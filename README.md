@@ -24,6 +24,7 @@
 - NCS/KSA 역량 매핑
 - ALIO 기반 기관 최근 사업 방향 분석
 - 국회 지적사항 기반 개선 과제 분석
+- 공고, NCS, 기관 정보 기반 준비 항목 리포트 생성
 
 ## 예상 도구
 
@@ -36,6 +37,7 @@
 - `map_ncs_competencies`
 - `analyze_institution_strategy`
 - `analyze_institution_weakness`
+- `analyze_job_fit_report`
 
 ## 데이터 소스
 

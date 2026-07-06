@@ -4,7 +4,7 @@
 
 ```txt
 한국인터넷진흥원 전산/보안 직무 공고와 기관 정보를 분석하고 싶어.
-공고, NCS, ALIO 자료를 연결해서 핵심 근거를 정리해줘.
+공고, NCS, ALIO 자료를 연결해서 이 지원자가 무엇을 준비해야 하는지 정리해줘.
 ```
 
 ## MCP 처리 흐름
@@ -14,6 +14,7 @@
 3. `map_ncs_competencies`로 NCS/KSA 역량을 추출합니다.
 4. `analyze_institution_strategy`로 기관 최근 사업 방향을 분석합니다.
 5. `analyze_institution_weakness`로 개선 과제를 정리합니다.
+6. `analyze_job_fit_report`로 공고, NCS, 기관 정보를 연결한 준비 항목 리포트를 생성합니다.
 
 ## 예상 출력
 
@@ -21,6 +22,7 @@
 - NCS 역량 매핑
 - KISA 주요사업 요약
 - ALIO 국회 지적사항 기반 개선 포인트
+- 준비 항목 리포트
 - 분석 근거 링크
 
 ## 심사 시 강조 포인트

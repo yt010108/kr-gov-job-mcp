@@ -7,6 +7,7 @@
 | map_ncs_competencies | 분석 | P0 | 공고와 직무기술서에서 NCS/KSA 역량을 추출합니다. |
 | analyze_institution_strategy | 분석 | P0 | 기관의 최근 사업 방향과 직무 연결 포인트를 요약합니다. |
 | analyze_institution_weakness | 분석 | P0 | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리합니다. |
+| analyze_job_fit_report | 분석 | P0 | 공고 내용, NCS, 기관 정보를 연결해 이 지원자가 무엇을 준비해야 하는지 리포트로 정리합니다. |
 
 ## 도구별 입출력
 
@@ -118,3 +119,23 @@
 - ALIO 국회 지적사항
 - 경영평가
 - 기관 보도자료
+
+### analyze_job_fit_report
+
+입력:
+
+- `job_detail`
+- `ncs_profile`
+- `institution_strategy`
+- `institution_weakness`
+- `applicant_profile`
+
+출력:
+
+- 공고 요구사항과 NCS 역량 연결 결과
+- 기관 사업 방향과 직무 연결 결과
+- 지원자가 우선 준비해야 할 항목
+- 보완해야 할 직무 지식
+- 확인해야 할 기관 자료
+- 준비 우선순위
+- 근거 링크

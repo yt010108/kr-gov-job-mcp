@@ -2,6 +2,11 @@
   "institution_name": "한국인터넷진흥원",
   "job_family": "전산/보안",
   "job_url": "",
+  "applicant_profile": {
+    "target_role": "공공기관 전산/보안 직무",
+    "known_skills": ["웹 보안 기초", "네트워크 기초", "Python"],
+    "preparation_status": "공고와 NCS 기준으로 부족한 준비 항목을 확인하려는 단계"
+  },
   "analysis_targets": [
     "채용공고",
     "NCS 역량",
