@@ -9,6 +9,7 @@ from kr_gov_job_mcp.collectors.base import (
     RawSampleWriter,
     RawSampleType,
 )
+from kr_gov_job_mcp.collectors.press_release import PressReleaseCollector
 from kr_gov_job_mcp.collectors.raw_store import RawSampleStore
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "RawSampleStore",
     "RawSampleWriter",
     "RawSampleType",
+    "PressReleaseCollector",
 ]
