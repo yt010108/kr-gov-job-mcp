@@ -12,5 +12,6 @@
     "NCS 역량",
     "ALIO 주요사업",
     "ALIO 국회 지적사항"
-  ]
+  ],
+  "expected_output_schema": "JobFitReport"
 }

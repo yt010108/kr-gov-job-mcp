@@ -11,6 +11,20 @@
 
 ## 도구별 입출력
 
+공통 스키마는 `kr_gov_job_mcp.schemas`에 Pydantic 모델로 정의합니다.
+각 도구는 가능한 한 아래 모델을 그대로 입출력에 사용하고, 원문에서 확인되지 않은 값은
+추정하지 않고 `verification_notes`에 남깁니다.
+
+| 모델 | 사용 도구 | 목적 |
+| --- | --- | --- |
+| `JobDetail` | `fetch_job_detail` | 공고 원문과 직무기술서를 구조화합니다. |
+| `NcsKsaMapping` | `map_ncs_competencies` | NCS/KSA 역량과 근거를 정리합니다. |
+| `InstitutionStrategy` | `analyze_institution_strategy` | 기관 주요사업과 직무 연결 포인트를 정리합니다. |
+| `InstitutionWeakness` | `analyze_institution_weakness` | 개선 과제, 조심할 표현, 기여 아이디어를 정리합니다. |
+| `JobFitReport` | `analyze_job_fit_report` | 공고, NCS, 기관 분석을 연결한 준비 리포트를 생성합니다. |
+| `EvidenceSource` | 모든 분석 도구 | 원문 링크, 발췌, 자료 유형을 공통 형식으로 기록합니다. |
+| `VerificationNote` | 모든 분석 도구 | 확인 필요 필드와 후속 확인 방법을 기록합니다. |
+
 ### search_public_jobs
 
 입력:
@@ -47,13 +61,14 @@
 - `job_url`
 - `institution_name`
 
-출력:
+출력: `JobDetail`
 
 - 지원자격
 - 우대사항
 - 직무 내용
 - 전형 절차
 - NCS 키워드
+- 확인 필요 사항
 
 데이터 소스:
 
@@ -68,7 +83,7 @@
 - `job_detail`
 - `duty_description_text`
 
-출력:
+출력: `NcsKsaMapping`
 
 - 직업기초능력
 - 직무수행능력
@@ -86,13 +101,14 @@
 - `year`
 - `job_family`
 
-출력:
+출력: `InstitutionStrategy`
 
 - 주요사업
 - 성장 사업
 - 디지털/보안/데이터 포인트
 - 기관 이해 근거
-- 사업 이해
+- 직무 연결 포인트
+- 확인 필요 사항
 
 데이터 소스:
 
@@ -107,12 +123,13 @@
 - `institution_name`
 - `year`
 
-출력:
+출력: `InstitutionWeakness`
 
 - 개선 과제
 - 운영/사업 약점
 - 조심할 표현
 - 지원자가 기여할 수 있는 개선 아이디어
+- 확인 필요 사항
 
 데이터 소스:
 
@@ -130,7 +147,7 @@
 - `institution_weakness`
 - `applicant_profile`
 
-출력:
+출력: `JobFitReport`
 
 - 공고 요구사항과 NCS 역량 연결 결과
 - 기관 사업 방향과 직무 연결 결과
@@ -139,3 +156,4 @@
 - 확인해야 할 기관 자료
 - 준비 우선순위
 - 근거 링크
+- 확인 필요 사항
