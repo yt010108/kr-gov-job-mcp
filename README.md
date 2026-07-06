@@ -74,6 +74,7 @@ kr-gov-job-mcp/
     raw-data-inventory.md
     ncs-competency-mapping.md
     institution-analysis-inputs.md
+    job-fit-report.md
     server-scaffold.md
     job-alio-field-inventory.md
     alio-disclosure-field-inventory.md

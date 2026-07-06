@@ -25,6 +25,17 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioStep,
     JobAlioSummary,
 )
+from kr_gov_job_mcp.schemas.job_fit import (
+    ApplicantReadinessInput,
+    InstitutionMaterialCheck,
+    JobFitEvidenceSource,
+    JobFitEvidenceType,
+    JobFitInstitutionSignal,
+    JobFitPreparationItem,
+    JobFitPreparationReport,
+    JobFitVerificationNote,
+    PreparationPriority,
+)
 from kr_gov_job_mcp.schemas.ncs import (
     KsaCandidate,
     KsaCategory,
@@ -68,6 +79,8 @@ __all__ = [
     "CareerPageLink",
     "CareerPageLinkKind",
     "CareerPageSnapshot",
+    "ApplicantReadinessInput",
+    "InstitutionMaterialCheck",
     "InstitutionAnalysisInput",
     "InstitutionEvidence",
     "InstitutionIdentityCandidate",
@@ -80,6 +93,12 @@ __all__ = [
     "JobAlioSearchResult",
     "JobAlioStep",
     "JobAlioSummary",
+    "JobFitEvidenceSource",
+    "JobFitEvidenceType",
+    "JobFitInstitutionSignal",
+    "JobFitPreparationItem",
+    "JobFitPreparationReport",
+    "JobFitVerificationNote",
     "KsaCandidate",
     "KsaCategory",
     "NcsAttachmentCandidate",
@@ -92,4 +111,5 @@ __all__ = [
     "PressReleaseEvidenceSource",
     "PressReleaseLink",
     "PressReleaseListItem",
+    "PreparationPriority",
 ]
