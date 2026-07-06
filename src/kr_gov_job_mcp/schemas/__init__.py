@@ -1,5 +1,25 @@
 """Shared response schemas for kr-gov-job-mcp."""
 
+from kr_gov_job_mcp.schemas.analysis import (
+    ApplicantProfile,
+    BusinessItem,
+    CompetencyItem,
+    Confidence,
+    EvidenceSource,
+    EvidenceType,
+    InstitutionMaterial,
+    InstitutionStrategy,
+    InstitutionWeakness,
+    JobDetail,
+    JobDuty,
+    JobFitReport,
+    JobRequirement,
+    NcsKsaMapping,
+    PreparationItem,
+    SelectionStep,
+    VerificationNote,
+    WeaknessItem,
+)
 from kr_gov_job_mcp.schemas.job import (
     JobAlioAttachment,
     JobAlioDetail,
@@ -9,9 +29,27 @@ from kr_gov_job_mcp.schemas.job import (
 )
 
 __all__ = [
+    "ApplicantProfile",
+    "BusinessItem",
+    "CompetencyItem",
+    "Confidence",
+    "EvidenceSource",
+    "EvidenceType",
+    "InstitutionMaterial",
+    "InstitutionStrategy",
+    "InstitutionWeakness",
     "JobAlioAttachment",
     "JobAlioDetail",
     "JobAlioSearchResult",
     "JobAlioStep",
     "JobAlioSummary",
+    "JobDetail",
+    "JobDuty",
+    "JobFitReport",
+    "JobRequirement",
+    "NcsKsaMapping",
+    "PreparationItem",
+    "SelectionStep",
+    "VerificationNote",
+    "WeaknessItem",
 ]
