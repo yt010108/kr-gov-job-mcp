@@ -48,6 +48,19 @@
 - 기관 보도자료
 - 나라장터 입찰/외주 정보
 
+## 수집 워크플로우
+
+수집기는 최종 분석 스키마를 확정하기 전에 원본 응답, 요청 조건, 결측 패턴을 남기는 역할을 합니다.
+로컬 설치, raw sample 저장 위치, 필드 인벤토리 작성 규칙, 데모 재현 순서는
+`docs/collector-workflow.md`에 정리되어 있습니다.
+
+기본 검증 명령:
+
+```powershell
+python -m pytest -q
+python -m ruff check .
+```
+
 ## 프로젝트 구조
 
 ```txt
@@ -57,6 +70,7 @@ kr-gov-job-mcp/
     tool-design.md
     demo-scenario.md
     collector-layer.md
+    collector-workflow.md
     server-scaffold.md
     job-alio-field-inventory.md
     alio-disclosure-field-inventory.md

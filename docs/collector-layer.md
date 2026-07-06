@@ -6,6 +6,9 @@ Collectors gather source data before the project commits to a final ERD or analy
 They should preserve raw source fields, save reproducible samples, and keep normalized collector
 outputs separate from later analysis results.
 
+For the team workflow, source-specific observation checklist, and PR checklist, see
+`docs/collector-workflow.md`.
+
 ## Package Structure
 
 ```txt
