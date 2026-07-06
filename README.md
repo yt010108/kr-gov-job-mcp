@@ -57,9 +57,11 @@ kr-gov-job-mcp/
     tool-design.md
     demo-scenario.md
     collector-layer.md
+    raw-data-inventory.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
+    raw-data-inventory.json
   src/
     kr_gov_job_mcp/
       clients/
