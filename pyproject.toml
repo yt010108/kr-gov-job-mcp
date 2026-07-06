@@ -13,6 +13,9 @@ dependencies = [
   "pydantic>=2.7",
 ]
 
+[project.scripts]
+kr-gov-job-mcp = "kr_gov_job_mcp.server:main"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
