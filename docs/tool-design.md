@@ -7,7 +7,6 @@
 | map_ncs_competencies | 분석 | P0 | 공고와 직무기술서에서 NCS/KSA 역량을 추출합니다. |
 | analyze_institution_strategy | 분석 | P0 | 기관의 최근 사업 방향과 직무 연결 포인트를 요약합니다. |
 | analyze_institution_weakness | 분석 | P0 | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리합니다. |
-| collect_research_reports | 수집 | P1 | 연구보고서와 사업보고서를 수집해 직무 관심도 근거를 만듭니다. |
 
 ## 도구별 입출력
 
@@ -99,7 +98,6 @@
 - ALIO 주요사업
 - 기관 홈페이지
 - 보도자료
-- 연구보고서
 
 ### analyze_institution_weakness
 
@@ -120,19 +118,3 @@
 - ALIO 국회 지적사항
 - 경영평가
 - 기관 보도자료
-
-### collect_research_reports
-
-입력:
-
-- `institution_name`
-- `job_family`
-- `keyword`
-
-출력:
-
-- 보고서명
-- 핵심 내용
-- 직무 연결 포인트
-- 직무/기관 분석 근거
-- 링크
