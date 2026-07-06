@@ -35,6 +35,15 @@ from kr_gov_job_mcp.schemas.ncs import (
     NcsMappingInput,
     NcsVerificationNote,
 )
+from kr_gov_job_mcp.schemas.institution import (
+    InstitutionAnalysisInput,
+    InstitutionEvidence,
+    InstitutionIdentityCandidate,
+    InstitutionSignalCandidate,
+    InstitutionSignalCategory,
+    InstitutionSourceType,
+    InstitutionVerificationNote,
+)
 from kr_gov_job_mcp.schemas.press_release import (
     PressReleaseDetail,
     PressReleaseEvidenceSource,
@@ -59,6 +68,13 @@ __all__ = [
     "CareerPageLink",
     "CareerPageLinkKind",
     "CareerPageSnapshot",
+    "InstitutionAnalysisInput",
+    "InstitutionEvidence",
+    "InstitutionIdentityCandidate",
+    "InstitutionSignalCandidate",
+    "InstitutionSignalCategory",
+    "InstitutionSourceType",
+    "InstitutionVerificationNote",
     "JobAlioAttachment",
     "JobAlioDetail",
     "JobAlioSearchResult",
