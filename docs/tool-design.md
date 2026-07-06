@@ -1,19 +1,19 @@
 # MCP 도구 설계 초안
 
-| 도구명 | 구분 | 우선순위 | MVP | 목적 |
-| --- | --- | --- | --- | --- |
-| search_public_jobs | 수집 | P0 | Yes | 공공기관 채용공고, 인턴, 공모전 정보를 검색하고 지원 가능 후보를 추립니다. |
-| fetch_job_detail | 수집 | P0 | Yes | 공고 상세와 직무기술서를 구조화해 지원 준비의 기준 데이터로 만듭니다. |
-| map_ncs_competencies | 분석 | P0 | Yes | 공고와 직무기술서에서 NCS/KSA 역량을 추출합니다. |
-| analyze_institution_strategy | 분석 | P0 | Yes | 기관의 최근 사업 방향과 직무 연결 포인트를 요약합니다. |
-| analyze_institution_weakness | 분석 | P0 | Yes | 기관의 부족한 점과 개선 과제를 면접 답변 소재로 바꿉니다. |
-| collect_research_reports | 수집 | P1 | Yes | 연구보고서와 사업보고서를 수집해 직무 관심도 근거를 만듭니다. |
-| match_user_experience | 개인화 | P0 | Yes | 사용자 경험을 요구역량, NCS, 자기소개서 문항과 매칭합니다. |
-| critique_self_intro | 평가 | P0 | Yes | 자기소개서 초안을 공고, NCS, 기관 분석 기준으로 진단합니다. |
-| generate_interview_pack | 생성 | P0 | Yes | 기관과 직무에 맞춘 면접 준비 패키지를 생성합니다. |
-| generate_application_brief | 생성 | P1 | Yes | 공공기관 지원 준비표를 한 장짜리 실행 문서로 만듭니다. |
-| store_mentoring_feedback | 개인화 | P1 | No | 멘토링 피드백을 사용자별 답변 개선 규칙으로 저장합니다. |
-| export_to_notion_or_pdf | 내보내기 | P2 | No | 지원 준비표를 Notion 페이지나 PDF 문서로 내보냅니다. |
+| 도구명 | 구분 | 우선순위 | 목적 |
+| --- | --- | --- | --- |
+| search_public_jobs | 수집 | P0 | 공공기관 채용공고, 인턴, 공모전 정보를 검색하고 지원 가능 후보를 추립니다. |
+| fetch_job_detail | 수집 | P0 | 공고 상세와 직무기술서를 구조화해 지원 준비의 기준 데이터로 만듭니다. |
+| map_ncs_competencies | 분석 | P0 | 공고와 직무기술서에서 NCS/KSA 역량을 추출합니다. |
+| analyze_institution_strategy | 분석 | P0 | 기관의 최근 사업 방향과 직무 연결 포인트를 요약합니다. |
+| analyze_institution_weakness | 분석 | P0 | 기관의 부족한 점과 개선 과제를 면접 답변 소재로 바꿉니다. |
+| collect_research_reports | 수집 | P1 | 연구보고서와 사업보고서를 수집해 직무 관심도 근거를 만듭니다. |
+| match_user_experience | 개인화 | P0 | 사용자 경험을 요구역량, NCS, 자기소개서 문항과 매칭합니다. |
+| critique_self_intro | 평가 | P0 | 자기소개서 초안을 공고, NCS, 기관 분석 기준으로 진단합니다. |
+| generate_interview_pack | 생성 | P0 | 기관과 직무에 맞춘 면접 준비 패키지를 생성합니다. |
+| generate_application_brief | 생성 | P1 | 공공기관 지원 준비표를 한 장짜리 실행 문서로 만듭니다. |
+| store_mentoring_feedback | 개인화 | P1 | 멘토링 피드백을 사용자별 답변 개선 규칙으로 저장합니다. |
+| export_to_notion_or_pdf | 내보내기 | P2 | 지원 준비표를 Notion 페이지나 PDF 문서로 내보냅니다. |
 
 ## 도구별 입출력
 

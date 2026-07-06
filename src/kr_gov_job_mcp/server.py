@@ -1,7 +1,7 @@
 """Entry point for the kr-gov-job-mcp server.
 
 The first commit keeps the server intentionally small. Tool implementations will
-be added under kr_gov_job_mcp.tools as the MVP scope is finalized.
+be added under kr_gov_job_mcp.tools as the product scope is finalized.
 """
 
 
