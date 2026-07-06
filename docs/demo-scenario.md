@@ -15,7 +15,6 @@
 4. `analyze_institution_strategy`로 기관 최근 사업 방향을 분석합니다.
 5. `analyze_institution_weakness`로 개선 과제를 정리합니다.
 6. `collect_research_reports`로 직무와 기관 분석 근거가 될 보고서를 찾습니다.
-7. `export_analysis_report`로 분석 결과를 문서화합니다.
 
 ## 예상 출력
 

@@ -8,7 +8,6 @@
 | analyze_institution_strategy | 분석 | P0 | 기관의 최근 사업 방향과 직무 연결 포인트를 요약합니다. |
 | analyze_institution_weakness | 분석 | P0 | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리합니다. |
 | collect_research_reports | 수집 | P1 | 연구보고서와 사업보고서를 수집해 직무 관심도 근거를 만듭니다. |
-| export_analysis_report | 내보내기 | P2 | 공고, NCS, 기관 분석 결과를 Notion 페이지나 PDF 문서로 내보냅니다. |
 
 ## 도구별 입출력
 
