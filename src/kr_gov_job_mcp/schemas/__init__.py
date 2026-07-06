@@ -7,8 +7,26 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioStep,
     JobAlioSummary,
 )
+from kr_gov_job_mcp.schemas.institution import (
+    CleaneyeInstitutionKind,
+    InstitutionAnalysisInput,
+    InstitutionEvidence,
+    InstitutionIdentityCandidate,
+    InstitutionSignalCandidate,
+    InstitutionSignalCategory,
+    InstitutionSourceType,
+    InstitutionVerificationNote,
+)
 
 __all__ = [
+    "CleaneyeInstitutionKind",
+    "InstitutionAnalysisInput",
+    "InstitutionEvidence",
+    "InstitutionIdentityCandidate",
+    "InstitutionSignalCandidate",
+    "InstitutionSignalCategory",
+    "InstitutionSourceType",
+    "InstitutionVerificationNote",
     "JobAlioAttachment",
     "JobAlioDetail",
     "JobAlioSearchResult",

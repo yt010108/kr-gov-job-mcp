@@ -57,6 +57,7 @@ kr-gov-job-mcp/
     tool-design.md
     demo-scenario.md
     collector-layer.md
+    institution-analysis-inputs.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
