@@ -94,3 +94,7 @@ python -m kr_gov_job_mcp.server
 ## 라이선스
 
 TBD
+
+## PR 테스트
+
+테스트 PR 플로우 확인용 변경입니다.
