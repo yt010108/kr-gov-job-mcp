@@ -1,0 +1,180 @@
+{
+  "inventory_version": "2026-07-07",
+  "raw_sample_types": [
+    "list",
+    "detail",
+    "attachment",
+    "html",
+    "pdf_text",
+    "api_response",
+    "metadata",
+    "other"
+  ],
+  "sources": [
+    {
+      "source": "job_alio",
+      "raw_types": ["list", "detail", "attachment"],
+      "stable_fields": [
+        "recrutPblntSn",
+        "instNm",
+        "pblntInstCd",
+        "recrutPbancTtl",
+        "pbancBgngYmd",
+        "pbancEndYmd",
+        "ncsCdLst",
+        "ncsCdNmLst",
+        "srcUrl"
+      ],
+      "often_missing_fields": [
+        "prefCn",
+        "srcUrl",
+        "files",
+        "steps"
+      ],
+      "source_specific_fields": [
+        "replmprYn",
+        "recrutSeNm",
+        "hireTypeNmLst",
+        "workRgnNmLst"
+      ],
+      "code_display_pairs": [
+        ["ncsCdLst", "ncsCdNmLst"],
+        ["pblntInstCd", "instNm"]
+      ],
+      "temporary_normalized_candidates": [
+        "id",
+        "institution_name",
+        "title",
+        "start_date",
+        "end_date",
+        "ncs_codes",
+        "ncs_categories",
+        "attachments"
+      ]
+    },
+    {
+      "source": "alio_disclosure",
+      "raw_types": ["list", "detail", "html", "metadata"],
+      "stable_fields": [
+        "apbaId",
+        "institution_name",
+        "item_id",
+        "item_name",
+        "source_url"
+      ],
+      "often_missing_fields": [
+        "contents",
+        "attachment_url",
+        "table_rows"
+      ],
+      "source_specific_fields": [
+        "disclosure_item_code",
+        "fiscal_year",
+        "quarter_or_half_year"
+      ],
+      "code_display_pairs": [
+        ["apbaId", "institution_name"],
+        ["item_id", "item_name"]
+      ],
+      "temporary_normalized_candidates": [
+        "institution_id",
+        "disclosure_item",
+        "title",
+        "body_html",
+        "body_text_preview"
+      ]
+    },
+    {
+      "source": "cleaneye",
+      "raw_types": ["list", "html", "metadata"],
+      "stable_fields": [
+        "entId",
+        "insttCode",
+        "entName",
+        "insttNm",
+        "entKind",
+        "itemNo",
+        "itemId",
+        "itemNm"
+      ],
+      "often_missing_fields": [
+        "portalActionUrl",
+        "useYn",
+        "html_table_rows"
+      ],
+      "source_specific_fields": [
+        "local_public_enterprise",
+        "local_invested_contributed",
+        "fixedYear",
+        "openedDate"
+      ],
+      "code_display_pairs": [
+        ["entId", "entName"],
+        ["insttCode", "insttNm"],
+        ["itemNo", "itemNm"]
+      ],
+      "temporary_normalized_candidates": [
+        "institution_id",
+        "institution_kind",
+        "kind_code",
+        "disclosure_item",
+        "body_html"
+      ]
+    },
+    {
+      "source": "career_page",
+      "raw_types": ["html", "metadata"],
+      "stable_fields": [
+        "source_url",
+        "final_url",
+        "status_code",
+        "content_type",
+        "title"
+      ],
+      "often_missing_fields": [
+        "body_text_preview",
+        "attachment_candidates",
+        "apply_candidates"
+      ],
+      "source_specific_fields": [
+        "page_type",
+        "links"
+      ],
+      "code_display_pairs": [],
+      "temporary_normalized_candidates": [
+        "page_title",
+        "page_type",
+        "attachment_candidates",
+        "apply_candidates"
+      ]
+    },
+    {
+      "source": "press_release",
+      "raw_types": ["list", "html", "metadata"],
+      "stable_fields": [
+        "list_url",
+        "title",
+        "url",
+        "published_date"
+      ],
+      "often_missing_fields": [
+        "body_text_preview",
+        "attachment_candidates",
+        "matched_keywords"
+      ],
+      "source_specific_fields": [
+        "postSeq",
+        "detail_link_pattern",
+        "keyword_filter"
+      ],
+      "code_display_pairs": [
+        ["postSeq", "title"]
+      ],
+      "temporary_normalized_candidates": [
+        "evidence_source",
+        "matched_keywords",
+        "excerpt"
+      ]
+    }
+  ]
+}
