@@ -11,6 +11,12 @@ from kr_gov_job_mcp.schemas.alio import (
     AlioReportFile,
     AlioReportSearchResult,
 )
+from kr_gov_job_mcp.schemas.cleaneye import (
+    CleaneyeDisclosureItem,
+    CleaneyeInstitution,
+    CleaneyeInstitutionKind,
+    CleaneyeInstitutionSearchResult,
+)
 from kr_gov_job_mcp.schemas.job import (
     JobAlioAttachment,
     JobAlioDetail,
@@ -29,6 +35,10 @@ __all__ = [
     "AlioReportDisclosure",
     "AlioReportFile",
     "AlioReportSearchResult",
+    "CleaneyeDisclosureItem",
+    "CleaneyeInstitution",
+    "CleaneyeInstitutionKind",
+    "CleaneyeInstitutionSearchResult",
     "JobAlioAttachment",
     "JobAlioDetail",
     "JobAlioSearchResult",
