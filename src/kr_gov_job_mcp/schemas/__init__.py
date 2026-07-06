@@ -25,6 +25,16 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioStep,
     JobAlioSummary,
 )
+from kr_gov_job_mcp.schemas.ncs import (
+    KsaCandidate,
+    KsaCategory,
+    NcsAttachmentCandidate,
+    NcsCodeMapping,
+    NcsEvidenceReference,
+    NcsEvidenceType,
+    NcsMappingInput,
+    NcsVerificationNote,
+)
 from kr_gov_job_mcp.schemas.press_release import (
     PressReleaseDetail,
     PressReleaseEvidenceSource,
@@ -54,6 +64,14 @@ __all__ = [
     "JobAlioSearchResult",
     "JobAlioStep",
     "JobAlioSummary",
+    "KsaCandidate",
+    "KsaCategory",
+    "NcsAttachmentCandidate",
+    "NcsCodeMapping",
+    "NcsEvidenceReference",
+    "NcsEvidenceType",
+    "NcsMappingInput",
+    "NcsVerificationNote",
     "PressReleaseDetail",
     "PressReleaseEvidenceSource",
     "PressReleaseLink",
