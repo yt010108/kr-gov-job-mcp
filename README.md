@@ -71,6 +71,7 @@ kr-gov-job-mcp/
     demo-scenario.md
     collector-layer.md
     collector-workflow.md
+    raw-data-inventory.md
     server-scaffold.md
     job-alio-field-inventory.md
     alio-disclosure-field-inventory.md
@@ -80,6 +81,7 @@ kr-gov-job-mcp/
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
+    raw-data-inventory.json
   src/
     kr_gov_job_mcp/
       clients/
