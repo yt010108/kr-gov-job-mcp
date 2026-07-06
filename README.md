@@ -62,6 +62,7 @@ kr-gov-job-mcp/
     alio-disclosure-field-inventory.md
     cleaneye-field-inventory.md
     career-page-collector.md
+    press-release-collector.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md

@@ -25,6 +25,12 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioStep,
     JobAlioSummary,
 )
+from kr_gov_job_mcp.schemas.press_release import (
+    PressReleaseDetail,
+    PressReleaseEvidenceSource,
+    PressReleaseLink,
+    PressReleaseListItem,
+)
 
 __all__ = [
     "AlioInstitution",
@@ -48,4 +54,8 @@ __all__ = [
     "JobAlioSearchResult",
     "JobAlioStep",
     "JobAlioSummary",
+    "PressReleaseDetail",
+    "PressReleaseEvidenceSource",
+    "PressReleaseLink",
+    "PressReleaseListItem",
 ]
