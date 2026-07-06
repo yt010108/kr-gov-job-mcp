@@ -56,11 +56,15 @@ kr-gov-job-mcp/
     proposal.md
     tool-design.md
     demo-scenario.md
+    collector-layer.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
   src/
     kr_gov_job_mcp/
+      clients/
+      collectors/
+      schemas/
       server.py
       tools/
   tests/
