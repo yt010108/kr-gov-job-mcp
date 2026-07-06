@@ -57,6 +57,7 @@ kr-gov-job-mcp/
     tool-design.md
     demo-scenario.md
     collector-layer.md
+    server-scaffold.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
@@ -83,11 +84,16 @@ python -m venv .venv
 pip install -e ".[dev]"
 ```
 
-서버 실행은 구현 이후 다음 형태를 목표로 합니다.
+서버 스캐폴드는 다음 명령으로 확인할 수 있습니다.
 
 ```powershell
 python -m kr_gov_job_mcp.server
+python -m kr_gov_job_mcp.server --health
+python -m kr_gov_job_mcp.server --list-tools
 ```
+
+패키지를 editable로 설치한 뒤에는 `kr-gov-job-mcp --health`도 사용할 수 있습니다.
+자세한 실행과 도구 등록 구조는 `docs/server-scaffold.md`에 정리되어 있습니다.
 
 ## 개인정보 원칙
 
