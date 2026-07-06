@@ -59,6 +59,7 @@ kr-gov-job-mcp/
     collector-layer.md
     server-scaffold.md
     job-alio-field-inventory.md
+    alio-disclosure-field-inventory.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
