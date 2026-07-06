@@ -73,6 +73,7 @@ kr-gov-job-mcp/
     collector-workflow.md
     raw-data-inventory.md
     ncs-competency-mapping.md
+    institution-analysis-inputs.md
     server-scaffold.md
     job-alio-field-inventory.md
     alio-disclosure-field-inventory.md
