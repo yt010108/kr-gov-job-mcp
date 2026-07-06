@@ -7,6 +7,16 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioStep,
     JobAlioSummary,
 )
+from kr_gov_job_mcp.schemas.ncs import (
+    KsaCandidate,
+    KsaCategory,
+    NcsAttachmentCandidate,
+    NcsCodeMapping,
+    NcsEvidenceReference,
+    NcsEvidenceType,
+    NcsMappingInput,
+    NcsVerificationNote,
+)
 
 __all__ = [
     "JobAlioAttachment",
@@ -14,4 +24,12 @@ __all__ = [
     "JobAlioSearchResult",
     "JobAlioStep",
     "JobAlioSummary",
+    "KsaCandidate",
+    "KsaCategory",
+    "NcsAttachmentCandidate",
+    "NcsCodeMapping",
+    "NcsEvidenceReference",
+    "NcsEvidenceType",
+    "NcsMappingInput",
+    "NcsVerificationNote",
 ]
