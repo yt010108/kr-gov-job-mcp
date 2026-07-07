@@ -93,6 +93,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 수집기는 최종 분석 스키마를 확정하기 전에 원본 응답, 요청 조건, 결측 패턴을 남기는 역할을 합니다.
 로컬 설치, raw sample 저장 위치, 필드 인벤토리 작성 규칙, 데모 재현 순서는
 `docs/collector-workflow.md`에 정리되어 있습니다.
+현재 MVP에서 Job-ALIO 필드 관찰은 `docs/job-alio-field-inventory.md`를 기준으로 봅니다.
 
 기본 검증 명령:
 
@@ -117,21 +118,21 @@ kr-gov-job-mcp/
       analyze-institution-weakness.md
       analyze-job-fit-report.md
     demo-scenario.md
-    collector-layer.md
     collector-workflow.md
-    raw-data-inventory.md
-    source-data-erd.md
     ncs-competency-mapping.md
-    institution-analysis-inputs.md
     job-fit-report.md
     server-scaffold.md
     job-alio-field-inventory.md
-    job-alio-alio-b1020-linking.md
     alio-disclosure-field-inventory.md
-    alio-pagination-policy.md
     alio-html-structure.md
-    cleaneye-field-inventory.md
-    cleaneye-html-structure.md
+    archive/
+      source-data-erd.md
+      institution-analysis-inputs.md
+      job-alio-alio-b1020-linking.md
+      alio-pagination-policy.md
+      raw-data-inventory.md
+      cleaneye-field-inventory.md
+      cleaneye-html-structure.md
   examples/
     kisa-demo-input.json
     kisa-demo-template.md
@@ -179,4 +180,4 @@ python -m kr_gov_job_mcp.server --list-tools
 
 ## 라이선스
 
-TBD
+추후 결정합니다.
