@@ -176,6 +176,8 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 - 수시 게시판 항목은 목록 JSON과 상세 HTML이 같이 저장되는지 확인
 - 정기 보고서 항목은 목록 JSON, 첨부파일 메타데이터, 본문 HTML이 같이 저장되는지 확인
 
+3개 기관 확대 검증 결과는 `docs/alio-sample-validation.md`에 기록한다.
+
 ### Cleaneye
 
 목표:
