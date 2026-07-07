@@ -44,8 +44,21 @@ def test_health_check_returns_server_metadata() -> None:
         "status": "ok",
         "service": "kr-gov-job-mcp",
         "version": "0.1.0",
+        "source_ref": "unknown",
+        "revision": "unknown",
         "registered_tools": 7,
     }
+
+
+def test_health_check_includes_deployment_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_SOURCE_REF", "main")
+    monkeypatch.setenv("APP_REVISION", "0113aa9")
+    registry = create_default_registry()
+
+    result = registry.call("health_check")
+
+    assert result["source_ref"] == "main"
+    assert result["revision"] == "0113aa9"
 
 
 def test_registry_rejects_duplicate_tool_names() -> None:

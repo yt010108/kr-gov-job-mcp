@@ -110,6 +110,8 @@ python -m ruff check .
 
 루트 `Dockerfile`은 Git 소스 빌드 화면에서 바로 사용할 수 있다. 컨테이너는 기본적으로
 `PORT` 환경변수 또는 `8000` 포트에서 HTTP MCP endpoint를 실행한다.
+배포 확인을 쉽게 하려면 빌드 시 `APP_SOURCE_REF`, `APP_REVISION` 값을 넣는다. 이 값은
+`/health`와 `health_check` 응답에 그대로 표시된다.
 
 등록 화면 입력값:
 
@@ -132,7 +134,7 @@ python -m ruff check .
 로컬 Docker 확인:
 
 ```bash
-docker build -t kr-gov-job-mcp .
+docker build -t kr-gov-job-mcp --build-arg APP_SOURCE_REF=main --build-arg APP_REVISION="$(git rev-parse --short HEAD)" .
 docker run --rm -p 8000:8000 kr-gov-job-mcp
 ```
 

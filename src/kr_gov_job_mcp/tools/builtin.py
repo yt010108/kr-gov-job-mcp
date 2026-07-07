@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from kr_gov_job_mcp import __version__
+from kr_gov_job_mcp.runtime import deployment_metadata
 from kr_gov_job_mcp.tools.code_lookup import create_lookup_region_codes_tool
 from kr_gov_job_mcp.tools.institution_analysis import (
     create_analyze_institution_strategy_tool,
@@ -26,8 +26,8 @@ def create_default_registry() -> ToolRegistry:
         return {
             "status": "ok",
             "service": "kr-gov-job-mcp",
-            "version": __version__,
             "registered_tools": len(registry.list_tools()),
+            **deployment_metadata(),
         }
 
     registry.register(

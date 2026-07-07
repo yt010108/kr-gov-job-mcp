@@ -12,7 +12,9 @@ def test_server_health_command_outputs_json(capsys) -> None:
     assert exit_code == 0
     assert json.loads(captured.out) == {
         "registered_tools": 7,
+        "revision": "unknown",
         "service": "kr-gov-job-mcp",
+        "source_ref": "unknown",
         "status": "ok",
         "version": "0.1.0",
     }

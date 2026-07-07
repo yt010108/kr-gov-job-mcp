@@ -85,7 +85,7 @@ python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 로컬 Docker smoke test:
 
 ```bash
-docker build -t kr-gov-job-mcp .
+docker build -t kr-gov-job-mcp --build-arg APP_SOURCE_REF=main --build-arg APP_REVISION="$(git rev-parse --short HEAD)" .
 docker run --rm -p 8000:8000 kr-gov-job-mcp
 curl http://localhost:8000/health
 ```
@@ -128,5 +128,5 @@ python -m pytest -q
 예상 health 응답:
 
 ```json
-{"registered_tools":7,"service":"kr-gov-job-mcp","status":"ok","version":"0.1.0"}
+{"registered_tools":7,"revision":"unknown","service":"kr-gov-job-mcp","source_ref":"unknown","status":"ok","version":"0.1.0"}
 ```
