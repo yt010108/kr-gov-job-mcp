@@ -67,7 +67,7 @@ PR에는 raw 파일 자체를 올리지 않는다.
 ## 3. Collector 구현 기준
 
 현재 collector 관련 기준 문서는 이 파일에 모은다. Job-ALIO에서 실제 관찰한 필드는
-`docs/job-alio-field-inventory.md`를 기준으로 본다.
+`docs/inventory/job-alio-field-inventory.md`를 기준으로 본다.
 
 패키지 구조:
 
@@ -158,7 +158,7 @@ Raw sample JSON은 다음 필드를 포함한다.
 
 ## 5. 필드 인벤토리 작성 규칙
 
-필드 인벤토리 문서는 `docs/<source>-field-inventory.md`에 둔다.
+필드 인벤토리 문서는 `docs/inventory/<source>-field-inventory.md`에 둔다.
 
 필수 섹션:
 
