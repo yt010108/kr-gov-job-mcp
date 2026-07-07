@@ -70,6 +70,7 @@ kr-gov-job-mcp/
     collector-layer.md
     collector-workflow.md
     raw-data-inventory.md
+    source-data-erd.md
     ncs-competency-mapping.md
     institution-analysis-inputs.md
     job-fit-report.md
