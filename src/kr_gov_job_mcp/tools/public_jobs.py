@@ -28,73 +28,73 @@ SEARCH_PUBLIC_JOBS_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "keyword": {
             "type": "string",
-            "description": "Search keyword for the Job-ALIO posting title.",
+            "description": "잡알리오 채용공고 제목 검색어입니다.",
         },
         "page": {
             "type": "integer",
             "minimum": 1,
             "default": 1,
-            "description": "1-based result page.",
+            "description": "조회할 결과 페이지입니다. 1부터 시작합니다.",
         },
         "limit": {
             "type": "integer",
             "minimum": 1,
             "maximum": 100,
             "default": 20,
-            "description": "Rows per page.",
+            "description": "한 페이지에 가져올 공고 수입니다.",
         },
         "ongoing_only": {
             "type": "boolean",
             "default": True,
-            "description": "Only include postings currently open in Job-ALIO.",
+            "description": "잡알리오 기준 현재 접수 중인 공고만 포함할지 여부입니다.",
         },
         "institution_code": {
             "type": "string",
-            "description": "Job-ALIO institution code, for example B552909.",
+            "description": "잡알리오 기관 코드입니다. 예: B552909",
         },
         "ncs_code": {
             "type": "string",
-            "description": "Job-ALIO NCS code filter.",
+            "description": "잡알리오 NCS 코드 필터입니다.",
         },
         "region_code": {
             "type": "string",
-            "description": "Job-ALIO work region code filter.",
+            "description": "잡알리오 근무지역 코드 필터입니다.",
         },
         "region": {
             "type": "string",
-            "description": "Natural-language work region name, for example 서울 or 서울특별시.",
+            "description": "자연어 근무지역명입니다. 예: 서울, 서울특별시",
         },
         "academic_condition_code": {
             "type": "string",
-            "description": "Job-ALIO academic condition code filter.",
+            "description": "잡알리오 학력 조건 코드 필터입니다.",
         },
         "employment_type_code": {
             "type": "string",
-            "description": "Job-ALIO employment type code filter.",
+            "description": "잡알리오 고용형태 코드 필터입니다.",
         },
         "recruitment_type": {
             "type": "string",
-            "description": "Job-ALIO recruitment type code filter.",
+            "description": "잡알리오 채용구분 코드 필터입니다.",
         },
         "replacement_only": {
             "type": "boolean",
-            "description": "Only include replacement recruitment postings when true.",
+            "description": "true이면 대체인력 채용 공고만 포함합니다.",
         },
         "announcement_start_date": {
             "type": "string",
-            "description": "Announcement start date filter, YYYY-MM-DD or YYYYMMDD.",
+            "description": "공고 시작일 필터입니다. YYYY-MM-DD 또는 YYYYMMDD 형식입니다.",
         },
         "announcement_end_date": {
             "type": "string",
-            "description": "Announcement end date filter, YYYY-MM-DD or YYYYMMDD.",
+            "description": "공고 종료일 필터입니다. YYYY-MM-DD 또는 YYYYMMDD 형식입니다.",
         },
         "institution_type": {
             "type": "string",
-            "description": "Job-ALIO institution type code filter.",
+            "description": "잡알리오 기관 유형 코드 필터입니다.",
         },
         "institution_classification": {
             "type": "string",
-            "description": "Job-ALIO institution classification code filter.",
+            "description": "잡알리오 기관 분류 코드 필터입니다.",
         },
     },
     "additionalProperties": False,
@@ -105,15 +105,15 @@ FETCH_JOB_DETAIL_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "job_id": {
             "type": "string",
-            "description": "Job-ALIO recruitment notice id returned by search_public_jobs.",
+            "description": "search_public_jobs가 반환한 잡알리오 채용공고 ID입니다.",
         },
         "source_job_id": {
             "type": "string",
-            "description": "Alias for job_id when passing search_public_jobs source_job_id.",
+            "description": "search_public_jobs의 source_job_id를 그대로 넘길 때 쓰는 job_id 별칭입니다.",
         },
         "recruitment_notice_sn": {
             "type": "string",
-            "description": "Job-ALIO recrutPblntSn value.",
+            "description": "잡알리오 채용공고 일련번호(recrutPblntSn)입니다.",
         },
     },
     "additionalProperties": False,
@@ -124,29 +124,29 @@ ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "job_id": {
             "type": "string",
-            "description": "Job-ALIO recruitment notice id returned by search_public_jobs.",
+            "description": "search_public_jobs가 반환한 잡알리오 채용공고 ID입니다.",
         },
         "source_job_id": {
             "type": "string",
-            "description": "Alias for job_id when passing search_public_jobs source_job_id.",
+            "description": "search_public_jobs의 source_job_id를 그대로 넘길 때 쓰는 job_id 별칭입니다.",
         },
         "recruitment_notice_sn": {
             "type": "string",
-            "description": "Job-ALIO recrutPblntSn value.",
+            "description": "잡알리오 채용공고 일련번호(recrutPblntSn)입니다.",
         },
         "target_role": {
             "type": "string",
-            "description": "Applicant's target role or preparation focus.",
+            "description": "지원자가 목표로 하는 직무 또는 준비 방향입니다.",
         },
         "known_skills": {
             "type": "array",
             "items": {"type": "string"},
             "default": [],
-            "description": "Skills, certifications, or experience the applicant already has.",
+            "description": "지원자가 이미 보유한 기술, 자격증, 경험입니다.",
         },
         "preparation_notes": {
             "type": "string",
-            "description": "Optional applicant notes to carry into the report context.",
+            "description": "준비 리포트에 반영할 지원자 메모입니다.",
         },
     },
     "additionalProperties": False,
@@ -191,8 +191,8 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
     return ToolDefinition(
         name="search_public_jobs",
         description=(
-            "Search public-sector job postings from Job-ALIO and return normalized posting "
-            "summaries with NCS mapping candidates."
+            "잡알리오 공공기관 채용공고를 검색하고 정규화된 공고 요약과 NCS 매핑 후보를 "
+            "반환합니다."
         ),
         input_schema=SEARCH_PUBLIC_JOBS_INPUT_SCHEMA,
         handler=handler,
@@ -216,8 +216,8 @@ def create_fetch_job_detail_tool(
     return ToolDefinition(
         name="fetch_job_detail",
         description=(
-            "Fetch one Job-ALIO posting detail by id and return normalized fields, "
-            "attachments, screening steps, and NCS mapping candidates."
+            "잡알리오 공고 ID로 상세 공고를 조회하고 지원자격, 첨부파일, 전형 단계, "
+            "NCS 매핑 후보를 반환합니다."
         ),
         input_schema=FETCH_JOB_DETAIL_INPUT_SCHEMA,
         handler=handler,
@@ -258,8 +258,8 @@ def create_analyze_job_fit_report_tool(
     return ToolDefinition(
         name="analyze_job_fit_report",
         description=(
-            "Generate a conservative MVP preparation report from one Job-ALIO posting detail, "
-            "including evidence links and verification notes for unsupported analysis."
+            "잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, 근거 링크, "
+            "검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다."
         ),
         input_schema=ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA,
         handler=handler,

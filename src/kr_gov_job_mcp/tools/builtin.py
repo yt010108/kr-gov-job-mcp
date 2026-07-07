@@ -33,7 +33,7 @@ def create_default_registry() -> ToolRegistry:
     registry.register(
         ToolDefinition(
             name="health_check",
-            description="Return basic server readiness and registry metadata.",
+            description="서버 준비 상태와 등록된 도구 개수 같은 기본 메타데이터를 반환합니다.",
             input_schema={"type": "object", "properties": {}, "additionalProperties": False},
             handler=health_check,
         )

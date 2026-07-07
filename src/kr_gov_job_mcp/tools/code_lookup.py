@@ -14,7 +14,7 @@ LOOKUP_REGION_CODES_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "query": {
             "type": "string",
-            "description": "Natural-language region name or Job-ALIO region code.",
+            "description": "자연어 지역명 또는 잡알리오 근무지역 코드입니다.",
         },
     },
     "additionalProperties": False,
@@ -39,7 +39,7 @@ def create_lookup_region_codes_tool() -> ToolDefinition:
 
     return ToolDefinition(
         name="lookup_region_codes",
-        description="Look up Job-ALIO work region codes by natural-language region name.",
+        description="자연어 지역명으로 잡알리오 근무지역 코드를 조회합니다.",
         input_schema=LOOKUP_REGION_CODES_INPUT_SCHEMA,
         handler=handler,
     )

@@ -22,27 +22,27 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "institution_name": {
             "type": "string",
-            "description": "Institution name to analyze.",
+            "description": "분석할 기관명입니다.",
         },
         "year": {
             "type": "integer",
-            "description": "Analysis year.",
+            "description": "분석 기준 연도입니다.",
         },
         "job_family": {
             "type": "string",
-            "description": "Target job family, for example 정보보호 or 전산.",
+            "description": "목표 직무군입니다. 예: 정보보호, 전산",
         },
         "evidence": {
             "type": "array",
             "items": {"type": "object"},
             "default": [],
-            "description": "Institution evidence candidates from ALIO, Cleaneye, homepage, or manual input.",
+            "description": "ALIO, 클린아이, 기관 홈페이지, 수동 입력에서 가져온 기관 근거 후보입니다.",
         },
         "signals": {
             "type": "array",
             "items": {"type": "object"},
             "default": [],
-            "description": "Pre-extracted institution signal candidates with evidence.",
+            "description": "근거가 연결된 사전 추출 기관 signal 후보입니다.",
         },
     },
     "additionalProperties": False,
@@ -56,23 +56,23 @@ ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "institution_name": {
             "type": "string",
-            "description": "Institution name to analyze.",
+            "description": "분석할 기관명입니다.",
         },
         "year": {
             "type": "integer",
-            "description": "Analysis year.",
+            "description": "분석 기준 연도입니다.",
         },
         "evidence": {
             "type": "array",
             "items": {"type": "object"},
             "default": [],
-            "description": "Improvement-task evidence candidates from ALIO, Cleaneye, or manual input.",
+            "description": "ALIO, 클린아이, 수동 입력에서 가져온 개선 과제 근거 후보입니다.",
         },
         "signals": {
             "type": "array",
             "items": {"type": "object"},
             "default": [],
-            "description": "Pre-extracted improvement signal candidates with evidence.",
+            "description": "근거가 연결된 사전 추출 개선 과제 signal 후보입니다.",
         },
     },
     "additionalProperties": False,
@@ -118,8 +118,8 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
     return ToolDefinition(
         name="analyze_institution_strategy",
         description=(
-            "Summarize institution business-direction signals and job connection points "
-            "from explicit evidence, leaving unsupported claims as verification notes."
+            "명시적인 근거를 바탕으로 기관의 사업 방향 signal과 직무 연결 포인트를 요약하고, "
+            "근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
         ),
         input_schema=ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA,
         handler=handler,
@@ -157,8 +157,8 @@ def create_analyze_institution_weakness_tool() -> ToolDefinition:
     return ToolDefinition(
         name="analyze_institution_weakness",
         description=(
-            "Summarize institution improvement-task signals from explicit evidence, "
-            "using careful wording and verification notes for unsupported claims."
+            "명시적인 근거를 바탕으로 기관의 개선 과제 signal을 요약하고, 단정적 표현을 피하면서 "
+            "근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
         ),
         input_schema=ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA,
         handler=handler,
