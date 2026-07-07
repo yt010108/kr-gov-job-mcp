@@ -318,7 +318,7 @@ v0에서는 준비 항목을 자주 쿼리할 가능성이 낮으므로 `prepara
 | --- | --- | --- |
 | `lookup_region_codes` | Job-ALIO `workRgnLst` 코드 테이블 | 없음 |
 | `search_public_jobs` | Job-ALIO list raw, `Institution` 후보 | `JobPosting`, 기본 `NcsMapping` 후보 |
-| `fetch_job_detail` | Job-ALIO detail raw | `JobPosting`, `JobAttachment`, `NcsMapping` |
+| `fetch_job_detail` | Job-ALIO detail raw | `JobPosting`, `JobAttachment`, `NcsMapping`, 전형 단계 metadata |
 | `collect_institution_context` | ALIO/Cleaneye raw, 기관 홈페이지 후보 | `Institution`, `DisclosureSource`, `DisclosureItem`, `InstitutionEvidence`, `InstitutionSignal` |
 | `analyze_job_fit_report` | `JobPosting`, `JobAttachment`, `NcsMapping`, `InstitutionSignal`, `InstitutionEvidence` | `JobFitReport` |
 

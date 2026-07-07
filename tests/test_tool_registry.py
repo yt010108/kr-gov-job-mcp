@@ -9,11 +9,12 @@ def test_default_registry_exposes_health_check() -> None:
     tools = registry.list_tools()
 
     assert [tool["name"] for tool in tools] == [
+        "fetch_job_detail",
         "health_check",
         "lookup_region_codes",
         "search_public_jobs",
     ]
-    assert tools[0] == {
+    assert tools[1] == {
         "name": "health_check",
         "description": "Return basic server readiness and registry metadata.",
         "input_schema": {
@@ -22,8 +23,9 @@ def test_default_registry_exposes_health_check() -> None:
             "additionalProperties": False,
         },
     }
-    assert tools[1]["input_schema"]["additionalProperties"] is False
+    assert tools[0]["input_schema"]["additionalProperties"] is False
     assert tools[2]["input_schema"]["additionalProperties"] is False
+    assert tools[3]["input_schema"]["additionalProperties"] is False
 
 
 def test_health_check_returns_server_metadata() -> None:
@@ -35,7 +37,7 @@ def test_health_check_returns_server_metadata() -> None:
         "status": "ok",
         "service": "kr-gov-job-mcp",
         "version": "0.1.0",
-        "registered_tools": 3,
+        "registered_tools": 4,
     }
 
 
