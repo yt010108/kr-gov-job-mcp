@@ -35,4 +35,3 @@ MCP tool은 아직 미구현. 현재는 `JobFitPreparationReport` schema와
 - 공고, NCS, 기관 signal은 evidence가 연결된 항목만 강한 주장으로 사용한다.
 - 부족한 자료는 `verification_notes` 또는 `institution_materials_to_check`로 남긴다.
 - 리포트는 지원자가 다음에 확인하거나 준비해야 할 항목을 우선순위로 정리한다.
-

@@ -30,4 +30,3 @@ MCP tool은 아직 미구현. 현재는 `InstitutionAnalysisInput` schema와 기
 - evidence가 없는 사업 방향은 최종 주장으로 쓰지 않는다.
 - ALIO와 Cleaneye 기관 ID를 기관명만으로 강제 병합하지 않는다.
 - 기관 홈페이지는 구조가 기관마다 다르므로 출처 URL과 excerpt를 함께 보존한다.
-
