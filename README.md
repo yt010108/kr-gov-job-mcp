@@ -48,7 +48,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 | --- | --- | --- |
 | `health_check` | 구현됨 | 서버 scaffold 상태, 서비스명, 버전, 등록 도구 수를 반환한다. |
 | `lookup_region_codes` | 구현됨 | 사용자가 입력한 지역명 또는 Job-ALIO 지역 코드를 Job-ALIO 검색용 `workRgnLst` 코드 후보로 변환/조회한다. 예: `서울특별시` → `R3010`. |
-| `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 키워드, 지역, 기관 코드, NCS 코드, 고용형태, 공고 기간 같은 필터를 받아 공고 요약과 NCS 매핑 후보를 반환한다. |
+| `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
 | `fetch_job_detail` | 구현됨 | `search_public_jobs`에서 얻은 Job-ALIO 공고 ID로 상세 공고를 조회한다. 지원자격, 우대사항, 전형절차, 첨부파일, 직무기술서 후보, 전형 단계 metadata를 구조화한다. |
 | `analyze_job_fit_report` | 구현됨 MVP | Job-ALIO 상세 정보만 사용해 준비 항목, 지식 보완 후보, 근거 링크, 검증 노트를 생성한다. ALIO/클린아이 기관 분석은 아직 자동 연결하지 않는다. |
 | `analyze_institution_strategy` | 구현됨 MVP | 입력으로 받은 기관 evidence와 signal 후보를 근거로 기관 사업 방향과 직무 연결 포인트를 요약한다. 근거가 없으면 단정하지 않고 `verification_notes`에 남긴다. |
