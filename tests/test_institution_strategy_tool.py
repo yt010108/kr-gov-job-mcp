@@ -109,6 +109,99 @@ def test_analyze_institution_weakness_returns_careful_evidence_backed_signal() -
     assert result["weakness_signals"][0]["summary"] == "보안 운영 체계 고도화 필요"
     assert "단정적으로 비판하지 않고" in result["weakness_signals"][0]["careful_wording"]
     assert "기여 포인트" in result["weakness_signals"][0]["applicant_connection"]
+    assert result["weakness_signals"][0]["risk_area"] == "국회 지적"
+    assert result["weakness_signals"][0]["severity"] == "high"
+    assert "반드시 잘못했다" in result["weakness_signals"][0]["do_not_say"]
+    assert "면접에서는" in result["weakness_signals"][0]["interview_safe_answer"]
+
+
+def test_analyze_institution_weakness_prioritizes_audit_before_management_eval() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "year": 2026,
+            "evidence": [
+                {
+                    "title": "경영평가 개선 권고",
+                    "source_type": "cleaneye",
+                    "url": "https://example.test/eval",
+                    "fields": {"year": 2026},
+                    "excerpt": "경영평가 성과관리 지표 환류 개선 필요",
+                },
+                {
+                    "title": "감사결과",
+                    "source_type": "alio_disclosure",
+                    "url": "https://example.test/audit",
+                    "fields": {"year": 2026},
+                    "excerpt": "감사결과 접근권한 관리 미흡 사항에 대한 시정 요구",
+                },
+            ],
+        }
+    )
+
+    first, second = result["weakness_signals"]
+    assert first["priority"] == 1
+    assert first["risk_area"] == "감사 지적"
+    assert first["severity"] == "high"
+    assert first["evidence_strength"] == "high"
+    assert "조치 결과" in " ".join(first["follow_up_checks"])
+    assert second["priority"] == 2
+    assert second["risk_area"] == "경영평가 개선 필요"
+    assert second["severity"] == "medium"
+    assert "평가등급 자체를 과장하지 않고" in second["careful_wording"]
+
+
+def test_analyze_institution_weakness_limits_financial_claims_without_numbers() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "샘플기관",
+            "evidence": [
+                {
+                    "title": "수동 메모",
+                    "source_type": "manual",
+                    "excerpt": "부채 관리 개선 필요",
+                }
+            ],
+        }
+    )
+
+    signal = result["weakness_signals"][0]
+    assert signal["risk_area"] == "재무/부채 리스크"
+    assert signal["needs_verification"] is True
+    assert "원문 수치와 기준 연도" in signal["careful_wording"]
+    assert "부채가 심각하다" in signal["do_not_say"]
+    assert "재무/부채 관련 수치" in " ".join(signal["follow_up_checks"])
+    assert any(note["field"] == "weakness_signals.needs_verification" for note in result["verification_notes"])
+
+
+def test_analyze_institution_weakness_avoids_security_incident_assumption() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "evidence": [
+                {
+                    "title": "개선 과제",
+                    "source_type": "alio_disclosure",
+                    "url": "https://example.test/security",
+                    "fields": {"year": 2026},
+                    "excerpt": "개인정보 접근권한 점검과 보안 통제 체계 개선 필요",
+                }
+            ],
+        }
+    )
+
+    signal = result["weakness_signals"][0]
+    assert signal["risk_area"] == "보안/개인정보/정보보호"
+    assert signal["severity"] == "high"
+    assert "사고 발생을 단정하지 않고" in signal["careful_wording"]
+    assert "개인정보 유출이 있었다" in signal["do_not_say"]
+    assert "보안 점검 자동화" in signal["applicant_connection"]
 
 
 def test_analyze_institution_weakness_keeps_missing_evidence_as_verification_notes() -> None:

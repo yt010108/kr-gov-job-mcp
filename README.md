@@ -56,7 +56,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 | `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
 | `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
 | `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`, `evidence`, `signals`를 받아 `strategy_signals`와 `verification_notes`를 반환한다. |
-| `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`, `evidence`, `signals`를 받아 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. |
+| `analyze_institution_weakness` | 구현됨 | `institution_name`, `year`, `evidence`, `signals`를 받아 개선 과제 taxonomy, 신중 표현, 피해야 할 표현, 면접 안전 문장이 포함된 `weakness_signals`와 `verification_notes`를 반환한다. |
 | `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
 
 ## 문제 정의

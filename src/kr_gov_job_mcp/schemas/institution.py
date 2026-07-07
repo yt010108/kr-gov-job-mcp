@@ -84,8 +84,16 @@ class InstitutionStrategyReport(BaseModel):
 class InstitutionWeaknessSignal(BaseModel):
     category: InstitutionWeaknessSignalCategory
     summary: str
+    priority: int | None = None
+    risk_area: str | None = None
+    severity: Literal["low", "medium", "high"] = "medium"
+    evidence_strength: Literal["low", "medium", "high"] = "medium"
     careful_wording: str
+    do_not_say: list[str] = Field(default_factory=list)
+    interview_safe_answer: str | None = None
     applicant_connection: str
+    follow_up_checks: list[str] = Field(default_factory=list)
+    needs_verification: bool = False
     evidence: list[InstitutionEvidence] = Field(default_factory=list)
 
 
