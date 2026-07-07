@@ -16,6 +16,7 @@
 - Job-ALIO 공고 상세 조회
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
 - evidence 입력 기반 기관 사업 방향 signal 요약
+- evidence 입력 기반 기관 개선 과제 signal 요약
 - 첨부파일, 전형 단계, NCS 매핑 후보 구조화
 
 ### 아직 미구현
@@ -38,6 +39,7 @@ python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keywo
 python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
 python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
 ```
 
 현재 MVP 데모 흐름은 `docs/demo-scenario.md`, 실제 KISA 기준 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
@@ -50,8 +52,8 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 | `fetch_job_detail` | 구현됨 | `search_public_jobs`에서 얻은 Job-ALIO 공고 ID로 상세 공고를 조회한다. 지원자격, 우대사항, 전형절차, 첨부파일, 직무기술서 후보, 전형 단계 metadata를 구조화한다. |
 | `analyze_job_fit_report` | 구현됨 MVP | Job-ALIO 상세 정보만 사용해 준비 항목, 지식 보완 후보, 근거 링크, 검증 노트를 생성한다. ALIO/클린아이 기관 분석은 아직 자동 연결하지 않는다. |
 | `analyze_institution_strategy` | 구현됨 MVP | 입력으로 받은 기관 evidence와 signal 후보를 근거로 기관 사업 방향과 직무 연결 포인트를 요약한다. 근거가 없으면 단정하지 않고 `verification_notes`에 남긴다. |
+| `analyze_institution_weakness` | 구현됨 MVP | 입력으로 받은 개선 과제 evidence와 signal 후보를 근거로 조심스러운 표현과 지원자 기여 포인트를 정리한다. 근거가 없으면 `verification_notes`에 남긴다. |
 | `map_ncs_competencies` | 예정 | 공고 상세와 직무기술서 텍스트를 바탕으로 NCS/KSA 역량을 추출한다. 근거가 있는 경우에만 Knowledge, Skill, Attitude, 직업기초능력, 직무수행능력 후보를 만든다. |
-| `analyze_institution_weakness` | 예정 | ALIO 국회 지적사항, 경영평가, 감사/운영 자료 등을 근거로 기관의 개선 과제와 지원자가 기여할 수 있는 포인트를 정리한다. 단정적 비판이 아니라 근거 기반 개선 관점으로 표현한다. |
 
 ## 문제 정의
 

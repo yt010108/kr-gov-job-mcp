@@ -7,6 +7,7 @@ from typing import Any
 
 from kr_gov_job_mcp.analysis import (
     generate_institution_strategy_report,
+    generate_institution_weakness_report,
     prepare_institution_analysis_input,
 )
 from kr_gov_job_mcp.schemas.institution import (
@@ -50,6 +51,35 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
 
 _STRATEGY_ARGUMENTS = set(ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA["properties"])
 
+ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "institution_name": {
+            "type": "string",
+            "description": "Institution name to analyze.",
+        },
+        "year": {
+            "type": "integer",
+            "description": "Analysis year.",
+        },
+        "evidence": {
+            "type": "array",
+            "items": {"type": "object"},
+            "default": [],
+            "description": "Improvement-task evidence candidates from ALIO, Cleaneye, or manual input.",
+        },
+        "signals": {
+            "type": "array",
+            "items": {"type": "object"},
+            "default": [],
+            "description": "Pre-extracted improvement signal candidates with evidence.",
+        },
+    },
+    "additionalProperties": False,
+}
+
+_WEAKNESS_ARGUMENTS = set(ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA["properties"])
+
 
 def create_analyze_institution_strategy_tool() -> ToolDefinition:
     """Create the institution business-direction analysis tool."""
@@ -92,6 +122,45 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
             "from explicit evidence, leaving unsupported claims as verification notes."
         ),
         input_schema=ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA,
+        handler=handler,
+    )
+
+
+def create_analyze_institution_weakness_tool() -> ToolDefinition:
+    """Create the institution improvement analysis tool."""
+
+    def handler(arguments: Mapping[str, Any]) -> dict[str, Any]:
+        unknown = sorted(set(arguments) - _WEAKNESS_ARGUMENTS)
+        if unknown:
+            raise ValueError("unsupported analyze_institution_weakness arguments: " + ", ".join(unknown))
+
+        institution_name = _required_text(arguments.get("institution_name"), "institution_name")
+        year = _to_int(arguments.get("year"), field="year")
+        evidence = _model_list(arguments.get("evidence"), InstitutionEvidence, field="evidence")
+        signals = _model_list(arguments.get("signals"), InstitutionSignalCandidate, field="signals")
+        analysis_input = prepare_institution_analysis_input(
+            institution_name=institution_name,
+            evidence=evidence,
+            signals=signals,
+        )
+        report = generate_institution_weakness_report(analysis_input, year=year)
+        return {
+            "source": "institution_analysis",
+            "query": {
+                "institution_name": institution_name,
+                "year": year,
+            },
+            **report.model_dump(mode="json"),
+            "warnings": [],
+        }
+
+    return ToolDefinition(
+        name="analyze_institution_weakness",
+        description=(
+            "Summarize institution improvement-task signals from explicit evidence, "
+            "using careful wording and verification notes for unsupported claims."
+        ),
+        input_schema=ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA,
         handler=handler,
     )
 

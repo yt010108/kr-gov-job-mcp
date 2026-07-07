@@ -1,6 +1,9 @@
 import pytest
 
-from kr_gov_job_mcp.tools.institution_analysis import create_analyze_institution_strategy_tool
+from kr_gov_job_mcp.tools.institution_analysis import (
+    create_analyze_institution_strategy_tool,
+    create_analyze_institution_weakness_tool,
+)
 
 
 def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
@@ -72,3 +75,57 @@ def test_analyze_institution_strategy_rejects_invalid_arguments() -> None:
 
     with pytest.raises(ValueError, match="expected integer value for year"):
         tool.handler({"institution_name": "한국인터넷진흥원", "year": "올해"})
+
+
+def test_analyze_institution_weakness_returns_careful_evidence_backed_signal() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "year": 2026,
+            "signals": [
+                {
+                    "category": "improvement_task",
+                    "title": "개선 과제",
+                    "summary": "보안 운영 체계 고도화 필요",
+                    "evidence": [
+                        {
+                            "title": "ALIO 국회 지적사항",
+                            "source_type": "alio_disclosure",
+                            "url": "https://example.test/alio",
+                            "excerpt": "보안 운영 체계 고도화 필요",
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+
+    assert result["source"] == "institution_analysis"
+    assert result["institution_name"] == "한국인터넷진흥원"
+    assert result["year"] == 2026
+    assert result["weakness_signals"][0]["category"] == "improvement_task"
+    assert result["weakness_signals"][0]["summary"] == "보안 운영 체계 고도화 필요"
+    assert "단정적으로 비판하지 않고" in result["weakness_signals"][0]["careful_wording"]
+    assert "기여 포인트" in result["weakness_signals"][0]["applicant_connection"]
+
+
+def test_analyze_institution_weakness_keeps_missing_evidence_as_verification_notes() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    result = tool.handler({"institution_name": "한국인터넷진흥원", "year": 2026})
+
+    assert result["weakness_signals"] == []
+    fields = {note["field"] for note in result["verification_notes"]}
+    assert {"identity_candidates", "evidence", "weakness_signals"}.issubset(fields)
+
+
+def test_analyze_institution_weakness_rejects_invalid_arguments() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler({})
+
+    with pytest.raises(ValueError, match="unsupported analyze_institution_weakness arguments"):
+        tool.handler({"institution_name": "한국인터넷진흥원", "job_family": "정보보호"})
