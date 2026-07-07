@@ -20,3 +20,94 @@ def test_readme_links_collector_workflow_doc() -> None:
     text = Path("README.md").read_text(encoding="utf-8")
 
     assert "docs/collector-workflow.md" in text
+
+
+def test_alio_pagination_policy_doc_covers_high_volume_controls() -> None:
+    text = Path("docs/alio-pagination-policy.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "raw_observation",
+        "full_collection",
+        "resume_collection",
+        "B1030",
+        "high_volume_threshold",
+        "rate_limited",
+        "checkpoint",
+        "page metadata",
+        "stopped_reason",
+    ]:
+        assert phrase in text
+
+
+def test_job_alio_alio_b1020_linking_doc_covers_statuses() -> None:
+    text = Path("docs/job-alio-alio-b1020-linking.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "B1020",
+        "JobPostingSourceLink",
+        "exact_match",
+        "strong_candidate",
+        "needs_review",
+        "source_only_job_alio",
+        "source_only_alio",
+        "conflict",
+        "EvidenceSource",
+        "pblntInstCd",
+        "apbaId",
+    ]:
+        assert phrase in text
+
+
+def test_source_data_erd_doc_covers_core_entities() -> None:
+    text = Path("docs/source-data-erd.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "erDiagram",
+        "RawSample",
+        "Institution",
+        "JobPosting",
+        "JobPostingAttachment",
+        "AlioDisclosureItem",
+        "DisclosureReport",
+        "DisclosureAttachment",
+        "EvidenceSource",
+        "disclosureNo",
+        "submissionNo",
+        "idx",
+        "NCS",
+    ]:
+        assert phrase in text
+
+
+def test_cleaneye_html_structure_doc_covers_parser_targets() -> None:
+    text = Path("docs/cleaneye-html-structure.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "일반현황",
+        "경영평가등급",
+        "부채규모",
+        "사업보고서",
+        "신규투자사업",
+        "entId",
+        "insttCode",
+        "공통 파서와 전용 파서 판단",
+        "기관 분석 입력 후보",
+    ]:
+        assert phrase in text
+
+
+def test_alio_html_structure_doc_covers_parser_targets() -> None:
+    text = Path("docs/alio-html-structure.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "B1020",
+        "31501",
+        "B1210",
+        "B1030",
+        "7030",
+        "B1040",
+        "B1260",
+        "Parser 구현 범위",
+        "ERD/기관분석 입력 승격 후보",
+    ]:
+        assert phrase in text

@@ -312,6 +312,9 @@ class AlioDisclosureCollector:
                     metadata={
                         "report": report.model_dump(exclude={"raw"}),
                         "normalized_count": len(files),
+                        "attachments": [
+                            file.model_dump(exclude={"raw"}) for file in files
+                        ],
                     },
                 ),
             )
