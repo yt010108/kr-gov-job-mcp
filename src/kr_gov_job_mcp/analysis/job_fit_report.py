@@ -85,7 +85,7 @@ def _preparation_items(
             JobFitVerificationNote(
                 field="duty_description_attachments",
                 reason="잡알리오 상세에서 직무기술서 첨부 후보를 찾지 못했습니다.",
-                suggested_check="기관 채용 페이지 원문과 공고 첨부파일을 확인합니다.",
+                suggested_check="잡알리오 상세의 공고 첨부파일을 확인합니다.",
             )
         )
 
@@ -107,7 +107,7 @@ def _preparation_items(
             JobFitVerificationNote(
                 field="ncs_codes",
                 reason="공고 상세에 NCS 코드나 표시명이 없습니다.",
-                suggested_check="직무기술서 또는 기관 채용 페이지에서 NCS 분류를 확인합니다.",
+                suggested_check="직무기술서 첨부파일에서 NCS 분류를 확인합니다.",
             )
         )
 
@@ -130,7 +130,7 @@ def _preparation_items(
             JobFitVerificationNote(
                 field="job_detail.source_fields",
                 reason="지원자격, 우대사항, 전형절차 본문이 비어 있습니다.",
-                suggested_check="잡알리오 상세 원문 또는 기관 채용 페이지를 다시 확인합니다.",
+                suggested_check="잡알리오 상세 원문을 다시 확인합니다.",
             )
         )
 

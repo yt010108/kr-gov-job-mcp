@@ -17,7 +17,6 @@ from kr_gov_job_mcp.schemas.cleaneye import (
     CleaneyeInstitutionKind,
     CleaneyeInstitutionSearchResult,
 )
-from kr_gov_job_mcp.schemas.career_page import CareerPageLink, CareerPageLinkKind, CareerPageSnapshot
 from kr_gov_job_mcp.schemas.job import (
     JobAlioAttachment,
     JobAlioDetail,
@@ -70,9 +69,6 @@ __all__ = [
     "CleaneyeInstitution",
     "CleaneyeInstitutionKind",
     "CleaneyeInstitutionSearchResult",
-    "CareerPageLink",
-    "CareerPageLinkKind",
-    "CareerPageSnapshot",
     "ApplicantReadinessInput",
     "InstitutionMaterialCheck",
     "InstitutionAnalysisInput",

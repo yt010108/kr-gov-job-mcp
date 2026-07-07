@@ -191,22 +191,6 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 - 경영평가, 감사, 지적사항 접근 가능 여부
 - 페이지네이션과 검색 조건 보존 방법
 
-### 기관 채용 페이지
-
-목표:
-
-- 기관 자체 채용 페이지에서 Job-ALIO에 없는 공고가 있는지 확인한다.
-- 게시판형/첨부파일형/외부 채용시스템형을 구분한다.
-- robots, 이용약관, 과도한 요청 방지 조건을 확인한다.
-
-관찰 체크:
-
-- 기관 채용 URL
-- 목록 페이지 제목, 공고 ID, 마감일
-- 상세 페이지 URL과 첨부파일
-- Job-ALIO 공고와 중복 판단 기준
-- 페이지네이션, 검색어, 직군 필터
-
 ## 6. 데모 재현 흐름
 
 기준 입력은 `examples/kisa-demo-input.json`을 사용한다.
@@ -215,9 +199,8 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 
 1. Job-ALIO에서 한국인터넷진흥원 관련 공고 목록과 상세 raw sample을 만든다.
 2. ALIO 경영공시에서 한국인터넷진흥원 일반현황, 주요사업, 국회/감사 지적사항 raw sample을 만든다.
-3. 필요하면 기관 채용 페이지 raw sample을 추가한다.
-4. 각 source별 field inventory에서 “분석에 바로 쓸 수 있는 필드”만 추려 분석 스키마 후보로 옮긴다.
-5. `examples/kisa-demo-output.md`의 리포트 형태와 비교해 부족한 근거 링크를 보강한다.
+3. 각 source별 field inventory에서 “분석에 바로 쓸 수 있는 필드”만 추려 분석 스키마 후보로 옮긴다.
+4. `examples/kisa-demo-output.md`의 리포트 형태와 비교해 부족한 근거 링크를 보강한다.
 
 데모 전에 확인할 결과물:
 

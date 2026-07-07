@@ -13,7 +13,6 @@ InstitutionSourceType = Literal[
     "alio_disclosure",
     "cleaneye",
     "institution_homepage",
-    "career_page",
     "job_alio",
     "manual",
 ]

@@ -120,33 +120,6 @@
         "disclosure_item",
         "body_html"
       ]
-    },
-    {
-      "source": "career_page",
-      "raw_types": ["html", "metadata"],
-      "stable_fields": [
-        "source_url",
-        "final_url",
-        "status_code",
-        "content_type",
-        "title"
-      ],
-      "often_missing_fields": [
-        "body_text_preview",
-        "attachment_candidates",
-        "apply_candidates"
-      ],
-      "source_specific_fields": [
-        "page_type",
-        "links"
-      ],
-      "code_display_pairs": [],
-      "temporary_normalized_candidates": [
-        "page_title",
-        "page_type",
-        "attachment_candidates",
-        "apply_candidates"
-      ]
     }
   ]
 }

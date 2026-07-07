@@ -11,7 +11,6 @@ def test_collector_workflow_doc_covers_required_sources() -> None:
         "Job-ALIO",
         "ALIO 경영공시",
         "Cleaneye",
-        "기관 채용 페이지",
         "데모 재현 흐름",
     ]:
         assert phrase in text

@@ -53,7 +53,7 @@ class NcsMappingPreparer:
                 NcsVerificationNote(
                     field="duty_description_attachments",
                     reason="잡알리오 상세 첨부에서 직무기술서 후보를 찾지 못했습니다.",
-                    suggested_check="기관 채용 페이지 원문과 공고 첨부파일을 확인합니다.",
+                    suggested_check="잡알리오 상세의 공고 첨부파일을 확인합니다.",
                 )
             )
         if not duty_description_text:

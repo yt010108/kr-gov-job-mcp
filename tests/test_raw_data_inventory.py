@@ -23,7 +23,6 @@ def test_raw_data_inventory_example_has_expected_sources_and_types() -> None:
         "job_alio",
         "alio_disclosure",
         "cleaneye",
-        "career_page",
     }
 
 

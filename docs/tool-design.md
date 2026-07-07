@@ -37,7 +37,6 @@
 
 - 잡알리오
 - 클린아이
-- 기관별 채용 페이지
 - 인턴 공고 사이트
 
 ### fetch_job_detail
@@ -59,7 +58,6 @@
 
 - 공고 원문
 - PDF/HTML 직무기술서
-- 기관 채용 페이지
 
 ### map_ncs_competencies
 
