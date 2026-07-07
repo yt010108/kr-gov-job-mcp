@@ -22,6 +22,23 @@ def test_readme_links_collector_workflow_doc() -> None:
     assert "docs/collector-workflow.md" in text
 
 
+def test_alio_pagination_policy_doc_covers_high_volume_controls() -> None:
+    text = Path("docs/alio-pagination-policy.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "raw_observation",
+        "full_collection",
+        "resume_collection",
+        "B1030",
+        "high_volume_threshold",
+        "rate_limited",
+        "checkpoint",
+        "page metadata",
+        "stopped_reason",
+    ]:
+        assert phrase in text
+
+
 def test_job_alio_alio_b1020_linking_doc_covers_statuses() -> None:
     text = Path("docs/job-alio-alio-b1020-linking.md").read_text(encoding="utf-8")
 

@@ -78,6 +78,7 @@ kr-gov-job-mcp/
     job-alio-field-inventory.md
     job-alio-alio-b1020-linking.md
     alio-disclosure-field-inventory.md
+    alio-pagination-policy.md
     alio-html-structure.md
     cleaneye-field-inventory.md
     cleaneye-html-structure.md
