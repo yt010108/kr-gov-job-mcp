@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import Callable, Mapping
 from typing import Any
 
+from kr_gov_job_mcp.analysis import generate_job_fit_report
 from kr_gov_job_mcp.clients.job_alio_web_client import JobAlioWebClient
 from kr_gov_job_mcp.codes import resolve_region_code
 from kr_gov_job_mcp.schemas.job import (
@@ -15,6 +16,7 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioStep,
     JobAlioSummary,
 )
+from kr_gov_job_mcp.schemas.job_fit import ApplicantReadinessInput, JobFitPreparationReport
 from kr_gov_job_mcp.tools.registry import ToolDefinition
 
 
@@ -117,8 +119,42 @@ FETCH_JOB_DETAIL_INPUT_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 
+ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "job_id": {
+            "type": "string",
+            "description": "Job-ALIO recruitment notice id returned by search_public_jobs.",
+        },
+        "source_job_id": {
+            "type": "string",
+            "description": "Alias for job_id when passing search_public_jobs source_job_id.",
+        },
+        "recruitment_notice_sn": {
+            "type": "string",
+            "description": "Job-ALIO recrutPblntSn value.",
+        },
+        "target_role": {
+            "type": "string",
+            "description": "Applicant's target role or preparation focus.",
+        },
+        "known_skills": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": [],
+            "description": "Skills, certifications, or experience the applicant already has.",
+        },
+        "preparation_notes": {
+            "type": "string",
+            "description": "Optional applicant notes to carry into the report context.",
+        },
+    },
+    "additionalProperties": False,
+}
+
 _SUPPORTED_ARGUMENTS = set(SEARCH_PUBLIC_JOBS_INPUT_SCHEMA["properties"])
 _FETCH_DETAIL_SUPPORTED_ARGUMENTS = set(FETCH_JOB_DETAIL_INPUT_SCHEMA["properties"])
+_ANALYZE_JOB_FIT_SUPPORTED_ARGUMENTS = set(ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA["properties"])
 _TEXT_ARGUMENTS = {
     "keyword",
     "institution_code",
@@ -188,6 +224,48 @@ def create_fetch_job_detail_tool(
     )
 
 
+def create_analyze_job_fit_report_tool(
+    fetch_job_detail: FetchJobDetailRunner | None = None,
+) -> ToolDefinition:
+    """Create the MVP job preparation report tool from one Job-ALIO posting."""
+
+    def handler(arguments: Mapping[str, Any]) -> dict[str, Any]:
+        unknown = sorted(set(arguments) - _ANALYZE_JOB_FIT_SUPPORTED_ARGUMENTS)
+        if unknown:
+            raise ValueError("unsupported analyze_job_fit_report arguments: " + ", ".join(unknown))
+
+        job_id = _normalize_detail_id(arguments, tool_name="analyze_job_fit_report")
+        applicant = ApplicantReadinessInput(
+            target_role=_to_text(arguments.get("target_role")),
+            known_skills=_to_text_list(arguments.get("known_skills")),
+            preparation_notes=_to_text(arguments.get("preparation_notes")),
+        )
+        detail = (
+            fetch_job_detail(job_id)
+            if fetch_job_detail is not None
+            else _run_async("analyze_job_fit_report", lambda: _fetch_job_alio_detail(job_id))
+        )
+        report = generate_job_fit_report(detail, applicant=applicant)
+        return _serialize_job_fit_report(
+            report,
+            query={
+                "job_id": job_id,
+                "target_role": applicant.target_role,
+                "known_skills": applicant.known_skills,
+            },
+        )
+
+    return ToolDefinition(
+        name="analyze_job_fit_report",
+        description=(
+            "Generate a conservative MVP preparation report from one Job-ALIO posting detail, "
+            "including evidence links and verification notes for unsupported analysis."
+        ),
+        input_schema=ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA,
+        handler=handler,
+    )
+
+
 async def _search_job_alio(**kwargs: Any) -> JobAlioSearchResult:
     async with JobAlioWebClient() as client:
         return await client.search_jobs(**kwargs)
@@ -251,18 +329,22 @@ def _normalize_detail_arguments(arguments: Mapping[str, Any]) -> str:
     if unknown:
         raise ValueError("unsupported fetch_job_detail arguments: " + ", ".join(unknown))
 
+    return _normalize_detail_id(arguments, tool_name="fetch_job_detail")
+
+
+def _normalize_detail_id(arguments: Mapping[str, Any], *, tool_name: str) -> str:
     values = {
         key: _to_text(arguments.get(key))
         for key in ("job_id", "source_job_id", "recruitment_notice_sn")
     }
     provided = {key: value for key, value in values.items() if value is not None}
     if not provided:
-        raise ValueError("fetch_job_detail requires job_id")
+        raise ValueError(f"{tool_name} requires job_id")
 
     unique_values = set(provided.values())
     if len(unique_values) > 1:
         parts = ", ".join(f"{key}={value}" for key, value in provided.items())
-        raise ValueError("conflicting fetch_job_detail ids: " + parts)
+        raise ValueError(f"conflicting {tool_name} ids: " + parts)
     return next(iter(unique_values))
 
 
@@ -308,6 +390,20 @@ def _serialize_detail_result(
         "source": "job_alio",
         "query": dict(query),
         "job": job,
+        "warnings": [],
+    }
+
+
+def _serialize_job_fit_report(
+    report: JobFitPreparationReport,
+    *,
+    query: Mapping[str, Any],
+) -> dict[str, Any]:
+    payload = report.model_dump(mode="json")
+    return {
+        "source": "job_alio",
+        "query": dict(query),
+        **payload,
         "warnings": [],
     }
 
@@ -394,6 +490,14 @@ def _to_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _to_text_list(value: Any) -> list[str]:
+    if value is None or value == "":
+        return []
+    if not isinstance(value, list):
+        raise ValueError(f"expected list value: {value}")
+    return [text for item in value if (text := _to_text(item)) is not None]
 
 
 def _to_int(
