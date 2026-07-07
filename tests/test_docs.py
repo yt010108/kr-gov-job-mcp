@@ -22,6 +22,23 @@ def test_readme_links_collector_workflow_doc() -> None:
     assert "docs/collector-workflow.md" in text
 
 
+def test_cleaneye_html_structure_doc_covers_parser_targets() -> None:
+    text = Path("docs/cleaneye-html-structure.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "일반현황",
+        "경영평가등급",
+        "부채규모",
+        "사업보고서",
+        "신규투자사업",
+        "entId",
+        "insttCode",
+        "공통 파서와 전용 파서 판단",
+        "기관 분석 입력 후보",
+    ]:
+        assert phrase in text
+
+
 def test_alio_html_structure_doc_covers_parser_targets() -> None:
     text = Path("docs/alio-html-structure.md").read_text(encoding="utf-8")
 
