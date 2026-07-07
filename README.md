@@ -76,6 +76,7 @@ kr-gov-job-mcp/
     server-scaffold.md
     job-alio-field-inventory.md
     alio-disclosure-field-inventory.md
+    alio-html-structure.md
     cleaneye-field-inventory.md
     cleaneye-html-structure.md
   examples/
