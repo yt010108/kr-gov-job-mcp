@@ -10,6 +10,7 @@
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
+python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input '{\"keyword\":\"정보\",\"limit\":1}'
 ```
 
 macOS/Linux에서는 다음처럼 실행할 수 있다.
@@ -55,9 +56,9 @@ registry.register(
 ```
 
 기본 레지스트리는 `create_default_registry()`로 생성한다.
-현재 기본 등록 도구는 `health_check` 하나이며, 이후 `search_public_jobs`,
-`fetch_job_detail`, `analyze_institution_strategy` 같은 실제 도구를 이 레지스트리에
-붙이면 된다.
+현재 기본 등록 도구는 `fetch_job_detail`, `health_check`, `lookup_region_codes`,
+`search_public_jobs`다. 이후 `collect_institution_context`, `analyze_job_fit_report` 같은
+실제 도구를 이 레지스트리에 붙인다.
 
 ## smoke test
 
@@ -72,5 +73,5 @@ python -m pytest -q
 예상 health 응답:
 
 ```json
-{"registered_tools":1,"service":"kr-gov-job-mcp","status":"ok","version":"0.1.0"}
+{"registered_tools":4,"service":"kr-gov-job-mcp","status":"ok","version":"0.1.0"}
 ```

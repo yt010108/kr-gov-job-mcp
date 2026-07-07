@@ -33,6 +33,7 @@
 우선 구현 후보:
 
 - `search_public_jobs`
+- `lookup_region_codes`
 - `fetch_job_detail`
 - `map_ncs_competencies`
 - `analyze_institution_strategy`
