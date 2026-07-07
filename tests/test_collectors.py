@@ -32,10 +32,62 @@ def test_raw_sample_store_writes_partitioned_json(tmp_path) -> None:
 
     path = store.write_sample(sample)
 
-    assert path == tmp_path / "job_alio" / "detail" / "2026-07-07" / "302423-debug-true.json"
+    assert path.parent == tmp_path / "job_alio" / "detail" / "2026-07-07"
+    assert path.name.startswith("302423-debug-true-")
+    assert path.name.endswith(".json")
     loaded = store.read_sample(path)
     assert loaded.source == "job_alio"
     assert loaded.payload == {"recrutPblntSn": 302423, "instNm": "창업진흥원"}
+
+
+def test_raw_sample_store_keeps_non_ascii_sample_ids_distinct(tmp_path) -> None:
+    store = RawSampleStore(tmp_path)
+
+    kisa_path = store.path_for(
+        RawSample(
+            source="job_alio",
+            raw_type="list",
+            sample_id="list-page-1-limit-5-한국인터넷진흥원",
+            collected_at="2026-07-07T00:01:02Z",
+            payload={},
+        )
+    )
+    metro_path = store.path_for(
+        RawSample(
+            source="job_alio",
+            raw_type="list",
+            sample_id="list-page-1-limit-5-서울교통공사",
+            collected_at="2026-07-07T00:01:02Z",
+            payload={},
+        )
+    )
+
+    assert kisa_path.name != metro_path.name
+    assert kisa_path.name.startswith("list-page-1-limit-5-")
+    assert metro_path.name.startswith("list-page-1-limit-5-")
+    assert kisa_path.name.isascii()
+    assert metro_path.name.isascii()
+
+
+def test_raw_sample_store_shortens_long_url_sample_ids(tmp_path) -> None:
+    store = RawSampleStore(tmp_path)
+    path = store.path_for(
+        RawSample(
+            source="press_release",
+            raw_type="html",
+            sample_id=(
+                "https://www.kepco.co.kr/home/media/newsroom/pr/boardView.do"
+                "?boardMngNo=15&boardNo=3106-detail-html"
+            ),
+            collected_at="2026-07-07T00:01:02Z",
+            payload={},
+        )
+    )
+
+    assert len(path.stem) <= 80
+    assert path.name.endswith(".json")
+    assert path.name.isascii()
+    assert "detail-html" in path.stem
 
 
 def test_collector_protocol_accepts_common_interface(tmp_path) -> None:
