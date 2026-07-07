@@ -6,7 +6,10 @@ from collections.abc import Mapping
 from typing import Any
 
 from kr_gov_job_mcp import __version__
-from kr_gov_job_mcp.tools.code_lookup import create_lookup_region_codes_tool
+from kr_gov_job_mcp.tools.code_lookup import (
+    create_lookup_institution_codes_tool,
+    create_lookup_region_codes_tool,
+)
 from kr_gov_job_mcp.tools.institution_analysis import (
     create_analyze_institution_strategy_tool,
     create_analyze_institution_weakness_tool,
@@ -39,6 +42,7 @@ def create_default_registry() -> ToolRegistry:
         )
     )
     registry.register(create_lookup_region_codes_tool())
+    registry.register(create_lookup_institution_codes_tool())
     registry.register(create_analyze_institution_strategy_tool())
     registry.register(create_analyze_institution_weakness_tool())
     registry.register(create_analyze_job_fit_report_tool())

@@ -144,6 +144,57 @@ def test_search_public_jobs_resolves_region_name() -> None:
     }
 
 
+def test_search_public_jobs_resolves_institution_name_alias() -> None:
+    captured_kwargs = {}
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_kwargs.update(kwargs)
+        return JobAlioSearchResult(page=1, limit=20, total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"institution_name": "전남대병원"})
+
+    assert captured_kwargs["institution_code"] == "C0113"
+    assert "institution_name" not in captured_kwargs
+    assert result["resolved_filters"]["institution"] == {
+        "code": "C0113",
+        "name": "전남대학교병원",
+        "aliases": ["전남대병원", "전남대학교 병원", "화순전남대학교병원"],
+        "query": "전남대병원",
+        "confidence": "high",
+    }
+
+
+def test_search_public_jobs_rejects_institution_code_conflict() -> None:
+    tool = create_search_public_jobs_tool(
+        search_jobs=lambda **_kwargs: JobAlioSearchResult(page=1, limit=20, total_count=0)
+    )
+
+    with pytest.raises(ValueError, match="institution_name and institution_code conflict"):
+        tool.handler({"institution_name": "전남대병원", "institution_code": "C0045"})
+
+
+def test_search_public_jobs_unknown_institution_name_falls_back_to_keyword() -> None:
+    captured_kwargs = {}
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_kwargs.update(kwargs)
+        return JobAlioSearchResult(page=1, limit=20, total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"institution_name": "없는기관"})
+
+    assert captured_kwargs["keyword"] == "없는기관"
+    assert "institution_code" not in captured_kwargs
+    assert "could not be resolved" in result["warnings"][0]
+    assert result["resolved_filters"]["institution"] == {
+        "query": "없는기관",
+        "matches": [],
+    }
+
+
 def test_search_public_jobs_rejects_region_code_conflict() -> None:
     tool = create_search_public_jobs_tool(
         search_jobs=lambda **_kwargs: JobAlioSearchResult(page=1, limit=20, total_count=0)

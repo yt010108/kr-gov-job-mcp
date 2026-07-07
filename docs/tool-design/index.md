@@ -7,6 +7,7 @@
 | 번호 | 도구명 | 구분 | 우선순위 | 문서 | 목적 |
 | --- | --- | --- | --- | --- | --- |
 | 01 | `lookup_region_codes` | 코드 조회 | P0 | [lookup-region-codes.md](lookup-region-codes.md) | 자연어 지역명이나 Job-ALIO 지역 코드로 근무지 코드 후보를 조회한다. |
+| 01b | `lookup_institution_codes` | 코드 조회 | P0 | [lookup-institution-codes.md](lookup-institution-codes.md) | 자연어 기관명이나 약칭으로 Job-ALIO 기관 코드 후보를 조회한다. |
 | 02 | `search_public_jobs` | 수집 | P0 | [search-public-jobs.md](search-public-jobs.md) | 공공기관 채용공고와 인턴 정보를 검색하고 지원 가능 후보를 추린다. |
 | 03 | `fetch_job_detail` | 수집 | P0 | [fetch-job-detail.md](fetch-job-detail.md) | 공고 상세와 직무기술서를 구조화해 분석 기준 데이터로 만든다. |
 | 04 | `map_ncs_competencies` | 분석 | P0 | [map-ncs-competencies.md](map-ncs-competencies.md) | 공고와 직무기술서에서 NCS/KSA 역량을 추출한다. |
@@ -17,11 +18,12 @@
 ## 구현 순서
 
 1. 01 `lookup_region_codes`
-2. 02 `search_public_jobs`
-3. 03 `fetch_job_detail`
-4. 07 `analyze_job_fit_report`
-5. 05 `analyze_institution_strategy`
-6. 06 `analyze_institution_weakness`
-7. `collect_institution_context`
+2. 01b `lookup_institution_codes`
+3. 02 `search_public_jobs`
+4. 03 `fetch_job_detail`
+5. 07 `analyze_job_fit_report`
+6. 05 `analyze_institution_strategy`
+7. 06 `analyze_institution_weakness`
+8. `collect_institution_context`
 
 04 `map_ncs_competencies`는 현재 분석 helper와 schema는 있으나 MCP tool로는 아직 분리 구현하지 않았다.

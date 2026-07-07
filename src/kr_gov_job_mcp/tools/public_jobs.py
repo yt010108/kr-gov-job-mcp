@@ -8,7 +8,13 @@ from typing import Any
 
 from kr_gov_job_mcp.analysis import generate_job_fit_report
 from kr_gov_job_mcp.clients.job_alio_web_client import JobAlioWebClient
-from kr_gov_job_mcp.codes import resolve_region_code
+from kr_gov_job_mcp.codes import (
+    InstitutionLookupError,
+    find_institution_codes,
+    institution_match_confidence,
+    resolve_institution_code,
+    resolve_region_code,
+)
 from kr_gov_job_mcp.schemas.job import (
     JobAlioAttachment,
     JobAlioDetail,
@@ -51,6 +57,10 @@ SEARCH_PUBLIC_JOBS_INPUT_SCHEMA: dict[str, Any] = {
         "institution_code": {
             "type": "string",
             "description": "잡알리오 기관 코드입니다. 예: B552909",
+        },
+        "institution_name": {
+            "type": "string",
+            "description": "자연어 기관명 또는 약칭입니다. 예: 전남대병원, 한국농수산식품유통공사",
         },
         "ncs_code": {
             "type": "string",
@@ -309,6 +319,46 @@ def _normalize_search_arguments(
         resolved_filters["region"] = resolved_region.public_dict()
     elif region_code:
         kwargs["region_code"] = region_code
+
+    institution_name = _to_text(arguments.get("institution_name"))
+    institution_code = _to_text(arguments.get("institution_code"))
+    if institution_name:
+        try:
+            resolved_institution = resolve_institution_code(institution_name)
+        except InstitutionLookupError:
+            matches = find_institution_codes(institution_name)
+            warnings.append(
+                "institution_name could not be resolved to a Job-ALIO institution code; "
+                "falling back to title keyword search when keyword is empty."
+            )
+            resolved_filters["institution"] = {
+                "query": institution_name,
+                "matches": [
+                    {
+                        **institution.public_dict(),
+                        "confidence": institution_match_confidence(institution, institution_name),
+                    }
+                    for institution in matches
+                ],
+            }
+            if "keyword" not in kwargs:
+                kwargs["keyword"] = institution_name
+        else:
+            if institution_code and institution_code != resolved_institution.code:
+                raise ValueError(
+                    "institution_name and institution_code conflict: "
+                    f"{institution_name} resolves to {resolved_institution.code}, "
+                    f"got {institution_code}"
+                )
+            kwargs["institution_code"] = resolved_institution.code
+            resolved_filters["institution"] = {
+                **resolved_institution.public_dict(),
+                "query": institution_name,
+                "confidence": institution_match_confidence(
+                    resolved_institution,
+                    institution_name,
+                ),
+            }
 
     if "replacement_only" in arguments:
         kwargs["replacement_only"] = _to_bool(arguments.get("replacement_only"), default=False)
