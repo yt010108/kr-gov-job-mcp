@@ -129,11 +129,19 @@ python -m ruff check .
 | `/health` | 배포 health check |
 | `/mcp` | MCP JSON-RPC POST endpoint |
 
+HTTP MCP endpoint 정책:
+
+- `POST /mcp`는 `Accept: application/json, text/event-stream`을 요구한다.
+- `MCP-Protocol-Version`이 들어온 경우 `2025-11-25` 또는 `2025-03-26`만 허용한다.
+- `Origin` 헤더가 있으면 same-host origin, loopback origin, `MCP_ALLOWED_ORIGINS` 또는
+  `MCP_CORS_ALLOW_ORIGINS`에 지정한 origin만 허용한다.
+- 세션을 유지하지 않으므로 `DELETE /mcp`는 JSON `405 Method Not Allowed`로 응답한다.
+
 로컬 Docker 확인:
 
 ```bash
 docker build -t kr-gov-job-mcp .
-docker run --rm -p 8000:8000 kr-gov-job-mcp
+docker run --rm -p 8000:8000 -e MCP_ALLOWED_ORIGINS="https://example.com" kr-gov-job-mcp
 ```
 
 MCP HTTP 호출 예시:
@@ -142,6 +150,7 @@ MCP HTTP 호출 예시:
 curl -X POST http://localhost:8000/mcp \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
+  -H "MCP-Protocol-Version: 2025-11-25" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"lookup_region_codes","arguments":{"query":"서울특별시"}}}'
 ```
 

@@ -33,20 +33,35 @@ def _request(
     method: str,
     path: str,
     payload: Any | None = None,
+    headers: dict[str, str] | None = None,
 ) -> tuple[int, Any]:
+    status, parsed, _headers = _raw_request(host, port, method, path, payload, headers)
+    return status, parsed
+
+
+def _raw_request(
+    host: str,
+    port: int,
+    method: str,
+    path: str,
+    payload: Any | None = None,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, Any, dict[str, str]]:
     body = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    headers = {
+    request_headers = {
         "Accept": "application/json, text/event-stream",
         "Content-Type": "application/json",
         "MCP-Protocol-Version": "2025-11-25",
     }
+    if headers:
+        request_headers.update(headers)
     connection = HTTPConnection(host, port, timeout=5)
     try:
-        connection.request(method, path, body=body, headers=headers)
+        connection.request(method, path, body=body, headers=request_headers)
         response = connection.getresponse()
         response_body = response.read().decode("utf-8")
         parsed = json.loads(response_body) if response_body else None
-        return response.status, parsed
+        return response.status, parsed, {key.lower(): value for key, value in response.getheaders()}
     finally:
         connection.close()
 
@@ -134,3 +149,80 @@ def test_mcp_http_notification_returns_accepted_without_body() -> None:
 
     assert status == 202
     assert payload is None
+
+
+def test_mcp_http_preflight_allows_loopback_origin() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload, headers = _raw_request(
+            host,
+            port,
+            "OPTIONS",
+            "/mcp",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+
+    assert status == 204
+    assert payload is None
+    assert headers["access-control-allow-origin"] == "http://localhost:5173"
+    assert "POST" in headers["access-control-allow-methods"]
+    assert "MCP-Protocol-Version" in headers["access-control-allow-headers"]
+
+
+def test_mcp_http_rejects_disallowed_origin() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload = _request(
+            host,
+            port,
+            "POST",
+            "/mcp",
+            {"jsonrpc": "2.0", "id": 1, "method": "ping"},
+            headers={"Origin": "https://evil.example"},
+        )
+
+    assert status == 403
+    assert payload["error"] == "origin is not allowed: https://evil.example"
+
+
+def test_mcp_http_delete_mcp_returns_json_method_not_allowed() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload, headers = _raw_request(host, port, "DELETE", "/mcp")
+
+    assert status == 405
+    assert headers["content-type"].startswith("application/json")
+    assert headers["allow"] == "GET, POST, OPTIONS"
+    assert "Session termination is not implemented" in payload["error"]
+
+
+def test_mcp_http_rejects_invalid_protocol_version() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload = _request(
+            host,
+            port,
+            "POST",
+            "/mcp",
+            {"jsonrpc": "2.0", "id": 1, "method": "ping"},
+            headers={"MCP-Protocol-Version": "1999-01-01"},
+        )
+
+    assert status == 400
+    assert payload["error"] == "unsupported MCP-Protocol-Version: 1999-01-01"
+    assert "2025-11-25" in payload["supported_protocol_versions"]
+
+
+def test_mcp_http_rejects_post_without_streamable_http_accept_header() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload = _request(
+            host,
+            port,
+            "POST",
+            "/mcp",
+            {"jsonrpc": "2.0", "id": 1, "method": "ping"},
+            headers={"Accept": "application/json"},
+        )
+
+    assert status == 406
+    assert payload["error"] == "unsupported Accept header"
+    assert payload["required_accept"] == ["application/json", "text/event-stream"]

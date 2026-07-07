@@ -72,6 +72,12 @@ python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 현재 HTTP 모드는 `/mcp`에서 JSON-RPC POST 요청을 처리하고 `/health`에서 readiness JSON을
 반환한다. SSE GET stream과 session resume은 아직 구현하지 않았다.
 
+`POST /mcp`는 MCP Streamable HTTP 호환성을 위해
+`Accept: application/json, text/event-stream`을 요구한다. `MCP-Protocol-Version`이
+들어온 경우 `2025-11-25` 또는 `2025-03-26`만 허용한다. 브라우저 `Origin`은 same-host,
+loopback, `MCP_ALLOWED_ORIGINS` 또는 `MCP_CORS_ALLOW_ORIGINS` allowlist에 있는 값만
+허용한다. 세션을 유지하지 않는 현재 구현에서는 `DELETE /mcp`가 JSON `405`로 응답한다.
+
 루트 `Dockerfile`은 이 HTTP 모드를 기본 실행한다. Git 소스 빌드 등록값은 다음처럼 둔다.
 
 | 항목 | 값 |
