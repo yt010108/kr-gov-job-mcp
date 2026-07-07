@@ -130,6 +130,7 @@ kr-gov-job-mcp/
       institution-analysis-inputs.md
       job-alio-alio-b1020-linking.md
       alio-pagination-policy.md
+      alio-sample-validation.md
       raw-data-inventory.md
       cleaneye-field-inventory.md
       cleaneye-html-structure.md
