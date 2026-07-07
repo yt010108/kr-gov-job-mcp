@@ -20,3 +20,20 @@ def test_readme_links_collector_workflow_doc() -> None:
     text = Path("README.md").read_text(encoding="utf-8")
 
     assert "docs/collector-workflow.md" in text
+
+
+def test_alio_html_structure_doc_covers_parser_targets() -> None:
+    text = Path("docs/alio-html-structure.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "B1020",
+        "31501",
+        "B1210",
+        "B1030",
+        "7030",
+        "B1040",
+        "B1260",
+        "Parser 구현 범위",
+        "ERD/기관분석 입력 승격 후보",
+    ]:
+        assert phrase in text
