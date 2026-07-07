@@ -7,18 +7,26 @@ helper 기준으로 입력 구조만 잡혀 있다.
 
 ## 입력
 
-- `job_detail`
-- `duty_description_text`
+planned schema:
+
+| field | 한국어 설명 |
+| --- | --- |
+| `job_detail` | `fetch_job_detail`이 반환한 공고 상세 구조화 결과 |
+| `duty_description_text` | 직무기술서에서 추출한 텍스트 |
 
 ## 출력
 
-- 직업기초능력
-- 직무수행능력
-- Knowledge
-- Skill
-- Attitude
-- 역량 근거
-- 검증 포인트
+planned schema:
+
+| field | 한국어 설명 |
+| --- | --- |
+| `basic_competencies` | 직업기초능력 후보 |
+| `duty_competencies` | 직무수행능력 후보 |
+| `knowledge` | 필요지식 후보 |
+| `skills` | 필요기술 후보 |
+| `attitudes` | 직무수행태도 후보 |
+| `evidence` | 역량 추출 근거 목록 |
+| `verification_notes` | 근거 부족 또는 확인 필요 사항 |
 
 ## 데이터 소스
 
