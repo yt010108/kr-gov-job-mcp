@@ -394,17 +394,18 @@ ALIO `49-1` 입찰공고와 `49-2` 수의계약에서 승격된다.
 | --- | --- | --- |
 | `lookup_region_codes` | Job-ALIO `workRgnLst` 코드 테이블 | 없음 |
 | `search_public_jobs` | Job-ALIO list raw, `Institution` 후보 | `JobPosting`, 기본 `NcsMapping` 후보 |
-| `fetch_job_detail` | Job-ALIO detail raw | `JobPosting`, `JobPostingAttachment`, `JobPostingNcsCode` |
+| `fetch_job_detail` | Job-ALIO detail raw | `JobPosting`, `JobPostingAttachment`, `JobPostingNcsCode`, 전형 단계 metadata |
 | `collect_institution_context` | ALIO/Cleaneye raw, 기관 홈페이지 후보 | `Institution`, `DisclosureReport`, `EvidenceSource`, `InstitutionSignalCandidate` |
 | `analyze_job_fit_report` | `JobPosting`, `JobPostingAttachment`, `JobPostingNcsCode`, `InstitutionSignalCandidate`, `EvidenceSource` | `JobFitPreparationReport` |
 
 ## 다음 구현 순서
 
-1. `search_public_jobs`를 먼저 MCP registry에 붙이고, Job-ALIO 목록과 NCS 코드 후보를 반환한다.
-2. `fetch_job_detail`에서 첨부파일, 상세 필드, 전형 단계, 직무기술서 후보를 붙인다.
-3. ALIO/Cleaneye HTML table parser는 raw-only 항목을 줄이는 작업으로 분리한다.
-4. `collect_institution_context`에서 evidence와 signal 후보를 만든다.
-5. `analyze_job_fit_report`는 evidence가 연결된 signal만 사용한다.
+현재 `lookup_region_codes`, `search_public_jobs`, `fetch_job_detail`는 MCP registry에 등록됐다.
+
+1. 직무기술서 첨부 본문 추출기를 붙여 `JobPostingAttachment`에서 K/S/A 후보 근거로 연결한다.
+2. ALIO/Cleaneye HTML table parser는 raw-only 항목을 줄이는 작업으로 분리한다.
+3. `collect_institution_context`에서 evidence와 signal 후보를 만든다.
+4. `analyze_job_fit_report`는 evidence가 연결된 signal만 사용한다.
 
 ## v0 보류 사항
 
