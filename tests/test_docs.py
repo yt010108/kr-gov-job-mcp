@@ -97,7 +97,7 @@ def test_cleaneye_html_structure_doc_covers_parser_targets() -> None:
 
 
 def test_alio_html_structure_doc_covers_parser_targets() -> None:
-    text = Path("docs/alio-html-structure.md").read_text(encoding="utf-8")
+    text = Path("docs/archive/alio-html-structure.md").read_text(encoding="utf-8")
 
     for phrase in [
         "B1020",
