@@ -3,10 +3,11 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+INVENTORY_DIR = ROOT / "docs" / "inventory"
 
 
 def test_raw_data_inventory_example_has_expected_sources_and_types() -> None:
-    payload = json.loads((ROOT / "examples" / "raw-data-inventory.json").read_text(encoding="utf-8"))
+    payload = json.loads((INVENTORY_DIR / "raw-data-inventory.json").read_text(encoding="utf-8"))
 
     assert payload["inventory_version"] == "2026-07-07"
     assert set(payload["raw_sample_types"]) == {
@@ -27,7 +28,7 @@ def test_raw_data_inventory_example_has_expected_sources_and_types() -> None:
 
 
 def test_each_inventory_source_separates_observed_and_candidate_fields() -> None:
-    payload = json.loads((ROOT / "examples" / "raw-data-inventory.json").read_text(encoding="utf-8"))
+    payload = json.loads((INVENTORY_DIR / "raw-data-inventory.json").read_text(encoding="utf-8"))
 
     for source in payload["sources"]:
         assert source["stable_fields"]
@@ -38,8 +39,8 @@ def test_each_inventory_source_separates_observed_and_candidate_fields() -> None
 
 
 def test_inventory_doc_mentions_every_source_and_raw_type() -> None:
-    payload = json.loads((ROOT / "examples" / "raw-data-inventory.json").read_text(encoding="utf-8"))
-    doc = (ROOT / "docs" / "archive" / "raw-data-inventory.md").read_text(encoding="utf-8")
+    payload = json.loads((INVENTORY_DIR / "raw-data-inventory.json").read_text(encoding="utf-8"))
+    doc = (INVENTORY_DIR / "raw-data-inventory.md").read_text(encoding="utf-8")
 
     for raw_type in payload["raw_sample_types"]:
         assert f"`{raw_type}`" in doc
