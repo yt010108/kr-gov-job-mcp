@@ -29,12 +29,12 @@ def test_generate_job_fit_report_links_job_ncs_duty_and_institution_evidence() -
     )
     signal = JobFitInstitutionSignal(
         title="디지털 재정 플랫폼 고도화",
-        summary="기관 보도자료 기반 signal",
+        summary="ALIO 주요사업 기반 signal",
         evidence=[
             JobFitEvidenceSource(
-                title="기관 보도자료",
+                title="ALIO 주요사업",
                 source_type="institution_signal",
-                url="https://example.test/press",
+                url="https://example.test/alio",
                 excerpt="디지털 재정 플랫폼 고도화",
             )
         ],

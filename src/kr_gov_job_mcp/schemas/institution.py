@@ -14,7 +14,6 @@ InstitutionSourceType = Literal[
     "cleaneye",
     "institution_homepage",
     "career_page",
-    "press_release",
     "job_alio",
     "manual",
 ]

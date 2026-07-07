@@ -98,7 +98,6 @@
 
 - ALIO 주요사업
 - 기관 홈페이지
-- 보도자료
 
 ### analyze_institution_weakness
 
@@ -118,7 +117,6 @@
 
 - ALIO 국회 지적사항
 - 경영평가
-- 기관 보도자료
 
 ### analyze_job_fit_report
 

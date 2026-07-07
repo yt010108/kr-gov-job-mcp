@@ -55,12 +55,6 @@ from kr_gov_job_mcp.schemas.institution import (
     InstitutionSourceType,
     InstitutionVerificationNote,
 )
-from kr_gov_job_mcp.schemas.press_release import (
-    PressReleaseDetail,
-    PressReleaseEvidenceSource,
-    PressReleaseLink,
-    PressReleaseListItem,
-)
 
 __all__ = [
     "AlioInstitution",
@@ -107,9 +101,5 @@ __all__ = [
     "NcsEvidenceType",
     "NcsMappingInput",
     "NcsVerificationNote",
-    "PressReleaseDetail",
-    "PressReleaseEvidenceSource",
-    "PressReleaseLink",
-    "PressReleaseListItem",
     "PreparationPriority",
 ]

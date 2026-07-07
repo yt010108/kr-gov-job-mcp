@@ -207,22 +207,6 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 - Job-ALIO 공고와 중복 판단 기준
 - 페이지네이션, 검색어, 직군 필터
 
-### 보도자료
-
-목표:
-
-- 기관 최근 사업 방향을 판단할 수 있는 보도자료 목록과 상세를 보존한다.
-- 날짜, 제목, 부서, 원문 URL, 첨부파일을 확인한다.
-- 분석에 쓸 키워드와 단순 홍보 문구를 구분한다.
-
-관찰 체크:
-
-- 목록 URL과 페이지네이션
-- 보도자료 ID, 제목, 게시일, 담당부서
-- 상세 본문 HTML 또는 첨부파일
-- 최근 6~12개월 필터 가능 여부
-- 기관명/사업명/직무 키워드 추출 가능성
-
 ## 6. 데모 재현 흐름
 
 기준 입력은 `examples/kisa-demo-input.json`을 사용한다.
@@ -231,7 +215,7 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 
 1. Job-ALIO에서 한국인터넷진흥원 관련 공고 목록과 상세 raw sample을 만든다.
 2. ALIO 경영공시에서 한국인터넷진흥원 일반현황, 주요사업, 국회/감사 지적사항 raw sample을 만든다.
-3. 필요하면 기관 채용 페이지와 보도자료 raw sample을 추가한다.
+3. 필요하면 기관 채용 페이지 raw sample을 추가한다.
 4. 각 source별 field inventory에서 “분석에 바로 쓸 수 있는 필드”만 추려 분석 스키마 후보로 옮긴다.
 5. `examples/kisa-demo-output.md`의 리포트 형태와 비교해 부족한 근거 링크를 보강한다.
 

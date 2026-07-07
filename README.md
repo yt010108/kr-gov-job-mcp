@@ -12,7 +12,7 @@
 - NCS 직업기초능력 및 직무수행능력
 - ALIO 주요사업, 국회 지적사항
 - 클린아이 지방공기업 자료
-- 기관 홈페이지, 보도자료, 채용 페이지
+- 기관 홈페이지, 채용 페이지
 
 자료는 많지만, 실제로 어려운 부분은 이 자료들을 직무 판단과 기관 이해로 연결하는 과정입니다.
 이 MCP는 단순 공고 검색이 아니라 공고, 직무기술서, NCS, 기관 분석을 한 흐름으로 정리하는 취업 정보 분석 워크플로우를 제공합니다.
@@ -45,7 +45,6 @@
 - ALIO 경영공시
 - 클린아이 지방공기업 정보
 - 기관별 채용 페이지
-- 기관 보도자료
 - 나라장터 입찰/외주 정보
 
 ## 수집 워크플로우
@@ -80,7 +79,6 @@ kr-gov-job-mcp/
     alio-disclosure-field-inventory.md
     cleaneye-field-inventory.md
     career-page-collector.md
-    press-release-collector.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md

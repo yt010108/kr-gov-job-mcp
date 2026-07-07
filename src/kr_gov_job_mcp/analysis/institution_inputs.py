@@ -98,7 +98,7 @@ def _verification_notes(
             InstitutionVerificationNote(
                 field="evidence",
                 reason="기관 분석에 연결할 원문 근거가 없습니다.",
-                suggested_check="ALIO, Cleaneye, 기관 홈페이지, 보도자료 raw sample을 먼저 수집합니다.",
+                suggested_check="ALIO, Cleaneye, 기관 홈페이지 raw sample을 먼저 수집합니다.",
             )
         )
     for index, signal in enumerate(signals):

@@ -147,34 +147,6 @@
         "attachment_candidates",
         "apply_candidates"
       ]
-    },
-    {
-      "source": "press_release",
-      "raw_types": ["list", "html", "metadata"],
-      "stable_fields": [
-        "list_url",
-        "title",
-        "url",
-        "published_date"
-      ],
-      "often_missing_fields": [
-        "body_text_preview",
-        "attachment_candidates",
-        "matched_keywords"
-      ],
-      "source_specific_fields": [
-        "postSeq",
-        "detail_link_pattern",
-        "keyword_filter"
-      ],
-      "code_display_pairs": [
-        ["postSeq", "title"]
-      ],
-      "temporary_normalized_candidates": [
-        "evidence_source",
-        "matched_keywords",
-        "excerpt"
-      ]
     }
   ]
 }

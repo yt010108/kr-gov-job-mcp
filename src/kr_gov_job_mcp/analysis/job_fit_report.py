@@ -150,7 +150,7 @@ def _preparation_items(
                     JobFitVerificationNote(
                         field="institution_signals",
                         reason="기관 signal은 분석 후보이므로 최종 문장 작성 전 원문 확인이 필요합니다.",
-                        suggested_check="ALIO, Cleaneye, 보도자료 URL과 excerpt를 다시 봅니다.",
+                        suggested_check="ALIO, Cleaneye, 기관 홈페이지 URL과 excerpt를 다시 봅니다.",
                     )
                 ],
             )
@@ -160,7 +160,7 @@ def _preparation_items(
             JobFitVerificationNote(
                 field="institution_signals",
                 reason="기관 사업 방향 또는 개선 과제 signal이 없습니다.",
-                suggested_check="기관 분석 입력에서 ALIO, Cleaneye, 보도자료 evidence를 먼저 연결합니다.",
+                suggested_check="기관 분석 입력에서 ALIO, Cleaneye, 기관 홈페이지 evidence를 먼저 연결합니다.",
             )
         )
 
@@ -215,7 +215,7 @@ def _institution_materials(
         InstitutionMaterialCheck(
             title="기관 최신 주요사업",
             reason="기관 이해와 직무 연결 판단의 기준 자료입니다.",
-            source_hint="ALIO 주요사업, 기관 홈페이지 사업 소개, 최근 보도자료",
+            source_hint="ALIO 주요사업, 기관 홈페이지 사업 소개",
         ),
         InstitutionMaterialCheck(
             title="기관 개선 과제",

@@ -33,7 +33,7 @@ src/kr_gov_job_mcp/
 Each collector should expose:
 
 - `name`: stable source name such as `job_alio`, `alio_disclosure`, `cleaneye`,
-  `institution_page`, or `press_release`.
+  or `institution_page`.
 - `http_policy`: timeout, retry, user-agent, and rate-limit defaults.
 - `collect_raw(query, sample_store)`: collects raw source data, writes `RawSample` files through
   a `RawSampleWriter`, and returns a `CollectionResult`.
