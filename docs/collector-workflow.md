@@ -235,7 +235,7 @@ Raw sample JSON은 다음 필드를 포함한다.
 - 수시 게시판 항목은 목록 JSON과 상세 HTML이 같이 저장되는지 확인
 - 정기 보고서 항목은 목록 JSON, 첨부파일 메타데이터, 본문 HTML이 같이 저장되는지 확인
 
-3개 기관 확대 검증 결과는 `docs/alio-sample-validation.md`에 기록한다.
+3개 기관 확대 검증 결과는 `docs/archive/alio-sample-validation.md`에 기록한다.
 
 ### Cleaneye
 
