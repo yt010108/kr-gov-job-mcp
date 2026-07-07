@@ -33,6 +33,7 @@
 우선 구현 후보:
 
 - `search_public_jobs`
+- `lookup_region_codes`
 - `fetch_job_detail`
 - `map_ncs_competencies`
 - `analyze_institution_strategy`
@@ -70,6 +71,7 @@ kr-gov-job-mcp/
     collector-layer.md
     collector-workflow.md
     raw-data-inventory.md
+    erd.md
     ncs-competency-mapping.md
     institution-analysis-inputs.md
     job-fit-report.md
