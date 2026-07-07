@@ -9,6 +9,7 @@ from typing import Any
 from kr_gov_job_mcp.clients.alio_disclosure_client import (
     AlioDisclosureClient,
     AlioDisclosureClientError,
+    AlioDisclosureItemConfig,
 )
 from kr_gov_job_mcp.collectors.base import (
     CollectionResult,
@@ -21,13 +22,12 @@ from kr_gov_job_mcp.collectors.base import (
 from kr_gov_job_mcp.schemas.alio import (
     AlioInstitution,
     AlioInstitutionSearchResult,
-    AlioPointKind,
     AlioReportDisclosure,
 )
 
 
 class AlioDisclosureCollector:
-    """Collect raw ALIO institution, point, and disclosure report samples."""
+    """Collect raw ALIO institution and item report samples."""
 
     name = "alio_disclosure"
 
@@ -62,8 +62,15 @@ class AlioDisclosureCollector:
             result.errors.append("institution_name or institution_code is required")
             return result
 
-        point_limit = self._to_int(query.get("point_limit"), default=5)
         include_report_html = self._to_bool(query.get("include_report_html"), default=True)
+        target_item_numbers, invalid_item_numbers = self._target_item_numbers(
+            query.get("item_numbers")
+        )
+        if invalid_item_numbers:
+            result.errors.append(
+                "unknown ALIO item_numbers: " + ", ".join(invalid_item_numbers)
+            )
+            return result
 
         search_result: AlioInstitutionSearchResult | None = None
         selected: AlioInstitution | None = None
@@ -154,116 +161,47 @@ class AlioDisclosureCollector:
             result.errors.append("ALIO institution detail could not be resolved")
             return result
 
-        point_name = institution.name or institution_name
-        if point_name:
-            for kind in ("national_assembly", "audit"):
-                await self._collect_points(
-                    result,
-                    sample_store,
-                    kind=kind,
-                    institution_id=institution.id,
-                    institution_name=point_name,
-                    limit=point_limit,
-                    collected_at=collected_at,
-                )
+        for item_number in target_item_numbers:
+            item = AlioDisclosureClient.TARGET_ITEM_REPORTS[item_number]
+            await self._collect_item_report(
+                result,
+                sample_store,
+                institution=institution,
+                institution_type=institution_type,
+                item=item,
+                include_report_html=include_report_html,
+                collected_at=collected_at,
+            )
 
-        await self._collect_general_status(
-            result,
-            sample_store,
-            institution=institution,
-            institution_type=institution_type,
-            include_report_html=include_report_html,
-            collected_at=collected_at,
-        )
-        await self._collect_main_business(
-            result,
-            sample_store,
-            institution=institution,
-            include_report_html=include_report_html,
-            collected_at=collected_at,
-        )
         self._write_source_links(result, sample_store, institution, collected_at)
 
         result.notes.extend(
             [
                 "Institution detail exposes general fields and main_business from ALIO contents.",
-                "General status uses reportFormRootNo=10105; main business uses reportFormRootNo=31501.",
-                "National assembly and audit points are available through reportFormNo B1210/B1220.",
+                "ALIO target item reports are collected from itemOrganList.do verified on the institution page.",
+                "47-2 audit and 47-3 ministry point items are intentionally excluded.",
             ]
         )
         return result
 
-    async def _collect_points(
-        self,
-        result: CollectionResult,
-        sample_store: RawSampleWriter,
-        *,
-        kind: AlioPointKind,
-        institution_id: str,
-        institution_name: str,
-        limit: int,
-        collected_at: str,
-    ) -> None:
-        points = await self._try_step(
-            result,
-            f"{kind} points",
-            self.client.list_point_items(
-                kind=kind,
-                institution_name=institution_name,
-                page=1,
-                limit=limit,
-            ),
-        )
-        if not points:
-            return
-
-        result.normalized_count += len(points.items)
-        self._write_sample(
-            result,
-            sample_store,
-            RawSample(
-                source=self.name,
-                raw_type="list",
-                sample_id=self._sample_id(institution_id, f"{kind}-points"),
-                payload=points.raw,
-                request=CollectorRequest(
-                    method="GET",
-                    url=AlioDisclosureClient._absolute_url(AlioDisclosureClient.POINT_LIST_PATH),
-                    endpoint=AlioDisclosureClient.POINT_LIST_PATH,
-                    params={
-                        "reportFormNo": AlioDisclosureClient.POINT_REPORT_FORM_NO[kind],
-                        "countPerPage": limit,
-                        "pageNo": 1,
-                        "type": "apbaNa",
-                        "word": institution_name,
-                    },
-                ),
-                collected_at=collected_at,
-                content_type="application/json",
-                metadata={
-                    "kind": kind,
-                    "normalized_count": len(points.items),
-                    "total_count": points.total_count,
-                },
-            ),
-        )
-
-    async def _collect_general_status(
+    async def _collect_item_report(
         self,
         result: CollectionResult,
         sample_store: RawSampleWriter,
         *,
         institution: AlioInstitution,
         institution_type: str | None,
+        item: AlioDisclosureItemConfig,
         include_report_html: bool,
         collected_at: str,
     ) -> None:
         reports = await self._try_step(
             result,
-            "general status reports",
-            self.client.list_general_status_reports(
+            f"ALIO item {item.item_no} {item.name}",
+            self.client.list_item_reports(
                 institution_code=institution.id,
                 institution_type=institution_type,
+                item=item,
             ),
         )
         if not reports:
@@ -276,88 +214,62 @@ class AlioDisclosureCollector:
             RawSample(
                 source=self.name,
                 raw_type="list",
-                sample_id=self._sample_id(institution.id, "general-status-reports"),
+                sample_id=self._sample_id(
+                    institution.id,
+                    f"item-{item.item_no}-{item.report_form_root_no}-reports",
+                ),
                 payload=reports.raw,
                 request=CollectorRequest(
                     method="POST",
                     url=AlioDisclosureClient._absolute_url(
-                        AlioDisclosureClient.GENERAL_REPORT_LIST_PATH
+                        AlioDisclosureClient.REGULAR_REPORT_LIST_PATH
+                        if item.kind == "regular"
+                        else AlioDisclosureClient.OCCASIONAL_REPORT_LIST_PATH
                     ),
-                    endpoint=AlioDisclosureClient.GENERAL_REPORT_LIST_PATH,
-                    body={
-                        "pageNo": 1,
-                        "apbaId": institution.id,
-                        "apbaType": institution_type,
-                        "reportFormRootNo": AlioDisclosureClient.GENERAL_STATUS_REPORT_FORM_ROOT_NO,
-                    },
+                    endpoint=(
+                        AlioDisclosureClient.REGULAR_REPORT_LIST_PATH
+                        if item.kind == "regular"
+                        else AlioDisclosureClient.OCCASIONAL_REPORT_LIST_PATH
+                    ),
+                    body=self._item_report_request_body(
+                        institution=institution,
+                        institution_type=institution_type,
+                        item=item,
+                    ),
                 ),
                 collected_at=collected_at,
                 content_type="application/json",
-                metadata={"normalized_count": len(reports.reports)},
-            ),
-        )
-        await self._collect_report_payloads(
-            result,
-            sample_store,
-            report=self._first_report_with_disclosure(reports.reports),
-            sample_prefix="general-status",
-            include_report_html=include_report_html,
-            collected_at=collected_at,
-        )
-
-    async def _collect_main_business(
-        self,
-        result: CollectionResult,
-        sample_store: RawSampleWriter,
-        *,
-        institution: AlioInstitution,
-        include_report_html: bool,
-        collected_at: str,
-    ) -> None:
-        reports = await self._try_step(
-            result,
-            "quarterly reports",
-            self.client.list_quarterly_report_disclosures(institution_code=institution.id),
-        )
-        if not reports:
-            return
-
-        main_business = [
-            report
-            for report in reports.reports
-            if report.report_form_no == AlioDisclosureClient.MAIN_BUSINESS_REPORT_FORM_ROOT_NO
-        ]
-        result.normalized_count += len(main_business)
-        self._write_sample(
-            result,
-            sample_store,
-            RawSample(
-                source=self.name,
-                raw_type="list",
-                sample_id=self._sample_id(institution.id, "quarterly-report-list"),
-                payload=reports.raw,
-                request=CollectorRequest(
-                    method="GET",
-                    url=AlioDisclosureClient._absolute_url(AlioDisclosureClient.QUARTERLY_REPORT_PATH),
-                    endpoint=AlioDisclosureClient.QUARTERLY_REPORT_PATH,
-                    params={"apbaId": institution.id, "nowQuarter": 0},
-                ),
-                collected_at=collected_at,
-                content_type="text/html",
                 metadata={
+                    "item_no": item.item_no,
+                    "item_name": item.name,
+                    "report_form_root_no": item.report_form_root_no,
+                    "kind": item.kind,
                     "normalized_count": len(reports.reports),
-                    "main_business_count": len(main_business),
+                    "total_count": reports.total_count,
+                    "note": item.note,
                 },
             ),
         )
-        await self._collect_report_payloads(
-            result,
-            sample_store,
-            report=self._first_report_with_disclosure(main_business),
-            sample_prefix="main-business",
-            include_report_html=include_report_html,
-            collected_at=collected_at,
-        )
+        first_report = self._first_report_for_payload(reports.reports)
+        sample_prefix = f"item-{item.item_no}-{item.report_form_root_no}"
+        if item.kind == "regular":
+            await self._collect_report_payloads(
+                result,
+                sample_store,
+                report=first_report,
+                sample_prefix=sample_prefix,
+                include_report_html=include_report_html,
+                collected_at=collected_at,
+            )
+        else:
+            await self._collect_board_payload(
+                result,
+                sample_store,
+                report=first_report,
+                sample_prefix=sample_prefix,
+                include_report_html=include_report_html,
+                collected_at=collected_at,
+            )
 
     async def _collect_report_payloads(
         self,
@@ -432,6 +344,55 @@ class AlioDisclosureCollector:
                 ),
             )
 
+    async def _collect_board_payload(
+        self,
+        result: CollectionResult,
+        sample_store: RawSampleWriter,
+        *,
+        report: AlioReportDisclosure | None,
+        sample_prefix: str,
+        include_report_html: bool,
+        collected_at: str,
+    ) -> None:
+        if not report:
+            result.notes.append(f"{sample_prefix} report list had no rows")
+            return
+        if not include_report_html:
+            return
+
+        html = await self._try_step(
+            result,
+            f"{sample_prefix} board html",
+            self.client.fetch_board_report_html(report),
+        )
+        if html is None:
+            return
+
+        report_form_no = self._to_text(report.raw.get("reportFormNo") or report.report_form_no)
+        board_path = f"/item/itemBoard{report_form_no}.do" if report_form_no else "/item/itemBoard.do"
+        self._write_sample(
+            result,
+            sample_store,
+            RawSample(
+                source=self.name,
+                raw_type="html",
+                sample_id=self._sample_id(
+                    self._report_sample_key(report),
+                    f"{sample_prefix}-board-html",
+                ),
+                payload=html,
+                request=CollectorRequest(
+                    method="GET",
+                    url=AlioDisclosureClient._absolute_url(board_path),
+                    endpoint=board_path,
+                    params=AlioDisclosureClient.item_board_params(report.raw),
+                ),
+                collected_at=collected_at,
+                content_type="text/html",
+                metadata={"report": report.model_dump(exclude={"raw"})},
+            ),
+        )
+
     def _write_source_links(
         self,
         result: CollectionResult,
@@ -448,25 +409,54 @@ class AlioDisclosureCollector:
                 sample_id=self._sample_id(institution.id, "source-links"),
                 payload={
                     "institution_detail": AlioDisclosureClient.institution_detail_url(institution.id),
-                    "general_status": AlioDisclosureClient.item_organ_list_url(
-                        institution.id,
-                        AlioDisclosureClient.GENERAL_STATUS_REPORT_FORM_ROOT_NO,
-                    ),
-                    "main_business": AlioDisclosureClient.item_report_term_url(
-                        institution_code=institution.id,
-                        report_form_root_no=AlioDisclosureClient.MAIN_BUSINESS_REPORT_FORM_ROOT_NO,
-                    ),
-                    "national_assembly_points": AlioDisclosureClient._absolute_url(
-                        "/occasional/nationalAssemblyList.do"
-                    ),
-                    "audit_points": AlioDisclosureClient._absolute_url(
-                        "/occasional/auditPointList.do"
-                    ),
+                    "item_reports": {
+                        item_no: {
+                            "item_name": item.name,
+                            "report_form_root_no": item.report_form_root_no,
+                            "kind": item.kind,
+                            "url": AlioDisclosureClient.item_organ_list_url(
+                                institution.id,
+                                item.report_form_root_no,
+                            ),
+                        }
+                        for item_no, item in AlioDisclosureClient.TARGET_ITEM_REPORTS.items()
+                    },
+                    "excluded_item_reports": {
+                        "47-2": "감사원 지적사항",
+                        "47-3": "주무부처 지적사항",
+                    },
                 },
                 collected_at=collected_at,
                 metadata={"institution_id": institution.id, "institution_name": institution.name},
             ),
         )
+
+    @staticmethod
+    def _item_report_request_body(
+        *,
+        institution: AlioInstitution,
+        institution_type: str | None,
+        item: AlioDisclosureItemConfig,
+    ) -> dict[str, Any]:
+        if item.kind == "regular":
+            return {
+                "apbaType": [],
+                "jidtDptm": [],
+                "area": [],
+                "apbaId": institution.id,
+                "reportFormRootNo": item.report_form_root_no,
+                "quart": "",
+            }
+        return {
+            "pageNo": 1,
+            "apbaId": institution.id,
+            "apbaType": institution_type,
+            "reportFormRootNo": item.report_form_root_no,
+            "search_word": "",
+            "search_flag": "title",
+            "bid_type": "",
+            "enfc_istt": "",
+        }
 
     def _write_sample(
         self,
@@ -509,13 +499,47 @@ class AlioDisclosureCollector:
         return search_result.institutions[0]
 
     @staticmethod
-    def _first_report_with_disclosure(
+    def _first_report_for_payload(
         reports: list[AlioReportDisclosure],
     ) -> AlioReportDisclosure | None:
         for report in reports:
-            if report.disclosure_no:
+            if report.disclosure_no or report.source_url:
                 return report
         return None
+
+    @classmethod
+    def _report_sample_key(cls, report: AlioReportDisclosure) -> str | None:
+        if report.disclosure_no and set(report.disclosure_no) != {"0"}:
+            return report.disclosure_no
+        return cls._to_text(
+            report.raw.get("idx") or report.raw.get("submissionNo") or report.disclosure_no
+        )
+
+    @classmethod
+    def _target_item_numbers(cls, value: Any) -> tuple[list[str], list[str]]:
+        if value is None:
+            return list(AlioDisclosureClient.DEFAULT_TARGET_ITEM_NOS), []
+        if isinstance(value, str):
+            raw_values = [part.strip() for part in value.split(",")]
+        else:
+            try:
+                raw_values = [str(part).strip() for part in value]
+            except TypeError:
+                raw_values = [str(value).strip()]
+
+        item_numbers: list[str] = []
+        invalid: list[str] = []
+        for raw in raw_values:
+            if not raw:
+                continue
+            expanded = AlioDisclosureClient.TARGET_ITEM_GROUPS.get(raw, (raw,))
+            for item_number in expanded:
+                if item_number not in AlioDisclosureClient.TARGET_ITEM_REPORTS:
+                    invalid.append(item_number)
+                    continue
+                if item_number not in item_numbers:
+                    item_numbers.append(item_number)
+        return item_numbers, invalid
 
     @staticmethod
     def _sample_id(value: str | None, suffix: str) -> str:

@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 import re
 from collections.abc import Mapping
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Literal
 from urllib.parse import urlencode
 
 import httpx
@@ -27,6 +28,20 @@ class AlioDisclosureClientError(RuntimeError):
     """Raised when ALIO returns an unusable disclosure response."""
 
 
+AlioDisclosureItemKind = Literal["regular", "occasional"]
+
+
+@dataclass(frozen=True)
+class AlioDisclosureItemConfig:
+    """ALIO item report target verified from the institution disclosure page."""
+
+    item_no: str
+    name: str
+    report_form_root_no: str
+    kind: AlioDisclosureItemKind
+    note: str | None = None
+
+
 class AlioDisclosureClient:
     """Client for public ALIO management disclosure endpoints."""
 
@@ -34,7 +49,9 @@ class AlioDisclosureClient:
     INSTITUTION_LIST_PATH = "/organ/findOrganApbaList.json"
     INSTITUTION_DETAIL_PATH = "/organ/findOrganApbaDtl.json"
     POINT_LIST_PATH = "/occasional/findPointList.json"
-    GENERAL_REPORT_LIST_PATH = "/item/itemReportListSusi.json"
+    OCCASIONAL_REPORT_LIST_PATH = "/item/itemReportListSusi.json"
+    GENERAL_REPORT_LIST_PATH = OCCASIONAL_REPORT_LIST_PATH
+    REGULAR_REPORT_LIST_PATH = "/item/itemOrganListJung.json"
     QUARTERLY_REPORT_PATH = "/organ/quarterlyReport.do"
     REPORT_FILES_PATH = "/item/itemReportFiles.json"
     REPORT_RIGHT_PATH = "/item/itemReportRight.do"
@@ -43,11 +60,60 @@ class AlioDisclosureClient:
     MAIN_BUSINESS_REPORT_FORM_ROOT_NO = "31501"
     POINT_REPORT_FORM_NO: dict[AlioPointKind, str] = {
         "national_assembly": "B1210",
-        "audit": "B1220",
     }
     POINT_DETAIL_PATH: dict[AlioPointKind, str] = {
         "national_assembly": "/occasional/nationalAssemblyDtl.do",
-        "audit": "/occasional/auditPointDtl.do",
+    }
+    TARGET_ITEM_REPORTS: dict[str, AlioDisclosureItemConfig] = {
+        "6-2": AlioDisclosureItemConfig(
+            item_no="6-2",
+            name="직원 채용정보",
+            report_form_root_no="B1020",
+            kind="occasional",
+        ),
+        "40": AlioDisclosureItemConfig(
+            item_no="40",
+            name="주요사업",
+            report_form_root_no="31501",
+            kind="regular",
+        ),
+        "47-1": AlioDisclosureItemConfig(
+            item_no="47-1",
+            name="국회지적사항",
+            report_form_root_no="B1210",
+            kind="occasional",
+            note="47-2 감사원 지적사항과 47-3 주무부처 지적사항은 수집 범위에서 제외한다.",
+        ),
+        "49-1": AlioDisclosureItemConfig(
+            item_no="49-1",
+            name="입찰공고",
+            report_form_root_no="B1030",
+            kind="occasional",
+        ),
+        "49-2": AlioDisclosureItemConfig(
+            item_no="49-2",
+            name="수의계약",
+            report_form_root_no="7030",
+            kind="regular",
+        ),
+        "50-1": AlioDisclosureItemConfig(
+            item_no="50-1",
+            name="자체 연구 보고서",
+            report_form_root_no="B1040",
+            kind="occasional",
+        ),
+        "50-2": AlioDisclosureItemConfig(
+            item_no="50-2",
+            name="외부용역 연구 보고서",
+            report_form_root_no="B1260",
+            kind="occasional",
+        ),
+    }
+    DEFAULT_TARGET_ITEM_NOS = ("6-2", "40", "47-1", "49-1", "49-2", "50-1", "50-2")
+    TARGET_ITEM_GROUPS = {
+        "47": ("47-1",),
+        "49": ("49-1", "49-2"),
+        "50": ("50-1", "50-2"),
     }
     REPORT_LIST_RE = re.compile(
         r"reportList:\s*JSON\.parse\('(?P<payload>(?:\\'|[^'])*)'\)",
@@ -64,7 +130,12 @@ class AlioDisclosureClient:
             timeout=timeout,
             headers={
                 "Accept": "application/json, text/javascript, */*; q=0.01",
-                "User-Agent": "kr-gov-job-mcp/0.1 (alio-disclosure)",
+                "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/126 Safari/537.36 kr-gov-job-mcp/0.1"
+                ),
                 "X-Requested-With": "XMLHttpRequest",
             },
         )
@@ -213,6 +284,117 @@ class AlioDisclosureClient:
             raw=dict(data),
         )
 
+    async def list_regular_item_reports(
+        self,
+        *,
+        institution_code: str,
+        report_form_root_no: str,
+    ) -> AlioReportSearchResult:
+        """Fetch an ALIO regular item report list for one institution."""
+
+        data = await self._post_json(
+            self.REGULAR_REPORT_LIST_PATH,
+            {
+                "apbaType": [],
+                "jidtDptm": [],
+                "area": [],
+                "apbaId": institution_code,
+                "reportFormRootNo": report_form_root_no,
+                "quart": "",
+            },
+            referer=self.item_organ_list_url(
+                institution_code,
+                report_form_root_no,
+                absolute=False,
+            ),
+        )
+        rows = data.get("organList") or []
+        if not isinstance(rows, list):
+            raise AlioDisclosureClientError("ALIO regular item organList was not a list")
+
+        return AlioReportSearchResult(
+            report_form_root_no=report_form_root_no,
+            total_count=self._to_int(data.get("totalCnt")) or len(rows),
+            reports=[
+                self.normalize_report_disclosure(row, source_url=self.item_report_url(row))
+                for row in rows
+                if isinstance(row, dict)
+            ],
+            raw=dict(data),
+        )
+
+    async def list_occasional_item_reports(
+        self,
+        *,
+        institution_code: str,
+        report_form_root_no: str,
+        institution_type: str | None = None,
+        page: int = 1,
+        keyword: str = "",
+        keyword_type: str = "title",
+    ) -> AlioReportSearchResult:
+        """Fetch an ALIO occasional item board/report list for one institution."""
+
+        _report_root, enforcement = self._split_report_form_root(report_form_root_no)
+        data = await self._post_json(
+            self.OCCASIONAL_REPORT_LIST_PATH,
+            self._clean_form(
+                {
+                    "pageNo": page,
+                    "apbaId": institution_code,
+                    "apbaType": institution_type,
+                    "reportFormRootNo": report_form_root_no,
+                    "search_word": keyword,
+                    "search_flag": keyword_type,
+                    "bid_type": "",
+                    "enfc_istt": enforcement,
+                }
+            ),
+            referer=self.item_organ_list_url(
+                institution_code,
+                report_form_root_no,
+                absolute=False,
+            ),
+        )
+        rows = data.get("result") or []
+        if not isinstance(rows, list):
+            raise AlioDisclosureClientError("ALIO occasional item result was not a list")
+        page_info = data.get("page") if isinstance(data.get("page"), dict) else {}
+
+        return AlioReportSearchResult(
+            report_form_root_no=report_form_root_no,
+            page=page,
+            total_count=self._to_int(page_info.get("totalCount")) or len(rows),
+            reports=[
+                self.normalize_report_disclosure(row, source_url=self.item_board_url(row))
+                for row in rows
+                if isinstance(row, dict)
+            ],
+            raw=dict(data),
+        )
+
+    async def list_item_reports(
+        self,
+        *,
+        institution_code: str,
+        item: AlioDisclosureItemConfig,
+        institution_type: str | None = None,
+        page: int = 1,
+    ) -> AlioReportSearchResult:
+        """Fetch the list for a verified ALIO item report target."""
+
+        if item.kind == "regular":
+            return await self.list_regular_item_reports(
+                institution_code=institution_code,
+                report_form_root_no=item.report_form_root_no,
+            )
+        return await self.list_occasional_item_reports(
+            institution_code=institution_code,
+            report_form_root_no=item.report_form_root_no,
+            institution_type=institution_type,
+            page=page,
+        )
+
     async def list_quarterly_report_disclosures(
         self,
         *,
@@ -269,6 +451,24 @@ class AlioDisclosureClient:
             self.REPORT_RIGHT_PATH,
             {"disclosureNo": disclosure_no},
             referer=f"/item/itemReport.do?seq={disclosure_no}&disclosureNo={disclosure_no}",
+            accept="text/html, */*; q=0.01",
+        )
+
+    async def fetch_board_report_html(self, report: AlioReportDisclosure) -> str:
+        """Fetch the HTML detail page for an ALIO occasional board item."""
+
+        report_form_no = self._to_text(report.raw.get("reportFormNo") or report.report_form_no)
+        if not report_form_no:
+            raise AlioDisclosureClientError("ALIO board report had no reportFormNo")
+        params = self.item_board_params(report.raw)
+        return await self._get_text(
+            f"/item/itemBoard{report_form_no}.do",
+            params,
+            referer=self.item_organ_list_url(
+                report.institution_id or self._to_text(report.raw.get("apbaId")) or "",
+                report_form_no,
+                absolute=False,
+            ),
             accept="text/html, */*; q=0.01",
         )
 
@@ -389,6 +589,31 @@ class AlioDisclosureClient:
         return cls._absolute_url(
             f"/item/itemReport.do?seq={disclosure_no}&disclosureNo={disclosure_no}"
         )
+
+    @classmethod
+    def item_board_params(cls, raw: Mapping[str, Any]) -> dict[str, str]:
+        report_form_no = cls._to_text(raw.get("reportFormNo")) or ""
+        return cls._clean_form(
+            {
+                "disclosureNo": raw.get("disclosureNo"),
+                "apbaId": raw.get("apbaId"),
+                "nowcode": report_form_no,
+                "reportFormNo": report_form_no,
+                "table_name": raw.get("tableName"),
+                "idx_name": raw.get("idxName"),
+                "idx": raw.get("idx"),
+                "reportGbn": raw.get("reportGbn") or "N",
+                "bid_type": raw.get("bidType"),
+            }
+        )
+
+    @classmethod
+    def item_board_url(cls, raw: Mapping[str, Any]) -> str | None:
+        report_form_no = cls._to_text(raw.get("reportFormNo"))
+        if not report_form_no:
+            return None
+        query = urlencode(cls.item_board_params(raw))
+        return cls._absolute_url(f"/item/itemBoard{report_form_no}.do?{query}")
 
     @classmethod
     def item_organ_list_url(
@@ -550,9 +775,14 @@ class AlioDisclosureClient:
 
     @classmethod
     def _point_list_referer(cls, kind: AlioPointKind) -> str:
-        if kind == "national_assembly":
-            return "/occasional/nationalAssemblyList.do"
-        return "/occasional/auditPointList.do"
+        return "/occasional/nationalAssemblyList.do"
+
+    @staticmethod
+    def _split_report_form_root(report_form_root_no: str) -> tuple[str, str | None]:
+        if "-" not in report_form_root_no:
+            return report_form_root_no, None
+        report_root, enforcement = report_form_root_no.split("-", 1)
+        return report_root, enforcement or None
 
     @classmethod
     def _absolute_url(cls, path_or_url: str) -> str:

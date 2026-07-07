@@ -141,6 +141,109 @@ def test_quarterly_report_page_exposes_main_business_disclosure() -> None:
     asyncio.run(run())
 
 
+def test_list_occasional_item_reports_posts_susi_payload_and_builds_board_url() -> None:
+    async def run() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/item/itemReportListSusi.json"
+            assert json.loads(request.content) == {
+                "pageNo": "1",
+                "apbaId": "C0399",
+                "apbaType": "A2004",
+                "reportFormRootNo": "B1020",
+                "search_flag": "title",
+            }
+            return httpx.Response(
+                200,
+                json={
+                    "status": "success",
+                    "data": {
+                        "result": [
+                            {
+                                "disclosureNo": "2026070303204326",
+                                "reportFormNo": "B1020",
+                                "tableName": "TTB_RECRUIT",
+                                "idxName": "IDX",
+                                "apbaId": "C0399",
+                                "idx": "302324",
+                                "reportGbn": "N",
+                                "title": "KISA recruitment",
+                                "idate": "2026.07.03",
+                                "submissionNo": "2026070310430728",
+                            }
+                        ],
+                        "page": {"totalCount": 54},
+                    },
+                },
+            )
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = AlioDisclosureClient(http_client=http_client)
+            result = await client.list_occasional_item_reports(
+                institution_code="C0399",
+                institution_type="A2004",
+                report_form_root_no="B1020",
+            )
+
+        report = result.reports[0]
+        assert result.total_count == 54
+        assert report.title == "KISA recruitment"
+        assert report.source_url is not None
+        assert "/item/itemBoardB1020.do?" in report.source_url
+        assert "idx=302324" in report.source_url
+
+    asyncio.run(run())
+
+
+def test_list_regular_item_reports_posts_jung_payload_and_normalizes_rows() -> None:
+    async def run() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/item/itemOrganListJung.json"
+            assert json.loads(request.content) == {
+                "apbaType": [],
+                "jidtDptm": [],
+                "area": [],
+                "apbaId": "C0399",
+                "reportFormRootNo": "31501",
+                "quart": "",
+            }
+            return httpx.Response(
+                200,
+                json={
+                    "status": "success",
+                    "data": {
+                        "totalCnt": 1,
+                        "organList": [
+                            {
+                                "apbaId": "C0399",
+                                "apbaNa": "KISA",
+                                "reportFormNo": "31501",
+                                "submissionNo": "2026041310382324",
+                                "disclosureNo": "2026041303151983",
+                                "files": "101@main-business.pdf",
+                            }
+                        ],
+                    },
+                },
+            )
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = AlioDisclosureClient(http_client=http_client)
+            result = await client.list_regular_item_reports(
+                institution_code="C0399",
+                report_form_root_no="31501",
+            )
+
+        report = result.reports[0]
+        assert result.total_count == 1
+        assert report.disclosure_no == "2026041303151983"
+        assert report.source_url is not None
+        assert report.source_url.endswith(
+            "/item/itemReport.do?seq=2026041303151983&disclosureNo=2026041303151983"
+        )
+
+    asyncio.run(run())
+
+
 def test_report_files_and_html_fetchers() -> None:
     async def run() -> None:
         def handler(request: httpx.Request) -> httpx.Response:
@@ -179,5 +282,33 @@ def test_report_files_and_html_fetchers() -> None:
             "/download/file.json?f=101&d=2026041303151983&s=2026041310382324"
         )
         assert html == "<div>주요사업</div>"
+
+    asyncio.run(run())
+
+
+def test_fetch_board_report_html_uses_item_board_path() -> None:
+    async def run() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            assert request.url.path == "/item/itemBoardB1020.do"
+            assert request.url.params["idx"] == "302324"
+            return httpx.Response(200, text="<article>KISA recruitment</article>")
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = AlioDisclosureClient(http_client=http_client)
+            html = await client.fetch_board_report_html(
+                AlioDisclosureClient.normalize_report_disclosure(
+                    {
+                        "disclosureNo": "2026070303204326",
+                        "reportFormNo": "B1020",
+                        "tableName": "TTB_RECRUIT",
+                        "idxName": "IDX",
+                        "apbaId": "C0399",
+                        "idx": "302324",
+                        "reportGbn": "N",
+                    }
+                )
+            )
+
+        assert html == "<article>KISA recruitment</article>"
 
     asyncio.run(run())

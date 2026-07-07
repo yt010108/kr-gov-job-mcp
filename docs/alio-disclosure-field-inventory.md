@@ -2,95 +2,97 @@
 
 조사일: 2026-07-07 KST
 
-# 확인한 접근 경로
+기준 페이지:
+`https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0399&pageNo=1&apba_id=C0399`
 
-| 목적 | 경로 | 방식 | 확인한 주요 파라미터 |
+## 확인한 수집 범위
+
+기관 상세 페이지의 항목별 보고서 표에서 `openItemReport(reportNo, isFixed)` 값을 직접 확인했다.
+현재 수집기는 공공기관 지원 준비에 바로 쓰는 항목만 대상으로 한다.
+
+| 항목번호 | 항목명 | ALIO 내부 번호 | 유형 | 수집 여부 |
+| --- | --- | --- | --- | --- |
+| 6-2 | 직원 채용정보 | `B1020` | 수시 게시판 | 수집 |
+| 40 | 주요사업 | `31501` | 정기 보고서 | 수집 |
+| 47-1 | 국회지적사항 | `B1210` | 수시 게시판 | 수집 |
+| 47-2 | 감사원 지적사항 | 제외 | 수시 게시판 | 제외 |
+| 47-3 | 주무부처 지적사항 | 제외 | 수시 게시판 | 제외 |
+| 49-1 | 입찰공고 | `B1030` | 수시 게시판 | 수집 |
+| 49-2 | 수의계약 | `7030` | 정기 보고서 | 수집 |
+| 50-1 | 자체 연구 보고서 | `B1040` | 수시 게시판 | 수집 |
+| 50-2 | 외부용역 연구 보고서 | `B1260` | 수시 게시판 | 수집 |
+
+47-2와 47-3은 사용자가 제외하기로 한 감사원/주무부처 지적사항이라 수집하지 않는다.
+
+## 접근 경로
+
+| 목적 | 경로 | 방식 | 주요 파라미터 |
 | --- | --- | --- | --- |
 | 기관 검색 | `/organ/findOrganApbaList.json` | POST JSON | `apbaNa`, `apba_id`, `pageNo` |
 | 기관 상세 | `/organ/findOrganApbaDtl.json` | GET | `apbaId` |
-| 국회 지적사항 | `/occasional/findPointList.json` | GET | `reportFormNo=B1210`, `type=apbaNa`, `word`, `pageNo`, `countPerPage` |
-| 감사원/주무부처 지적사항 | `/occasional/findPointList.json` | GET | `reportFormNo=B1220`, `type=apbaNa`, `word`, `pageNo`, `countPerPage` |
-| 일반현황 보고서 목록 | `/item/itemReportListSusi.json` | POST JSON | `apbaId`, `apbaType`, `reportFormRootNo=10105`, `pageNo` |
-| 정기공시 보고서 목록 | `/organ/quarterlyReport.do` | GET HTML | `apbaId`, `nowQuarter=0` |
-| 보고서 본문 | `/item/itemReportRight.do` | GET HTML | `disclosureNo` |
-| 보고서 첨부파일 | `/item/itemReportFiles.json` | GET | `disclosureNo` |
+| 항목별 보고서 화면 | `/item/itemOrganList.do` | GET HTML | `apbaId`, `reportFormRootNo` |
+| 수시 항목 목록 | `/item/itemReportListSusi.json` | POST JSON | `pageNo`, `apbaId`, `apbaType`, `reportFormRootNo`, `search_flag` |
+| 정기 항목 목록 | `/item/itemOrganListJung.json` | POST JSON | `apbaId`, `reportFormRootNo`, `quart` |
+| 수시 게시판 상세 | `/item/itemBoard{reportFormNo}.do` | GET HTML | `disclosureNo`, `apbaId`, `reportFormNo`, `table_name`, `idx_name`, `idx` |
+| 정기 보고서 본문 | `/item/itemReportRight.do` | GET HTML | `disclosureNo` |
+| 정기 보고서 첨부파일 | `/item/itemReportFiles.json` | GET | `disclosureNo` |
 
-정기공시 보고서 목록은 별도 JSON API가 아니라 `quarterlyReport.do` HTML 안의
-`reportList: JSON.parse(...)`에 포함된다. 이 중 `reportFormNo=31501`이 주요사업이다.
+ALIO 화면 기준으로 `isFixed=true`인 항목은 정기 보고서 경로를 쓰고,
+`isFixed=false`인 항목은 수시 게시판 경로를 쓴다.
 
-# 분석에 바로 쓸 수 있는 필드
+## 샘플 관찰
 
-기관 검색/상세에서 안정적으로 확인한 필드:
+2026-07-07에 한국인터넷진흥원 `C0399` 기준으로 확인한 1페이지 응답이다.
+
+| 항목 | 내부 번호 | 관찰 결과 |
+| --- | --- | --- |
+| 직원 채용정보 | `B1020` | `itemReportListSusi.json`에서 총 54건, 첫 항목은 2026년 기간제 근로자 채용 공고 |
+| 주요사업 | `31501` | `itemOrganListJung.json`에서 1건, PDF 첨부파일 목록 포함 |
+| 국회지적사항 | `B1210` | `itemReportListSusi.json`에서 총 78건 |
+| 입찰공고 | `B1030` | `itemReportListSusi.json`에서 총 4718건 |
+| 수의계약 | `7030` | `itemOrganListJung.json`에서 여러 `7030x` 보고서가 묶여 내려옴 |
+| 자체 연구 보고서 | `B1040` | 한국인터넷진흥원 기준 0건 |
+| 외부용역 연구 보고서 | `B1260` | `itemReportListSusi.json`에서 총 53건 |
+
+## 원본 샘플 저장 방식
+
+수집기는 최종 분석 결과를 바로 만들지 않고, 먼저 원본 응답을 `data/raw_samples/alio_disclosure/...`
+아래에 저장한다. 이 디렉터리는 `.gitignore` 대상이다.
+
+| raw type | 저장 내용 |
+| --- | --- |
+| `list` | 기관 검색 결과, 항목별 보고서 목록 JSON |
+| `detail` | 기관 상세 JSON |
+| `html` | 수시 게시판 상세 HTML 또는 정기 보고서 본문 HTML |
+| `attachment` | 정기 보고서 첨부파일 메타데이터 |
+| `metadata` | 원본 화면 링크와 항목번호 매핑 |
+
+HTML raw 저장은 파서와 ERD를 추측으로 만들지 않기 위한 개발용 근거다.
+수시 게시판 항목은 별도 첨부파일 API가 비어 있는 경우가 많아, 목록 JSON과 상세 HTML을 먼저 보존한다.
+정기 보고서 항목은 `itemReportFiles.json`에서 첨부파일 목록을 함께 보존한다.
+
+## 분석에 바로 쓸 수 있는 필드
 
 | 정규화 필드 | ALIO 원본 필드 | 비고 |
 | --- | --- | --- |
 | `id` | `apbaId` | ALIO 기관 코드 |
 | `name` | `apbaNa`, `dcsrApbaNa` | 기관명 |
-| `type_name` | `typeNa`, `apbaTypeNa` | 기관 유형명 |
+| `type_name` | `typeNa`, `apbaTypeNa` | 기관 유형 |
 | `ministry_name` | `jidtNa`, `jidtDptmNa`, `cd` | 주무부처명 |
-| `ceo` | `ceo` | 기관장 |
-| `established_date` | `fdate` | `YYYYMMDD`를 ISO 날짜로 변환 가능 |
-| `region` | `addrCd` | 광역 지역 |
-| `address` | `addr1` | 주소 |
-| `homepage_url` | `homepage` | 스킴이 없는 값이 많아 `https://` 보정 |
-| `main_business` | `contents` | `&cr;` 구분자를 줄바꿈으로 변환 |
-| `submission_no` | `submissionNo` | 보고서/이미지 경로 연결에 사용 |
+| `homepage_url` | `homepage` | `https://` 없는 값 보정 |
+| `main_business` | `contents` | 기관 상세의 주요사업 요약 |
+| `disclosure_no` | `disclosureNo` | 보고서 상세 조회 키 |
+| `report_form_no` | `reportFormNo` | 실제 내부 보고서 번호 |
+| `title` | `title`, `rtitle` | 항목 제목 |
+| `disclosed_date` | `idate` | 공시일 |
+| `submission_no` | `submissionNo` | 제출 번호 |
+| `source_url` | 조합 URL | 원문 상세 페이지 |
 
-국회/감사 지적사항에서 안정적으로 확인한 필드:
+## 구현 메모
 
-| 정규화 필드 | ALIO 원본 필드 | 비고 |
-| --- | --- | --- |
-| `id` | `submissionNo` | 상세 페이지 `seq`로 사용 |
-| `report_form_no` | `reportFormNo` | `B1210`, `B1220` |
-| `institution_id` | `apbaId` | 기관 코드 |
-| `institution_name` | `apbaNa`, `pname` | 기관명 |
-| `title` | `rtitle` | 일부 값에 줄바꿈/HTML 포함 가능 |
-| `registered_date` | `idate` | 표시용 날짜 |
-| `action_plan_date` | `pdate`, `actnPlanRegYmd` | 조치계획 등록일 |
-| `action_result_date` | `rdate`, `actnResRegYmd` | 조치실행 등록일 |
-| `enforcement_start_date` | `enfcBgngYmd` | 시행기간 시작 |
-| `enforcement_end_date` | `enfcEndYmd` | 시행기간 종료 |
-| `attachments` | `filedata1`~`filedata3` | `**` 구분 문자열로 파일명/저장경로 추출 가능 |
+`AlioDisclosureClient.TARGET_ITEM_REPORTS`가 항목번호와 내부 번호를 관리한다.
+기본 수집 대상은 `6-2`, `40`, `47-1`, `49-1`, `49-2`, `50-1`, `50-2`다.
 
-# 주의가 필요한 필드와 결측 패턴
-
-| 영역 | 관찰 내용 |
-| --- | --- |
-| 기관 코드 검색 | `apbaId` 직접 상세 조회는 가능하다. 목록 검색은 화면에 따라 `apba_id`를 사용한다. |
-| 기관 일반현황 | `findOrganApbaDtl.json`만으로 기본 필드는 충분하지만, 공시 원문 보고서 본문은 HTML 테이블이다. |
-| 주요사업 | 기관 상세의 `contents`에서 요약 텍스트를 얻을 수 있고, 정기공시 `31501` 보고서에서 원문 HTML/PDF 첨부를 얻을 수 있다. |
-| 보고서 구조화 | `itemReportRight.do`는 HTML 조각을 반환한다. 표 단위 정규화는 별도 파서가 필요하다. |
-| 보고서 결측 | `quarterlyReport.do`의 `reportList` 안에 `disclosureNo=null`인 항목이 있다. 해당 항목은 원문 본문/첨부 조회가 불가능하다. |
-| 첨부파일 크기 | `itemReportFiles.json`의 `fileSize`가 `0`으로 내려오는 사례가 있다. 존재 여부 판단에는 파일 목록 자체를 우선 사용해야 한다. |
-| 숫자/금액 | 기관 상세의 `fmoney`는 `null`인 경우가 있다. 현재 분석 필드에서는 제외한다. |
-
-# 샘플 기관 관찰
-
-아래 값은 2026-07-07에 ALIO 라이브 엔드포인트로 확인한 1페이지 기준 관찰치다.
-
-| 기관 | ALIO 코드 | 기관 유형 | 주무부처 | `contents` 길이 | 국회 지적사항 | 감사/평가 지적사항 |
-| --- | --- | --- | --- | ---: | ---: | ---: |
-| 한국인터넷진흥원 | `C0399` | 준정부기관(위탁집행형) | 과학기술정보통신부 | 216 | 78 | 5 |
-| 창업진흥원 | `C0451` | 기타공공기관 | 중소벤처기업부 | 600 | 5 | 9 |
-| 한국전력공사 | `C0247` | 공기업(시장형) | 기후에너지환경부 | 191 | 48 | 22 |
-
-# 구현 메모
-
-`AlioDisclosureClient`는 확인된 공개 ALIO 경로만 감싼다.
-
-`AlioDisclosureCollector`는 `institution_name` 또는 `institution_code` 기준으로 다음 raw sample을
-`data/raw_samples/alio_disclosure/...` 아래에 저장한다. 이 디렉터리는 `.gitignore` 대상이다.
-
-수집되는 raw sample:
-
-| sample | 내용 |
-| --- | --- |
-| institution search | 기관 목록 검색 원본 JSON |
-| institution detail | 기관 상세 원본 JSON |
-| national assembly points | 국회 지적사항 원본 JSON |
-| audit points | 감사원/주무부처 지적사항 원본 JSON |
-| general status reports | 일반현황 보고서 목록 원본 JSON |
-| general status files/html | 일반현황 첨부파일 목록과 본문 HTML |
-| quarterly report list | 정기공시 HTML과 추출한 `reportList` |
-| main business files/html | 주요사업 첨부파일 목록과 본문 HTML |
-| source links | 기관 상세/일반현황/주요사업/지적사항 원본 링크 |
+쿼리에서 `item_numbers`를 넘기면 일부 항목만 수집할 수 있다.
+`49`는 `49-1`, `49-2`로, `50`은 `50-1`, `50-2`로 확장된다.
+`47`은 제외 결정을 반영해 `47-1`만 확장된다.

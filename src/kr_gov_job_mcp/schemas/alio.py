@@ -7,7 +7,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 
-AlioPointKind = Literal["national_assembly", "audit"]
+AlioPointKind = Literal["national_assembly"]
 
 
 class AlioInstitution(BaseModel):
