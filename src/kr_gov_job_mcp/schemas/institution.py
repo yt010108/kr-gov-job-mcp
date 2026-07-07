@@ -23,6 +23,7 @@ InstitutionSignalCategory = Literal[
     "financial_or_operational",
     "management_evaluation",
 ]
+InstitutionStrategySignalCategory = Literal["business_direction", "job_connection"]
 
 
 class InstitutionVerificationNote(BaseModel):
@@ -57,6 +58,22 @@ class InstitutionSignalCandidate(BaseModel):
     matched_keywords: list[str] = Field(default_factory=list)
     evidence: list[InstitutionEvidence] = Field(default_factory=list)
     needs_verification: bool = False
+
+
+class InstitutionStrategySignal(BaseModel):
+    category: InstitutionStrategySignalCategory
+    summary: str
+    job_connection: str | None = None
+    evidence: list[InstitutionEvidence] = Field(default_factory=list)
+
+
+class InstitutionStrategyReport(BaseModel):
+    institution_name: str
+    normalized_name: str
+    year: int | None = None
+    job_family: str | None = None
+    strategy_signals: list[InstitutionStrategySignal] = Field(default_factory=list)
+    verification_notes: list[InstitutionVerificationNote] = Field(default_factory=list)
 
 
 class InstitutionAnalysisInput(BaseModel):
