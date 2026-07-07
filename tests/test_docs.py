@@ -20,3 +20,20 @@ def test_readme_links_collector_workflow_doc() -> None:
     text = Path("README.md").read_text(encoding="utf-8")
 
     assert "docs/collector-workflow.md" in text
+
+
+def test_alio_pagination_policy_doc_covers_high_volume_controls() -> None:
+    text = Path("docs/alio-pagination-policy.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "raw_observation",
+        "full_collection",
+        "resume_collection",
+        "B1030",
+        "high_volume_threshold",
+        "rate_limited",
+        "checkpoint",
+        "page metadata",
+        "stopped_reason",
+    ]:
+        assert phrase in text
