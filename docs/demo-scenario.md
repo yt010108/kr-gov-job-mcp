@@ -15,11 +15,12 @@
 
 1. `search_public_jobs`로 관련 공고를 찾습니다.
 2. `fetch_job_detail`로 공고 상세, 첨부파일, 전형 단계, NCS 후보를 구조화합니다.
-3. `analyze_job_fit_report`로 Job-ALIO 상세 정보 기반의 최소 준비 항목 리포트를 생성합니다.
+3. `collect_institution_context`로 ALIO 기관 후보, 주요사업/국회지적사항 evidence, 홈페이지 URL evidence를 수집합니다.
+4. `analyze_institution_strategy`, `analyze_institution_weakness`에 수집한 evidence와 signal 후보를 전달합니다.
+5. `analyze_job_fit_report`로 Job-ALIO 상세 정보 기반의 최소 준비 항목 리포트를 생성합니다.
 
-기관 분석 도구인 `analyze_institution_strategy`, `analyze_institution_weakness`도 호출 가능하지만,
-현재는 입력으로 전달된 evidence와 signal 후보만 사용한다. ALIO/Cleaneye 자료 자동 수집과
-준비 리포트 자동 연결은 아직 planned 단계다.
+기관 분석 도구는 `collect_institution_context`가 반환한 evidence와 signal 후보를 입력으로 사용할 수 있다.
+Cleaneye 자동 수집, 기관 홈페이지 본문 크롤링, 준비 리포트 자동 연결은 아직 planned 단계다.
 
 실제 KISA 기준 출력 예시는 `examples/kisa-real-demo-output.md`에 기록되어 있습니다.
 
@@ -43,6 +44,12 @@ python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input '{"job_id":
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input '{"job_id":"302324","target_role":"정보보호","known_skills":["웹 보안","네트워크","정보보안기사"]}'
 ```
 
+기관 context 수집:
+
+```bash
+python -m kr_gov_job_mcp.server --call-tool collect_institution_context --input '{"institution_name":"한국인터넷진흥원","year":2026,"sources":["alio","homepage"]}'
+```
+
 기관 사업 방향 분석:
 
 ```bash
@@ -62,6 +69,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 - 첨부파일과 직무기술서 후보
 - 지원자격, 우대사항, 전형절차 기반 준비 항목
 - Job-ALIO 근거 링크
+- ALIO 기관 후보와 기관 분석용 evidence/signal 후보
 - 기관 분석 미연결 상태에 대한 `verification_notes`
 - 기관 분석 도구에서 evidence 미입력 시 근거 부족 `verification_notes`
 
@@ -70,7 +78,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 다음 흐름은 설계 문서에는 있지만 현재 기본 registry 또는 자동 연결에는 아직 포함되지 않습니다.
 
 1. `map_ncs_competencies`: 직무기술서 본문에서 NCS/KSA 역량을 추출합니다.
-2. `collect_institution_context`: ALIO, Cleaneye, 기관 홈페이지 evidence를 자동 수집합니다.
+2. `collect_institution_context`: Cleaneye evidence와 기관 홈페이지 본문 evidence까지 확장합니다.
 3. 기관 분석 signal을 `analyze_job_fit_report` 준비 항목에 자동 연결합니다.
 
 planned 흐름까지 연결되면 최종 출력은 다음 항목을 포함합니다.

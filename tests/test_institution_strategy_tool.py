@@ -125,8 +125,8 @@ def test_collect_institution_context_rejects_invalid_arguments() -> None:
     with pytest.raises(ValueError, match="institution_name is required"):
         tool.handler({})
 
-    with pytest.raises(ValueError, match="unsupported context sources"):
-        tool.handler({"institution_name": "기관", "sources": ["cleaneye"]})
+    with pytest.raises(ValueError, match="unsupported institution context source"):
+        tool.handler({"institution_name": "기관", "sources": ["unknown"]})
 
 
 def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:

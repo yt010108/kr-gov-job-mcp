@@ -110,7 +110,7 @@ registry.register(
 
 기본 레지스트리는 `create_default_registry()`로 생성한다.
 현재 기본 등록 도구는 `health_check`, `lookup_region_codes`, `search_public_jobs`,
-`fetch_job_detail`, `analyze_job_fit_report`, `collect_institution_context`,
+`fetch_job_detail`, `collect_institution_context`, `analyze_job_fit_report`,
 `analyze_institution_strategy`, `analyze_institution_weakness`다.
 
 ## smoke test
