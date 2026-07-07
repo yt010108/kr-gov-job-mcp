@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
+from kr_gov_job_mcp.analysis.ncs_mapping import prepare_ncs_mapping_input
 from kr_gov_job_mcp.schemas.job import JobAlioAttachment, JobAlioDetail
 from kr_gov_job_mcp.schemas.job_fit import (
     ApplicantReadinessInput,
@@ -14,6 +15,7 @@ from kr_gov_job_mcp.schemas.job_fit import (
     JobFitPreparationReport,
     JobFitVerificationNote,
 )
+from kr_gov_job_mcp.schemas.ncs import NcsEvidenceReference, NcsMappingInput
 
 
 def generate_job_fit_report(
@@ -21,6 +23,7 @@ def generate_job_fit_report(
     *,
     applicant: ApplicantReadinessInput | None = None,
     institution_signals: Iterable[JobFitInstitutionSignal] = (),
+    duty_description_text: str | None = None,
 ) -> JobFitPreparationReport:
     """Create a preparation report without inventing unsupported claims."""
 
@@ -28,11 +31,19 @@ def generate_job_fit_report(
     signals = list(institution_signals)
     verification_notes: list[JobFitVerificationNote] = []
     evidence_links = [_job_posting_evidence(job_detail)]
+    ncs_mapping = prepare_ncs_mapping_input(
+        job_detail,
+        duty_description_text=duty_description_text,
+    )
     preparation_items = _preparation_items(job_detail, signals, verification_notes)
+    ksa_item = _ksa_preparation_item(ncs_mapping)
+    if ksa_item is not None:
+        preparation_items.insert(0, ksa_item)
     knowledge_gaps = _knowledge_gaps(job_detail, applicant)
     materials = _institution_materials(signals)
     for item in [*preparation_items, *knowledge_gaps]:
         evidence_links.extend(item.evidence)
+    verification_notes.extend(_ncs_verification_notes(ncs_mapping))
 
     for signal in signals:
         evidence_links.extend(signal.evidence)
@@ -52,6 +63,7 @@ def generate_job_fit_report(
         applicant_target_role=applicant.target_role,
         preparation_items=preparation_items,
         knowledge_gaps=knowledge_gaps,
+        ncs_mapping=ncs_mapping,
         institution_materials_to_check=materials,
         evidence_links=_dedupe_evidence(evidence_links),
         verification_notes=verification_notes,
@@ -177,6 +189,48 @@ def _preparation_items(
     return items
 
 
+def _ksa_preparation_item(ncs_mapping: NcsMappingInput) -> JobFitPreparationItem | None:
+    if not ncs_mapping.ksa_candidates:
+        return None
+
+    categories = {
+        "knowledge": "필요지식",
+        "skill": "필요기술",
+        "attitude": "직무수행태도",
+        "basic_competency": "직업기초능력",
+        "duty_competency": "직무수행능력",
+    }
+    grouped_actions = [
+        f"{categories.get(candidate.category, candidate.category)}: {candidate.name}"
+        for candidate in ncs_mapping.ksa_candidates[:10]
+    ]
+    return JobFitPreparationItem(
+        priority="P0",
+        title="직무기술서 K/S/A 후보 검증",
+        rationale="직무기술서 텍스트에서 필요지식, 필요기술, 태도 후보를 추출했습니다.",
+        recommended_actions=[
+            "아래 후보를 직무기술서 원문 표와 대조해 확정합니다.",
+            *grouped_actions,
+        ],
+        evidence=[
+            _ncs_evidence_to_job_fit_evidence(evidence)
+            for candidate in ncs_mapping.ksa_candidates[:10]
+            for evidence in candidate.evidence
+        ],
+    )
+
+
+def _ncs_verification_notes(ncs_mapping: NcsMappingInput) -> list[JobFitVerificationNote]:
+    return [
+        JobFitVerificationNote(
+            field=f"ncs_mapping.{note.field}",
+            reason=note.reason,
+            suggested_check=note.suggested_check,
+        )
+        for note in ncs_mapping.verification_notes
+    ]
+
+
 def _knowledge_gaps(
     job_detail: JobAlioDetail,
     applicant: ApplicantReadinessInput,
@@ -288,6 +342,21 @@ def _source_field_evidence(job_detail: JobAlioDetail) -> list[JobFitEvidenceSour
         for title, value in fields
         if value
     ]
+
+
+def _ncs_evidence_to_job_fit_evidence(evidence: NcsEvidenceReference) -> JobFitEvidenceSource:
+    source_type_map = {
+        "job_alio_field": "job_alio_field",
+        "duty_description_attachment": "duty_description",
+        "duty_description_text": "duty_description_text",
+        "ncs_code": "ncs",
+    }
+    return JobFitEvidenceSource(
+        title=evidence.title,
+        source_type=source_type_map[evidence.source_type],
+        url=evidence.url,
+        excerpt=evidence.excerpt,
+    )
 
 
 def _dedupe_evidence(evidence: list[JobFitEvidenceSource]) -> list[JobFitEvidenceSource]:

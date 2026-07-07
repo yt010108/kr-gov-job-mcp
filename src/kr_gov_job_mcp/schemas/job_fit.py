@@ -6,10 +6,14 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from kr_gov_job_mcp.schemas.ncs import NcsMappingInput
+
 
 JobFitEvidenceType = Literal[
     "job_posting",
+    "job_alio_field",
     "duty_description",
+    "duty_description_text",
     "ncs",
     "institution_signal",
     "manual",
@@ -64,6 +68,7 @@ class JobFitPreparationReport(BaseModel):
     applicant_target_role: str | None = None
     preparation_items: list[JobFitPreparationItem] = Field(default_factory=list)
     knowledge_gaps: list[JobFitPreparationItem] = Field(default_factory=list)
+    ncs_mapping: NcsMappingInput | None = None
     institution_materials_to_check: list[InstitutionMaterialCheck] = Field(default_factory=list)
     evidence_links: list[JobFitEvidenceSource] = Field(default_factory=list)
     verification_notes: list[JobFitVerificationNote] = Field(default_factory=list)

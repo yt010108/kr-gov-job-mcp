@@ -59,11 +59,49 @@ def test_generate_job_fit_report_links_job_ncs_duty_and_institution_evidence() -
     assert report.institution_materials_to_check
 
 
+def test_generate_job_fit_report_includes_ksa_candidates_from_duty_text() -> None:
+    detail = JobAlioDetail(
+        id="302423",
+        institution_name="한국인터넷진흥원",
+        title="정보보호 채용",
+        source_url="https://example.test/job",
+        ncs_codes=["R600020"],
+        ncs_categories=["정보통신"],
+        attachments=[JobAlioAttachment(name="직무기술서.pdf", file_type="C")],
+    )
+
+    report = generate_job_fit_report(
+        detail,
+        duty_description_text=(
+            "필요지식: 개인정보보호법, 네트워크 보안\n"
+            "필요기술: 보안 로그 분석, 취약점 진단\n"
+            "직무수행태도: 보안 정책 준수, 책임감"
+        ),
+    )
+
+    assert report.ncs_mapping is not None
+    assert {candidate.category for candidate in report.ncs_mapping.ksa_candidates} >= {
+        "knowledge",
+        "skill",
+        "attitude",
+    }
+    assert any(
+        candidate.name == "보안 로그 분석"
+        for candidate in report.ncs_mapping.ksa_candidates
+    )
+    assert any("K/S/A" in item.title for item in report.preparation_items)
+    assert any(
+        evidence.source_type == "duty_description_text"
+        for evidence in report.evidence_links
+    )
+
+
 def test_generate_job_fit_report_adds_verification_notes_for_missing_inputs() -> None:
     detail = JobAlioDetail(id="1", title="공고")
 
     report = generate_job_fit_report(detail)
 
+    assert report.ncs_mapping is not None
     fields = {note.field for note in report.verification_notes}
     assert "duty_description_attachments" in fields
     assert "ncs_codes" in fields

@@ -306,6 +306,7 @@ def test_analyze_job_fit_report_fetches_detail_and_returns_preparation_report() 
         "job_id": "302423",
         "target_role": "정보보호",
         "known_skills": ["웹 보안", "정보보안기사"],
+        "duty_description_text_provided": False,
     }
     assert result["job_id"] == "302423"
     assert result["job_title"] == "정보보호 분야 채용 공고"
@@ -313,6 +314,34 @@ def test_analyze_job_fit_report_fetches_detail_and_returns_preparation_report() 
     assert any(item["priority"] == "P0" for item in result["preparation_items"])
     assert any(item["source_type"] == "duty_description" for item in result["evidence_links"])
     assert any(note["field"] == "institution_signals" for note in result["verification_notes"])
+
+
+def test_analyze_job_fit_report_accepts_duty_description_text_for_ksa_mapping() -> None:
+    def fake_fetch_job_detail(job_id: str) -> JobAlioDetail:
+        return JobAlioDetail(
+            id=job_id,
+            title="정보보호 분야 채용 공고",
+            ncs_codes=["R600020"],
+            ncs_categories=["정보통신"],
+            attachments=[JobAlioAttachment(name="NCS 직무기술서.pdf", file_type="C")],
+        )
+
+    tool = create_analyze_job_fit_report_tool(fetch_job_detail=fake_fetch_job_detail)
+
+    result = tool.handler(
+        {
+            "job_id": "302423",
+            "duty_description_text": "필요지식: 개인정보보호법\n필요기술: 보안 로그 분석",
+        }
+    )
+
+    assert result["query"]["duty_description_text_provided"] is True
+    assert result["ncs_mapping"]["ksa_candidates"][0]["category"] == "knowledge"
+    assert any(
+        candidate["name"] == "보안 로그 분석"
+        for candidate in result["ncs_mapping"]["ksa_candidates"]
+    )
+    assert any("K/S/A" in item["title"] for item in result["preparation_items"])
 
 
 def test_analyze_job_fit_report_rejects_unknown_arguments_and_bad_skills() -> None:

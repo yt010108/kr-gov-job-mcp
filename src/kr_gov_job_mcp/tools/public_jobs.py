@@ -148,6 +148,10 @@ ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
             "type": "string",
             "description": "준비 리포트에 반영할 지원자 메모입니다.",
         },
+        "duty_description_text": {
+            "type": "string",
+            "description": "직무기술서 PDF/HWP 등에서 추출한 원문 텍스트입니다.",
+        },
     },
     "additionalProperties": False,
 }
@@ -240,18 +244,24 @@ def create_analyze_job_fit_report_tool(
             known_skills=_to_text_list(arguments.get("known_skills")),
             preparation_notes=_to_text(arguments.get("preparation_notes")),
         )
+        duty_description_text = _to_text(arguments.get("duty_description_text"))
         detail = (
             fetch_job_detail(job_id)
             if fetch_job_detail is not None
             else _run_async("analyze_job_fit_report", lambda: _fetch_job_alio_detail(job_id))
         )
-        report = generate_job_fit_report(detail, applicant=applicant)
+        report = generate_job_fit_report(
+            detail,
+            applicant=applicant,
+            duty_description_text=duty_description_text,
+        )
         return _serialize_job_fit_report(
             report,
             query={
                 "job_id": job_id,
                 "target_role": applicant.target_role,
                 "known_skills": applicant.known_skills,
+                "duty_description_text_provided": duty_description_text is not None,
             },
         )
 
