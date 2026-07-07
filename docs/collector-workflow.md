@@ -64,7 +64,51 @@ asyncio.run(main())
 `data/raw_samples`는 `.gitignore` 대상이다. raw sample은 로컬 재현과 필드 관찰에 쓰고,
 PR에는 raw 파일 자체를 올리지 않는다.
 
-## 3. Raw Sample 저장 규칙
+## 3. Collector 구현 기준
+
+현재 collector 관련 기준 문서는 이 파일에 모은다. Job-ALIO에서 실제 관찰한 필드는
+`docs/job-alio-field-inventory.md`를 기준으로 본다.
+
+패키지 구조:
+
+```txt
+src/kr_gov_job_mcp/
+  clients/
+    job_alio_web_client.py
+  collectors/
+    __init__.py
+    base.py
+    raw_store.py
+  schemas/
+    job.py
+```
+
+- `clients/`: 소스별 HTTP adapter와 응답 parsing을 둔다.
+- `collectors/`: 수집 실행 계약, run metadata, raw sample 저장을 둔다.
+- `schemas/`: 안정화된 소스 응답 model만 둔다. 분석 스키마는 field inventory가 충분히 쌓인 뒤 정한다.
+
+각 collector는 다음 계약을 따른다.
+
+- `name`: `job_alio`, `alio_disclosure`, `cleaneye` 같은 안정적인 source 이름.
+- `http_policy`: timeout, retry, user-agent, rate-limit 기본값.
+- `collect_raw(query, sample_store)`: 원본 데이터를 수집하고 `RawSampleStore`로 raw sample을 쓴 뒤 `CollectionResult`를 반환한다.
+
+HTTP 기본값:
+
+- Timeout: request당 10초.
+- Retry: 일시적 실패에는 2회 재시도.
+- Backoff: 재시도 전 0.5초.
+- Rate limit: source별 초당 1회 요청. 더 취약한 source는 더 엄격하게 둔다.
+- User-Agent: `kr-gov-job-mcp/0.1 (raw-data-observation)`.
+
+분리 원칙:
+
+- Raw sample은 원천 필드와 source별 이름을 그대로 보존한다.
+- 안정화된 source schema는 raw payload를 유지해 field inventory 작업에 쓸 수 있게 한다.
+- 분석 결과는 `data/raw_samples`에 쓰지 않는다.
+- 필드 인벤토리는 추측한 최종 스키마가 아니라 raw sample에서 관찰한 내용으로 작성한다.
+
+## 4. Raw Sample 저장 규칙
 
 `RawSampleStore`는 다음 경로를 사용한다.
 
@@ -97,7 +141,22 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 한글 기관명만 sample id로 쓰면 안전 경로 변환 후 충돌할 수 있으므로, 기관 코드나 공고 ID를
 함께 사용한다.
 
-## 4. 필드 인벤토리 작성 규칙
+Raw sample JSON은 다음 필드를 포함한다.
+
+| 필드 | 의미 |
+| --- | --- |
+| `source` | source 이름 |
+| `raw_type` | `list`, `detail`, `attachment`, `html`, `pdf_text`, `api_response`, `metadata`, `other` 중 하나 |
+| `sample_id` | source 식별자 또는 결정 가능한 local identifier |
+| `payload` | 분석 필드를 더하지 않은 원본 payload |
+| `request` | 민감값을 제거한 request metadata |
+| `collected_at` | UTC 수집 시각 |
+| `content_type` | 확인 가능한 경우 응답 content type |
+| `metadata` | pagination, parser version 같은 source별 관찰 note |
+
+비밀값, access token, 개인 메모, 지원자 개인 데이터는 raw sample에 저장하지 않는다.
+
+## 5. 필드 인벤토리 작성 규칙
 
 필드 인벤토리 문서는 `docs/<source>-field-inventory.md`에 둔다.
 
@@ -122,7 +181,7 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 - 첨부파일은 파일명, 원본 링크, 파일 타입을 우선 보존하고 본문 파싱은 별도 단계로 둔다.
 - HTML/PDF 본문 파싱이 필요한 필드는 “추가 파서 필요”로 표시한다.
 
-## 5. 소스별 관찰 흐름
+## 6. 소스별 관찰 흐름
 
 ### Job-ALIO
 
@@ -199,7 +258,7 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 - 경영평가, 감사, 지적사항 접근 가능 여부
 - 페이지네이션과 검색 조건 보존 방법
 
-## 6. 데모 재현 흐름
+## 7. 데모 재현 흐름
 
 기준 입력은 `examples/kisa-demo-input.json`을 사용한다.
 
@@ -208,7 +267,7 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 1. Job-ALIO에서 한국인터넷진흥원 관련 공고 목록과 상세 raw sample을 만든다.
 2. ALIO 경영공시에서 한국인터넷진흥원 일반현황, 주요사업, 국회/감사 지적사항 raw sample을 만든다.
 3. 각 source별 field inventory에서 “분석에 바로 쓸 수 있는 필드”만 추려 분석 스키마 후보로 옮긴다.
-4. `examples/kisa-demo-template.md`의 목표 리포트 형태와 `examples/kisa-real-demo-output.md`의 실제 MVP 출력을 비교해 부족한 근거 링크를 보강한다.
+4. `examples/kisa-demo-output.md`의 리포트 형태와 비교해 부족한 근거 링크를 보강한다.
 
 데모 전에 확인할 결과물:
 
@@ -217,7 +276,7 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list.json
 - 필드 인벤토리에 샘플 2~3개 기준 결측 패턴이 적혀 있는지
 - 원본 링크가 사람이 브라우저에서 열 수 있는지
 
-## 7. PR 전 체크리스트
+## 8. PR 전 체크리스트
 
 - `python -m pytest -q`
 - `python -m ruff check .`

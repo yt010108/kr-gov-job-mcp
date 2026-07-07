@@ -39,7 +39,7 @@ def test_each_inventory_source_separates_observed_and_candidate_fields() -> None
 
 def test_inventory_doc_mentions_every_source_and_raw_type() -> None:
     payload = json.loads((ROOT / "examples" / "raw-data-inventory.json").read_text(encoding="utf-8"))
-    doc = (ROOT / "docs" / "raw-data-inventory.md").read_text(encoding="utf-8")
+    doc = (ROOT / "docs" / "archive" / "raw-data-inventory.md").read_text(encoding="utf-8")
 
     for raw_type in payload["raw_sample_types"]:
         assert f"`{raw_type}`" in doc

@@ -1,5 +1,7 @@
 # Raw Data Inventory
 
+현재 MVP 범위 밖의 보조 inventory 문서입니다. Job-ALIO MVP 개발자는 `docs/collector-workflow.md`와 `docs/job-alio-field-inventory.md`를 우선 기준으로 보고, ALIO/Cleaneye raw inventory가 다시 필요할 때 이 문서를 참고합니다.
+
 조사일: 2026-07-07 KST
 
 ## 목적
