@@ -70,27 +70,6 @@ class AlioPointSearchResult(BaseModel):
     raw: dict[str, Any] = Field(default_factory=dict)
 
 
-class AlioReportDisclosure(BaseModel):
-    disclosure_no: str
-    report_form_no: str | None = None
-    title: str | None = None
-    report_kind: str | None = None
-    disclosed_date: str | None = None
-    institution_id: str | None = None
-    institution_name: str | None = None
-    submission_no: str | None = None
-    source_url: str | None = None
-    raw: dict[str, Any] = Field(default_factory=dict)
-
-
-class AlioReportSearchResult(BaseModel):
-    report_form_root_no: str
-    page: int | None = None
-    total_count: int | None = None
-    reports: list[AlioReportDisclosure] = Field(default_factory=list)
-    raw: dict[str, Any] = Field(default_factory=dict)
-
-
 class AlioReportFile(BaseModel):
     file_no: str
     disclosure_no: str | None = None
@@ -103,4 +82,26 @@ class AlioReportFile(BaseModel):
     file_type: str | None = None
     file_size: int | None = None
     download_url: str | None = None
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+
+class AlioReportDisclosure(BaseModel):
+    disclosure_no: str
+    report_form_no: str | None = None
+    title: str | None = None
+    report_kind: str | None = None
+    disclosed_date: str | None = None
+    institution_id: str | None = None
+    institution_name: str | None = None
+    submission_no: str | None = None
+    source_url: str | None = None
+    attachments: list[AlioReportFile] = Field(default_factory=list)
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+
+class AlioReportSearchResult(BaseModel):
+    report_form_root_no: str
+    page: int | None = None
+    total_count: int | None = None
+    reports: list[AlioReportDisclosure] = Field(default_factory=list)
     raw: dict[str, Any] = Field(default_factory=dict)
