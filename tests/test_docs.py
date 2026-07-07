@@ -23,7 +23,7 @@ def test_readme_links_collector_workflow_doc() -> None:
 
 
 def test_alio_pagination_policy_doc_covers_high_volume_controls() -> None:
-    text = Path("docs/alio-pagination-policy.md").read_text(encoding="utf-8")
+    text = Path("docs/archive/alio-pagination-policy.md").read_text(encoding="utf-8")
 
     for phrase in [
         "raw_observation",
@@ -40,7 +40,7 @@ def test_alio_pagination_policy_doc_covers_high_volume_controls() -> None:
 
 
 def test_job_alio_alio_b1020_linking_doc_covers_statuses() -> None:
-    text = Path("docs/job-alio-alio-b1020-linking.md").read_text(encoding="utf-8")
+    text = Path("docs/archive/job-alio-alio-b1020-linking.md").read_text(encoding="utf-8")
 
     for phrase in [
         "B1020",
@@ -59,7 +59,7 @@ def test_job_alio_alio_b1020_linking_doc_covers_statuses() -> None:
 
 
 def test_source_data_erd_doc_covers_core_entities() -> None:
-    text = Path("docs/source-data-erd.md").read_text(encoding="utf-8")
+    text = Path("docs/archive/source-data-erd.md").read_text(encoding="utf-8")
 
     for phrase in [
         "erDiagram",
@@ -80,7 +80,7 @@ def test_source_data_erd_doc_covers_core_entities() -> None:
 
 
 def test_cleaneye_html_structure_doc_covers_parser_targets() -> None:
-    text = Path("docs/cleaneye-html-structure.md").read_text(encoding="utf-8")
+    text = Path("docs/archive/cleaneye-html-structure.md").read_text(encoding="utf-8")
 
     for phrase in [
         "일반현황",

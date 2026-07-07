@@ -79,18 +79,19 @@ kr-gov-job-mcp/
     collector-layer.md
     collector-workflow.md
     raw-data-inventory.md
-    source-data-erd.md
     ncs-competency-mapping.md
-    institution-analysis-inputs.md
     job-fit-report.md
     server-scaffold.md
     job-alio-field-inventory.md
-    job-alio-alio-b1020-linking.md
     alio-disclosure-field-inventory.md
-    alio-pagination-policy.md
     alio-html-structure.md
-    cleaneye-field-inventory.md
-    cleaneye-html-structure.md
+    archive/
+      source-data-erd.md
+      institution-analysis-inputs.md
+      job-alio-alio-b1020-linking.md
+      alio-pagination-policy.md
+      cleaneye-field-inventory.md
+      cleaneye-html-structure.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
