@@ -45,6 +45,16 @@ def _handle_line(line: str, registry: ToolRegistry) -> dict[str, Any] | None:
     except json.JSONDecodeError as exc:
         return _error_response(None, PARSE_ERROR, f"Parse error: {exc.msg}")
 
+    return handle_json_rpc_message(message, registry)
+
+
+def handle_json_rpc_message(message: Any, registry: ToolRegistry) -> dict[str, Any] | None:
+    """Handle one MCP JSON-RPC message.
+
+    A return value of ``None`` means the message was a notification and no response should be
+    written by the active transport.
+    """
+
     if not isinstance(message, dict):
         return _error_response(None, INVALID_REQUEST, "Invalid Request")
 

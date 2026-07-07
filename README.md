@@ -12,6 +12,7 @@
 
 - 서버 상태 확인
 - MCP stdio 서버 실행
+- MCP Streamable HTTP POST 엔드포인트 실행
 - Job-ALIO 지역 코드 조회
 - Job-ALIO 공공기관 채용공고 검색
 - Job-ALIO 공고 상세 조회
@@ -22,7 +23,7 @@
 
 ### 아직 미구현
 
-- MCP SSE/Streamable HTTP 서버 연결
+- MCP SSE GET stream, resumable session 같은 고급 HTTP transport 기능
 - NCS/KSA 상세 역량 분석
 - ALIO/클린아이 자료 자동 수집 기반 기관 분석
 - 기관 signal을 준비 리포트에 자동 연결하는 흐름
@@ -36,6 +37,7 @@
 ```powershell
 python -m kr_gov_job_mcp.server --list-tools
 python -m kr_gov_job_mcp.server --stdio
+python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"query\":\"서울특별시\"}"
 python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
 python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
@@ -104,10 +106,51 @@ python -m pytest -q
 python -m ruff check .
 ```
 
+## Docker / Git 소스 빌드 배포
+
+루트 `Dockerfile`은 Git 소스 빌드 화면에서 바로 사용할 수 있다. 컨테이너는 기본적으로
+`PORT` 환경변수 또는 `8000` 포트에서 HTTP MCP endpoint를 실행한다.
+
+등록 화면 입력값:
+
+| 항목 | 값 |
+| --- | --- |
+| MCP 서버 이름 | `kr-gov-job-mcp` |
+| 설명 | `Korean public-sector Job-ALIO and NCS preparation MCP server` |
+| Git URL | `https://github.com/yt010108/kr-gov-job-mcp.git` |
+| 브랜치 / ref | `main` |
+| Dockerfile 경로 | `Dockerfile` |
+| PAT | 공개 저장소라면 비워둠 |
+
+컨테이너가 제공하는 endpoint:
+
+| 경로 | 용도 |
+| --- | --- |
+| `/health` | 배포 health check |
+| `/mcp` | MCP JSON-RPC POST endpoint |
+
+로컬 Docker 확인:
+
+```bash
+docker build -t kr-gov-job-mcp .
+docker run --rm -p 8000:8000 kr-gov-job-mcp
+```
+
+MCP HTTP 호출 예시:
+
+```bash
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"lookup_region_codes","arguments":{"query":"서울특별시"}}}'
+```
+
 ## 프로젝트 구조
 
 ```txt
 kr-gov-job-mcp/
+  Dockerfile
+  .dockerignore
   docs/
     proposal.md
     tool-design/
@@ -147,6 +190,8 @@ kr-gov-job-mcp/
       clients/
       collectors/
       schemas/
+      mcp_http.py
+      mcp_stdio.py
       server.py
       tools/
   tests/
@@ -172,6 +217,7 @@ python -m kr_gov_job_mcp.server
 python -m kr_gov_job_mcp.server --health
 python -m kr_gov_job_mcp.server --list-tools
 python -m kr_gov_job_mcp.server --stdio
+python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 ```
 
 패키지를 editable로 설치한 뒤에는 `kr-gov-job-mcp --health`도 사용할 수 있습니다.
