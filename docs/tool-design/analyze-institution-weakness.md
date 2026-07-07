@@ -1,4 +1,4 @@
-# analyze_institution_weakness
+# 06. analyze_institution_weakness
 
 ## 구현 상태
 
