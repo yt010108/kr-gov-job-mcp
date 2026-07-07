@@ -11,6 +11,7 @@
 ### 현재 구현됨
 
 - 서버 상태 확인
+- MCP stdio 서버 실행
 - Job-ALIO 지역 코드 조회
 - Job-ALIO 공공기관 채용공고 검색
 - Job-ALIO 공고 상세 조회
@@ -21,7 +22,7 @@
 
 ### 아직 미구현
 
-- 실제 MCP stdio/SSE 서버 연결
+- MCP SSE/Streamable HTTP 서버 연결
 - NCS/KSA 상세 역량 분석
 - ALIO/클린아이 자료 자동 수집 기반 기관 분석
 - 기관 signal을 준비 리포트에 자동 연결하는 흐름
@@ -34,6 +35,7 @@
 
 ```powershell
 python -m kr_gov_job_mcp.server --list-tools
+python -m kr_gov_job_mcp.server --stdio
 python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"query\":\"서울특별시\"}"
 python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
 python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
@@ -125,16 +127,16 @@ kr-gov-job-mcp/
       raw-data-inventory.json
     demo-scenario.md
     collector-workflow.md
-    ncs-competency-mapping.md
-    job-fit-report.md
     server-scaffold.md
-    alio-html-structure.md
     archive/
       source-data-erd.md
       institution-analysis-inputs.md
       job-alio-alio-b1020-linking.md
       alio-pagination-policy.md
       alio-sample-validation.md
+      alio-html-structure.md
+      ncs-competency-mapping.md
+      job-fit-report.md
       cleaneye-html-structure.md
   examples/
     kisa-demo-input.json
@@ -169,10 +171,24 @@ pip install -e ".[dev]"
 python -m kr_gov_job_mcp.server
 python -m kr_gov_job_mcp.server --health
 python -m kr_gov_job_mcp.server --list-tools
+python -m kr_gov_job_mcp.server --stdio
 ```
 
 패키지를 editable로 설치한 뒤에는 `kr-gov-job-mcp --health`도 사용할 수 있습니다.
 자세한 실행과 도구 등록 구조는 `docs/server-scaffold.md`에 정리되어 있습니다.
+
+로컬 MCP 클라이언트에는 다음처럼 stdio 서버로 연결할 수 있습니다.
+
+```json
+{
+  "mcpServers": {
+    "kr-gov-job-mcp": {
+      "command": "python",
+      "args": ["-m", "kr_gov_job_mcp.server", "--stdio"]
+    }
+  }
+}
+```
 
 ## 개인정보 원칙
 

@@ -8,6 +8,7 @@ import sys
 from collections.abc import Mapping, Sequence
 from typing import Any, TextIO
 
+from kr_gov_job_mcp.mcp_stdio import run_stdio_server
 from kr_gov_job_mcp.tools import ToolRegistry, create_default_registry
 
 
@@ -29,6 +30,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Call a registered tool by name and print JSON.",
     )
     parser.add_argument(
+        "--stdio",
+        action="store_true",
+        help="Run the MCP stdio server using newline-delimited JSON-RPC messages.",
+    )
+    parser.add_argument(
         "--input",
         default="{}",
         help="JSON object passed as tool arguments when using --call-tool.",
@@ -40,9 +46,13 @@ def run_command(
     args: argparse.Namespace,
     *,
     registry: ToolRegistry,
+    stdin: TextIO,
     stdout: TextIO,
     stderr: TextIO,
 ) -> int:
+    if args.stdio:
+        return run_stdio_server(registry, stdin=stdin, stdout=stdout, stderr=stderr)
+
     if args.list_tools:
         _write_json({"tools": registry.list_tools()}, stdout)
         return 0
@@ -76,7 +86,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     registry = create_default_registry()
-    return run_command(args, registry=registry, stdout=sys.stdout, stderr=sys.stderr)
+    return run_command(args, registry=registry, stdin=sys.stdin, stdout=sys.stdout, stderr=sys.stderr)
 
 
 def _loads_json_object(value: str) -> Mapping[str, Any]:

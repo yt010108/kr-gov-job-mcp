@@ -19,6 +19,7 @@ macOS/Linux에서는 다음처럼 실행할 수 있다.
 python -m kr_gov_job_mcp.server
 python -m kr_gov_job_mcp.server --health
 python -m kr_gov_job_mcp.server --list-tools
+python -m kr_gov_job_mcp.server --stdio
 python -m kr_gov_job_mcp.server --call-tool health_check --input '{}'
 ```
 
@@ -35,7 +36,27 @@ kr-gov-job-mcp --health
 | `python -m kr_gov_job_mcp.server` | 서버 스캐폴드 상태와 등록 도구 목록을 JSON으로 출력 |
 | `python -m kr_gov_job_mcp.server --health` | `health_check` 도구를 호출해 readiness JSON 출력 |
 | `python -m kr_gov_job_mcp.server --list-tools` | 등록된 도구 정의 목록 출력 |
+| `python -m kr_gov_job_mcp.server --stdio` | MCP stdio 서버 실행 |
 | `python -m kr_gov_job_mcp.server --call-tool NAME --input '{}'` | 도구 호출 구조 smoke test |
+
+## MCP stdio 연결 예시
+
+Claude Desktop, Cursor, Codex MCP 클라이언트처럼 stdio transport를 지원하는 로컬 클라이언트에는
+다음 설정으로 연결한다.
+
+```json
+{
+  "mcpServers": {
+    "kr-gov-job-mcp": {
+      "command": "python",
+      "args": ["-m", "kr_gov_job_mcp.server", "--stdio"]
+    }
+  }
+}
+```
+
+stdio 모드는 표준 입력에서 newline-delimited JSON-RPC 메시지를 읽고 표준 출력으로 MCP 응답만
+쓴다. 로그가 필요하면 표준 에러를 사용한다.
 
 ## 도구 등록 구조
 
@@ -56,9 +77,10 @@ registry.register(
 ```
 
 기본 레지스트리는 `create_default_registry()`로 생성한다.
-현재 기본 등록 도구는 `fetch_job_detail`, `health_check`, `lookup_region_codes`,
-`search_public_jobs`다. 이후 `collect_institution_context`, `analyze_job_fit_report` 같은
-실제 도구를 이 레지스트리에 붙인다.
+현재 기본 등록 도구는 `health_check`, `lookup_region_codes`, `search_public_jobs`,
+`fetch_job_detail`, `analyze_job_fit_report`, `analyze_institution_strategy`,
+`analyze_institution_weakness`다. 이후 `collect_institution_context` 같은 실제 도구를
+이 레지스트리에 붙인다.
 
 ## smoke test
 
@@ -73,5 +95,5 @@ python -m pytest -q
 예상 health 응답:
 
 ```json
-{"registered_tools":4,"service":"kr-gov-job-mcp","status":"ok","version":"0.1.0"}
+{"registered_tools":7,"service":"kr-gov-job-mcp","status":"ok","version":"0.1.0"}
 ```

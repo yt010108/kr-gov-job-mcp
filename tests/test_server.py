@@ -1,6 +1,8 @@
 import json
+from io import StringIO
 
-from kr_gov_job_mcp.server import main
+from kr_gov_job_mcp.server import build_parser, main, run_command
+from kr_gov_job_mcp.tools import create_default_registry
 
 
 def test_server_health_command_outputs_json(capsys) -> None:
@@ -45,3 +47,34 @@ def test_server_call_tool_rejects_non_object_input(capsys) -> None:
     captured = capsys.readouterr()
     assert exit_code == 2
     assert "--input must be a JSON object" in captured.err
+
+
+def test_server_stdio_command_uses_mcp_transport() -> None:
+    args = build_parser().parse_args(["--stdio"])
+    stdin = StringIO(
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "tools/call",
+                "params": {"name": "health_check", "arguments": {}},
+            }
+        )
+        + "\n"
+    )
+    stdout = StringIO()
+    stderr = StringIO()
+
+    exit_code = run_command(
+        args,
+        registry=create_default_registry(),
+        stdin=stdin,
+        stdout=stdout,
+        stderr=stderr,
+    )
+
+    response = json.loads(stdout.getvalue())
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert response["id"] == 1
+    assert response["result"]["structuredContent"]["status"] == "ok"
