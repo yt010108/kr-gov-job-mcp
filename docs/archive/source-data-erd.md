@@ -1,5 +1,7 @@
 # Source Data ERD v0
 
+현재 MVP 범위 밖의 미래 설계 문서입니다. Job-ALIO 검색, 상세 조회, 준비 리포트 흐름이 안정된 뒤 parser와 source-normalized 계층 설계에서 다시 사용합니다.
+
 작성일: 2026-07-07 KST
 
 ## 목적
