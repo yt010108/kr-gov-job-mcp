@@ -144,6 +144,57 @@ def test_search_public_jobs_resolves_region_name() -> None:
     }
 
 
+def test_search_public_jobs_zero_results_include_diagnostics_and_suggestions() -> None:
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        return JobAlioSearchResult(page=kwargs["page"], limit=kwargs["limit"], total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler(
+        {
+            "keyword": "전남대학교 병원",
+            "region": "서울",
+            "ongoing_only": True,
+            "limit": 5,
+        }
+    )
+
+    diagnostics = result["diagnostics"]
+    suggestions = result["suggested_next_queries"]
+
+    assert result["result_count"] == 0
+    assert diagnostics["no_result"] is True
+    assert diagnostics["applied_filters"]["keyword"] == "전남대학교 병원"
+    assert diagnostics["resolved_filters"]["region"]["code"] == "R3010"
+    assert diagnostics["keyword_scope"] == "keyword는 잡알리오 채용공고 제목 검색어로 전달됩니다."
+    assert any("현재 접수 중인 공고만" in cause for cause in diagnostics["possible_causes"])
+    assert any("기관명" in cause for cause in diagnostics["possible_causes"])
+    assert any(suggestion["arguments"].get("ongoing_only") is False for suggestion in suggestions)
+    assert any(suggestion["tool"] == "lookup_institution_codes" for suggestion in suggestions)
+    assert any(
+        set(suggestion["arguments"]) <= {"keyword", "page", "limit", "ongoing_only"}
+        for suggestion in suggestions
+    )
+
+
+def test_search_public_jobs_zero_results_suggest_region_filter_for_region_keyword() -> None:
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        return JobAlioSearchResult(page=kwargs["page"], limit=kwargs["limit"], total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"keyword": "서울", "ongoing_only": False})
+
+    suggestions = result["suggested_next_queries"]
+
+    assert any(
+        suggestion["tool"] == "search_public_jobs"
+        and suggestion["arguments"].get("region") == "서울"
+        and "keyword" not in suggestion["arguments"]
+        for suggestion in suggestions
+    )
+
+
 def test_search_public_jobs_rejects_region_code_conflict() -> None:
     tool = create_search_public_jobs_tool(
         search_jobs=lambda **_kwargs: JobAlioSearchResult(page=1, limit=20, total_count=0)

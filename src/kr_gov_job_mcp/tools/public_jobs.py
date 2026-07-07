@@ -8,7 +8,7 @@ from typing import Any
 
 from kr_gov_job_mcp.analysis import generate_job_fit_report
 from kr_gov_job_mcp.clients.job_alio_web_client import JobAlioWebClient
-from kr_gov_job_mcp.codes import resolve_region_code
+from kr_gov_job_mcp.codes import RegionLookupError, resolve_region_code
 from kr_gov_job_mcp.schemas.job import (
     JobAlioAttachment,
     JobAlioDetail,
@@ -165,6 +165,21 @@ _TEXT_ARGUMENTS = {
     "institution_type",
     "institution_classification",
 }
+_INSTITUTION_KEYWORD_HINTS = (
+    "공사",
+    "공단",
+    "공원",
+    "공단",
+    "재단",
+    "진흥원",
+    "연구원",
+    "병원",
+    "대학교",
+    "대학",
+    "센터",
+    "협회",
+    "위원회",
+)
 
 
 def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) -> ToolDefinition:
@@ -355,7 +370,7 @@ def _serialize_search_result(
     warnings: list[str],
     resolved_filters: Mapping[str, Any],
 ) -> dict[str, Any]:
-    return {
+    payload: dict[str, Any] = {
         "source": "job_alio",
         "query": dict(query),
         "resolved_filters": dict(resolved_filters),
@@ -366,6 +381,130 @@ def _serialize_search_result(
         "jobs": [_serialize_job(job) for job in result.jobs],
         "warnings": warnings,
     }
+    if not result.jobs:
+        payload.update(_no_result_metadata(query, resolved_filters))
+    return payload
+
+
+def _no_result_metadata(
+    query: Mapping[str, Any],
+    resolved_filters: Mapping[str, Any],
+) -> dict[str, Any]:
+    keyword = _to_text(query.get("keyword"))
+    possible_causes = [
+        "잡알리오 검색 결과가 0건입니다.",
+        "keyword는 현재 잡알리오 채용공고 제목 검색어로 전달됩니다.",
+    ]
+    suggestions: list[dict[str, Any]] = []
+
+    if query.get("ongoing_only") is True:
+        possible_causes.append("현재 접수 중인 공고만 조회해 과거 공고가 제외됐을 수 있습니다.")
+        retry_arguments = dict(query)
+        retry_arguments["ongoing_only"] = False
+        suggestions.append(
+            {
+                "reason": "현재 진행 중인 공고가 없을 수 있어 과거 공고까지 확장합니다.",
+                "tool": "search_public_jobs",
+                "arguments": retry_arguments,
+            }
+        )
+
+    if keyword:
+        possible_causes.append("기관명이나 직무 설명이 공고 제목에 직접 포함되지 않으면 누락될 수 있습니다.")
+
+        region_hint = _region_retry_suggestion(keyword, query)
+        if region_hint is not None:
+            possible_causes.append("keyword가 지역명으로도 해석될 수 있습니다.")
+            suggestions.append(region_hint)
+
+        if _looks_like_institution_keyword(keyword):
+            possible_causes.append("keyword가 기관명으로 보입니다. 기관 코드 기반 검색이 더 정확합니다.")
+            suggestions.append(
+                {
+                    "reason": "기관명 alias와 잡알리오 기관 코드를 먼저 확인합니다.",
+                    "tool": "lookup_institution_codes",
+                    "arguments": {"query": keyword},
+                }
+            )
+
+    filter_keys = sorted(
+        key
+        for key in query
+        if key
+        not in {
+            "keyword",
+            "page",
+            "limit",
+            "ongoing_only",
+        }
+    )
+    if filter_keys:
+        possible_causes.append(
+            "여러 필터가 동시에 적용되어 조건이 너무 좁아졌을 수 있습니다: "
+            + ", ".join(filter_keys)
+        )
+        relaxed_arguments = {
+            key: value
+            for key, value in query.items()
+            if key in {"keyword", "page", "limit", "ongoing_only"}
+        }
+        suggestions.append(
+            {
+                "reason": "지역/기관/NCS 같은 추가 필터를 잠시 제거하고 검색 범위를 넓힙니다.",
+                "tool": "search_public_jobs",
+                "arguments": relaxed_arguments,
+            }
+        )
+
+    return {
+        "diagnostics": {
+            "no_result": True,
+            "applied_filters": dict(query),
+            "resolved_filters": dict(resolved_filters),
+            "keyword_scope": "keyword는 잡알리오 채용공고 제목 검색어로 전달됩니다.",
+            "possible_causes": possible_causes,
+        },
+        "suggested_next_queries": _dedupe_suggestions(suggestions),
+    }
+
+
+def _region_retry_suggestion(
+    keyword: str,
+    query: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    if query.get("region") or query.get("region_code"):
+        return None
+    try:
+        region = resolve_region_code(keyword)
+    except RegionLookupError:
+        return None
+
+    retry_arguments = dict(query)
+    retry_arguments.pop("keyword", None)
+    retry_arguments["region"] = region.name
+    return {
+        "reason": f"{keyword}을 검색어가 아니라 근무지역 필터로 사용합니다.",
+        "tool": "search_public_jobs",
+        "arguments": retry_arguments,
+        "resolved_filter": {"region": region.public_dict()},
+    }
+
+
+def _looks_like_institution_keyword(keyword: str) -> bool:
+    normalized = "".join(keyword.split())
+    return any(hint in normalized for hint in _INSTITUTION_KEYWORD_HINTS)
+
+
+def _dedupe_suggestions(suggestions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    seen: set[str] = set()
+    deduped: list[dict[str, Any]] = []
+    for suggestion in suggestions:
+        key = f"{suggestion.get('tool')}:{suggestion.get('arguments')}"
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(suggestion)
+    return deduped
 
 
 def _serialize_detail_result(
