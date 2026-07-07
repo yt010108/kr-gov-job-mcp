@@ -539,6 +539,9 @@ class AlioDisclosureClient:
         source_url: str | None = None,
     ) -> AlioReportDisclosure:
         disclosure_no = cls._to_text(raw.get("disclosureNo") or raw.get("seq")) or ""
+        report_form_no = cls._to_text(raw.get("reportFormNo"))
+        institution_id = cls._to_text(raw.get("apbaId"))
+        submission_no = cls._to_text(raw.get("submissionNo"))
         report_kind = cls._to_text(raw.get("reportGbn") or raw.get("gbn"))
         if report_kind == "Y":
             report_kind = "susi_report"
@@ -549,14 +552,21 @@ class AlioDisclosureClient:
 
         return AlioReportDisclosure(
             disclosure_no=disclosure_no,
-            report_form_no=cls._to_text(raw.get("reportFormNo")),
+            report_form_no=report_form_no,
             title=cls._to_text(raw.get("title") or raw.get("rtitle")),
             report_kind=report_kind,
             disclosed_date=cls._to_date(raw.get("idate")),
-            institution_id=cls._to_text(raw.get("apbaId")),
+            institution_id=institution_id,
             institution_name=cls._to_text(raw.get("pname") or raw.get("apbaNa")),
-            submission_no=cls._to_text(raw.get("submissionNo")),
+            submission_no=submission_no,
             source_url=source_url,
+            attachments=cls.normalize_report_file_refs(
+                raw.get("files"),
+                disclosure_no=disclosure_no,
+                report_form_no=report_form_no,
+                institution_id=institution_id,
+                submission_no=submission_no,
+            ),
             raw=dict(raw),
         )
 
@@ -565,21 +575,80 @@ class AlioDisclosureClient:
         file_no = cls._to_text(raw.get("fileNo")) or ""
         disclosure_no = cls._to_text(raw.get("disclosureNo"))
         submission_no = cls._to_text(raw.get("submissionNo"))
-        query = cls._clean_form({"f": file_no, "d": disclosure_no, "s": submission_no})
         return AlioReportFile(
             file_no=file_no,
             disclosure_no=disclosure_no,
             report_form_no=cls._to_text(raw.get("reportFormNo")),
             institution_id=cls._to_text(raw.get("apbaId")),
             submission_no=submission_no,
-            original_name=cls._to_text(raw.get("orcpFileNa")),
+            original_name=cls._to_text(raw.get("orcpFileNa") or raw.get("fileName")),
             save_name=cls._to_text(raw.get("saveFileNa")),
             save_path=cls._to_text(raw.get("savePath")),
             file_type=cls._to_text(raw.get("fileType")),
             file_size=cls._to_int(raw.get("fileSize")),
-            download_url=cls._absolute_url(f"/download/file.json?{urlencode(query)}") if file_no else None,
+            download_url=cls.report_file_download_url(
+                file_no=file_no,
+                disclosure_no=disclosure_no,
+                submission_no=submission_no,
+            ),
             raw=dict(raw),
         )
+
+    @classmethod
+    def normalize_report_file_refs(
+        cls,
+        value: Any,
+        *,
+        disclosure_no: str | None = None,
+        report_form_no: str | None = None,
+        institution_id: str | None = None,
+        submission_no: str | None = None,
+    ) -> list[AlioReportFile]:
+        text = cls._to_text(value)
+        if not text:
+            return []
+
+        files: list[AlioReportFile] = []
+        for entry in text.split("|"):
+            entry = entry.strip()
+            if not entry or entry == "@":
+                continue
+            file_no_text, separator, name_text = entry.partition("@")
+            file_no = cls._to_text(file_no_text)
+            if not file_no:
+                continue
+            original_name = cls._to_text(name_text) if separator else None
+            files.append(
+                AlioReportFile(
+                    file_no=file_no,
+                    disclosure_no=cls._to_text(disclosure_no),
+                    report_form_no=cls._to_text(report_form_no),
+                    institution_id=cls._to_text(institution_id),
+                    submission_no=cls._to_text(submission_no),
+                    original_name=original_name,
+                    download_url=cls.report_file_download_url(
+                        file_no=file_no,
+                        disclosure_no=disclosure_no,
+                        submission_no=submission_no,
+                    ),
+                    raw={"files": text, "entry": entry},
+                )
+            )
+        return files
+
+    @classmethod
+    def report_file_download_url(
+        cls,
+        *,
+        file_no: str | None,
+        disclosure_no: str | None = None,
+        submission_no: str | None = None,
+    ) -> str | None:
+        file_no = cls._to_text(file_no)
+        if not file_no:
+            return None
+        query = cls._clean_form({"f": file_no, "d": disclosure_no, "s": submission_no})
+        return cls._absolute_url(f"/download/file.json?{urlencode(query)}")
 
     @classmethod
     def item_report_url(cls, raw: Mapping[str, Any]) -> str | None:
