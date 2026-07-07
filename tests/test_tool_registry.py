@@ -12,12 +12,13 @@ def test_default_registry_exposes_health_check() -> None:
         "analyze_institution_strategy",
         "analyze_institution_weakness",
         "analyze_job_fit_report",
+        "collect_institution_context",
         "fetch_job_detail",
         "health_check",
         "lookup_region_codes",
         "search_public_jobs",
     ]
-    assert tools[4] == {
+    assert tools[5] == {
         "name": "health_check",
         "description": "서버 준비 상태와 등록된 도구 개수 같은 기본 메타데이터를 반환합니다.",
         "input_schema": {
@@ -33,6 +34,7 @@ def test_default_registry_exposes_health_check() -> None:
     assert tools[4]["input_schema"]["additionalProperties"] is False
     assert tools[5]["input_schema"]["additionalProperties"] is False
     assert tools[6]["input_schema"]["additionalProperties"] is False
+    assert tools[7]["input_schema"]["additionalProperties"] is False
 
 
 def test_health_check_returns_server_metadata() -> None:
@@ -44,7 +46,7 @@ def test_health_check_returns_server_metadata() -> None:
         "status": "ok",
         "service": "kr-gov-job-mcp",
         "version": "0.1.0",
-        "registered_tools": 7,
+        "registered_tools": 8,
     }
 
 

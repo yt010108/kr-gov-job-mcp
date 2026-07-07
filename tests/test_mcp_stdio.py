@@ -51,6 +51,7 @@ def test_mcp_stdio_initialize_and_list_tools() -> None:
     tools = responses[1]["result"]["tools"]
     assert {tool["name"] for tool in tools} >= {
         "health_check",
+        "collect_institution_context",
         "lookup_region_codes",
         "search_public_jobs",
         "fetch_job_detail",

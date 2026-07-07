@@ -3,7 +3,130 @@ import pytest
 from kr_gov_job_mcp.tools.institution_analysis import (
     create_analyze_institution_strategy_tool,
     create_analyze_institution_weakness_tool,
+    create_collect_institution_context_tool,
 )
+
+
+def test_collect_institution_context_returns_analysis_ready_payload() -> None:
+    tool = create_collect_institution_context_tool(
+        collect_context=lambda **_kwargs: {
+            "source": "institution_context",
+            "query": {
+                "institution_name": "한국농수산식품유통공사",
+                "sources": ["alio"],
+            },
+            "institution_name": "한국농수산식품유통공사",
+            "normalized_name": "한국농수산식품유통공사",
+            "aliases": [],
+            "alio_id": "C0045",
+            "cleaneye_id": None,
+            "cleaneye_kind": None,
+            "identity_candidates": [
+                {
+                    "name": "한국농수산식품유통공사",
+                    "source_type": "alio_disclosure",
+                    "source_id": "C0045",
+                    "code_type": "apbaId",
+                    "source_url": "https://example.test/alio",
+                    "confidence": "high",
+                }
+            ],
+            "evidence": [
+                {
+                    "title": "ALIO 기관 주요사업",
+                    "source_type": "alio_disclosure",
+                    "url": "https://example.test/alio",
+                    "source_id": "C0045",
+                    "collected_at": None,
+                    "excerpt": "농수산식품 유통 구조 개선",
+                    "fields": {},
+                }
+            ],
+            "signals": [
+                {
+                    "category": "business_direction",
+                    "title": "ALIO 기관 주요사업",
+                    "summary": "농수산식품 유통 구조 개선",
+                    "matched_keywords": [],
+                    "evidence": [
+                        {
+                            "title": "ALIO 기관 주요사업",
+                            "source_type": "alio_disclosure",
+                            "url": "https://example.test/alio",
+                            "source_id": "C0045",
+                            "collected_at": None,
+                            "excerpt": "농수산식품 유통 구조 개선",
+                            "fields": {},
+                        }
+                    ],
+                    "needs_verification": False,
+                }
+            ],
+            "verification_notes": [],
+            "warnings": [],
+        }
+    )
+
+    result = tool.handler({"institution_name": "한국농수산식품유통공사"})
+
+    assert result["source"] == "institution_context"
+    assert result["identity_candidates"][0]["source_id"] == "C0045"
+    assert result["evidence"][0]["source_type"] == "alio_disclosure"
+    assert result["signals"][0]["category"] == "business_direction"
+
+
+def test_collected_context_can_feed_strategy_analysis() -> None:
+    context_tool = create_collect_institution_context_tool(
+        collect_context=lambda **_kwargs: {
+            "source": "institution_context",
+            "query": {"institution_name": "기관", "sources": ["alio"]},
+            "institution_name": "기관",
+            "normalized_name": "기관",
+            "aliases": [],
+            "alio_id": "A001",
+            "cleaneye_id": None,
+            "cleaneye_kind": None,
+            "identity_candidates": [],
+            "evidence": [
+                {
+                    "title": "ALIO 기관 주요사업",
+                    "source_type": "alio_disclosure",
+                    "url": "https://example.test/alio",
+                    "source_id": "A001",
+                    "collected_at": None,
+                    "excerpt": "디지털 서비스 확대",
+                    "fields": {},
+                }
+            ],
+            "signals": [],
+            "verification_notes": [],
+            "warnings": [],
+        }
+    )
+    strategy_tool = create_analyze_institution_strategy_tool()
+
+    context = context_tool.handler({"institution_name": "기관"})
+    result = strategy_tool.handler(
+        {
+            "institution_name": context["institution_name"],
+            "job_family": "전산",
+            "evidence": context["evidence"],
+            "signals": context["signals"],
+        }
+    )
+
+    assert result["strategy_signals"][0]["summary"] == "디지털 서비스 확대"
+    assert result["strategy_signals"][0]["evidence"][0]["source_type"] == "alio_disclosure"
+
+
+def test_collect_institution_context_rejects_invalid_arguments() -> None:
+    tool = create_collect_institution_context_tool(collect_context=lambda **_kwargs: {})
+
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler({})
+
+    with pytest.raises(ValueError, match="unsupported context sources"):
+        tool.handler({"institution_name": "기관", "sources": ["cleaneye"]})
 
 
 def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:

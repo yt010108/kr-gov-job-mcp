@@ -13,6 +13,7 @@
 | 05 | `analyze_institution_strategy` | 분석 | P0 | [analyze-institution-strategy.md](analyze-institution-strategy.md) | 기관의 최근 사업 방향과 직무 연결 포인트를 요약한다. |
 | 06 | `analyze_institution_weakness` | 분석 | P0 | [analyze-institution-weakness.md](analyze-institution-weakness.md) | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리한다. |
 | 07 | `analyze_job_fit_report` | 분석 | P0 | [analyze-job-fit-report.md](analyze-job-fit-report.md) | 공고 내용, NCS, 기관 정보를 연결해 준비 리포트를 만든다. |
+| 08 | `collect_institution_context` | 수집 | P0 | [collect-institution-context.md](collect-institution-context.md) | 기관 분석 전에 ALIO 기관 근거와 signal 후보를 수집한다. |
 
 ## 구현 순서
 
@@ -22,6 +23,6 @@
 4. 07 `analyze_job_fit_report`
 5. 05 `analyze_institution_strategy`
 6. 06 `analyze_institution_weakness`
-7. `collect_institution_context`
+7. 08 `collect_institution_context`
 
 04 `map_ncs_competencies`는 현재 분석 helper와 schema는 있으나 MCP tool로는 아직 분리 구현하지 않았다.

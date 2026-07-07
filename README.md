@@ -42,6 +42,7 @@ python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"quer
 python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
 python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
+python -m kr_gov_job_mcp.server --call-tool collect_institution_context --input "{\"institution_name\":\"한국농수산식품유통공사\",\"sources\":[\"alio\",\"homepage\"]}"
 python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
 ```
@@ -55,6 +56,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 | `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
 | `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
 | `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
+| `collect_institution_context` | 구현됨 MVP | `institution_name`, `sources`를 받아 ALIO 기관 정보 기반 `identity_candidates`, `evidence`, `signals`를 생성한다. |
 | `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`, `evidence`, `signals`를 받아 `strategy_signals`와 `verification_notes`를 반환한다. |
 | `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`, `evidence`, `signals`를 받아 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. |
 | `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
@@ -158,6 +160,7 @@ kr-gov-job-mcp/
       lookup-region-codes.md
       search-public-jobs.md
       fetch-job-detail.md
+      collect-institution-context.md
       map-ncs-competencies.md
       analyze-institution-strategy.md
       analyze-institution-weakness.md
