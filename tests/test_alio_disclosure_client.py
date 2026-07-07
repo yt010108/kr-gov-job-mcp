@@ -219,7 +219,7 @@ def test_list_regular_item_reports_posts_jung_payload_and_normalizes_rows() -> N
                                 "reportFormNo": "31501",
                                 "submissionNo": "2026041310382324",
                                 "disclosureNo": "2026041303151983",
-                                "files": "101@main-business.pdf",
+                                "files": "101@main-business.pdf|102@contract-summary.xlsx",
                             }
                         ],
                     },
@@ -240,8 +240,52 @@ def test_list_regular_item_reports_posts_jung_payload_and_normalizes_rows() -> N
         assert report.source_url.endswith(
             "/item/itemReport.do?seq=2026041303151983&disclosureNo=2026041303151983"
         )
+        assert [attachment.file_no for attachment in report.attachments] == ["101", "102"]
+        assert report.attachments[0].original_name == "main-business.pdf"
+        assert report.attachments[0].disclosure_no == "2026041303151983"
+        assert report.attachments[0].submission_no == "2026041310382324"
+        assert report.attachments[0].download_url is not None
+        assert report.attachments[0].download_url.endswith(
+            "/download/file.json?f=101&d=2026041303151983&s=2026041310382324"
+        )
 
     asyncio.run(run())
+
+
+def test_regular_report_file_refs_ignore_empty_placeholder_rows() -> None:
+    report = AlioDisclosureClient.normalize_report_disclosure(
+        {
+            "apbaId": "C0399",
+            "reportFormNo": "70302",
+            "submissionNo": None,
+            "disclosureNo": None,
+            "files": "@",
+        }
+    )
+
+    assert report.disclosure_no == ""
+    assert report.attachments == []
+
+
+def test_regular_report_file_refs_support_contract_xlsx_names() -> None:
+    attachments = AlioDisclosureClient.normalize_report_file_refs(
+        "101@한국인터넷진흥원_49-2_계약정보(수의계약-2021년).xlsx",
+        disclosure_no="2026041303153038",
+        report_form_no="70301",
+        institution_id="C0399",
+        submission_no="2026041310379821",
+    )
+
+    assert len(attachments) == 1
+    attachment = attachments[0]
+    assert attachment.file_no == "101"
+    assert attachment.report_form_no == "70301"
+    assert attachment.institution_id == "C0399"
+    assert attachment.original_name.endswith(".xlsx")
+    assert attachment.download_url is not None
+    assert attachment.download_url.endswith(
+        "/download/file.json?f=101&d=2026041303153038&s=2026041310379821"
+    )
 
 
 def test_report_files_and_html_fetchers() -> None:
@@ -278,6 +322,7 @@ def test_report_files_and_html_fetchers() -> None:
             html = await client.fetch_report_html("2026041303151983")
 
         assert files[0].file_no == "101"
+        assert files[0].file_size == 0
         assert files[0].download_url.endswith(
             "/download/file.json?f=101&d=2026041303151983&s=2026041310382324"
         )
