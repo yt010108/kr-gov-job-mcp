@@ -30,6 +30,15 @@ SEARCH_PUBLIC_JOBS_INPUT_SCHEMA: dict[str, Any] = {
             "type": "string",
             "description": "잡알리오 채용공고 제목 검색어입니다.",
         },
+        "keyword_scope": {
+            "type": "string",
+            "enum": ["title", "title_and_ncs", "summary_fields"],
+            "default": "title",
+            "description": (
+                "keyword 검색 범위입니다. title은 잡알리오 제목 검색, title_and_ncs와 "
+                "summary_fields는 목록 응답을 가져온 뒤 서버에서 추가 필드를 필터링합니다."
+            ),
+        },
         "page": {
             "type": "integer",
             "minimum": 1,
@@ -156,7 +165,6 @@ _SUPPORTED_ARGUMENTS = set(SEARCH_PUBLIC_JOBS_INPUT_SCHEMA["properties"])
 _FETCH_DETAIL_SUPPORTED_ARGUMENTS = set(FETCH_JOB_DETAIL_INPUT_SCHEMA["properties"])
 _ANALYZE_JOB_FIT_SUPPORTED_ARGUMENTS = set(ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA["properties"])
 _TEXT_ARGUMENTS = {
-    "keyword",
     "institution_code",
     "ncs_code",
     "academic_condition_code",
@@ -165,6 +173,24 @@ _TEXT_ARGUMENTS = {
     "institution_type",
     "institution_classification",
 }
+_KEYWORD_SCOPES = {"title", "title_and_ncs", "summary_fields"}
+_TITLE_FIELDS = ("title",)
+_TITLE_AND_NCS_FIELDS = ("title", "ncs_codes", "ncs_categories")
+_SUMMARY_FIELDS = (
+    "title",
+    "institution_name",
+    "ncs_codes",
+    "ncs_categories",
+    "qualification",
+    "preferred_conditions",
+    "preference",
+    "screening_procedure",
+    "employment_types",
+    "recruitment_type",
+    "work_regions",
+)
+_CLIENT_FILTER_MIN_CANDIDATES = 50
+_CLIENT_FILTER_MAX_CANDIDATES = 100
 
 
 def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) -> ToolDefinition:
@@ -175,17 +201,21 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
     """
 
     def handler(arguments: Mapping[str, Any]) -> dict[str, Any]:
-        search_kwargs, warnings, resolved_filters = _normalize_search_arguments(arguments)
+        search_kwargs, query, warnings, resolved_filters, keyword_filter = (
+            _normalize_search_arguments(arguments)
+        )
         result = (
             search_jobs(**search_kwargs)
             if search_jobs is not None
             else _run_async("search_public_jobs", lambda: _search_job_alio(**search_kwargs))
         )
+        result, search_scope = _apply_keyword_filter(result, keyword_filter, requested_query=query)
         return _serialize_search_result(
             result,
-            query=search_kwargs,
+            query=query,
             warnings=warnings,
             resolved_filters=resolved_filters,
+            search_scope=search_scope,
         )
 
     return ToolDefinition(
@@ -278,23 +308,55 @@ async def _fetch_job_alio_detail(job_id: str) -> JobAlioDetail:
 
 def _normalize_search_arguments(
     arguments: Mapping[str, Any],
-) -> tuple[dict[str, Any], list[str], dict[str, Any]]:
+) -> tuple[dict[str, Any], dict[str, Any], list[str], dict[str, Any], dict[str, Any]]:
     unknown = sorted(set(arguments) - _SUPPORTED_ARGUMENTS)
     if unknown:
         raise ValueError("unsupported search_public_jobs arguments: " + ", ".join(unknown))
 
     warnings: list[str] = []
     resolved_filters: dict[str, Any] = {}
+    keyword = _to_text(arguments.get("keyword"))
+    keyword_scope = _normalize_keyword_scope(arguments.get("keyword_scope"))
     kwargs: dict[str, Any] = {
         "page": _to_int(arguments.get("page"), default=1, minimum=1),
         "limit": _to_int(arguments.get("limit"), default=20, minimum=1, maximum=100),
         "ongoing_only": _to_bool(arguments.get("ongoing_only"), default=True),
     }
+    query = dict(kwargs)
+    if keyword is not None:
+        query["keyword"] = keyword
+        query["keyword_scope"] = keyword_scope
 
     for key in _TEXT_ARGUMENTS:
         value = _to_text(arguments.get(key))
         if value is not None:
             kwargs[key] = value
+            query[key] = value
+
+    keyword_filter = {
+        "keyword": keyword,
+        "keyword_scope": keyword_scope,
+        "searched_fields": list(_fields_for_keyword_scope(keyword_scope)),
+        "client_side": keyword_scope != "title",
+        "candidate_limit": kwargs["limit"],
+    }
+    if keyword is not None and keyword_scope == "title":
+        kwargs["keyword"] = keyword
+        warnings.append(
+            "keyword_scope=title searches the Job-ALIO posting title only; use "
+            "keyword_scope=title_and_ncs or summary_fields to search additional list fields."
+        )
+    elif keyword is not None:
+        original_limit = kwargs["limit"]
+        kwargs["limit"] = min(
+            max(original_limit * 5, _CLIENT_FILTER_MIN_CANDIDATES),
+            _CLIENT_FILTER_MAX_CANDIDATES,
+        )
+        keyword_filter["candidate_limit"] = kwargs["limit"]
+        warnings.append(
+            f"keyword_scope={keyword_scope} uses client-side filtering over up to "
+            f"{kwargs['limit']} Job-ALIO list rows; matches outside that candidate window may be missed."
+        )
 
     region_code = _to_text(arguments.get("region_code"))
     region = _to_text(arguments.get("region"))
@@ -306,22 +368,34 @@ def _normalize_search_arguments(
                 f"{region} resolves to {resolved_region.code}, got {region_code}"
             )
         kwargs["region_code"] = resolved_region.code
+        query["region_code"] = resolved_region.code
         resolved_filters["region"] = resolved_region.public_dict()
     elif region_code:
         kwargs["region_code"] = region_code
+        query["region_code"] = region_code
 
     if "replacement_only" in arguments:
         kwargs["replacement_only"] = _to_bool(arguments.get("replacement_only"), default=False)
+        query["replacement_only"] = kwargs["replacement_only"]
 
     for key in ("announcement_start_date", "announcement_end_date"):
         value = _to_query_date(arguments.get(key))
         if value is not None:
             kwargs[key] = value
+            query[key] = value
 
-    if kwargs["limit"] == 100:
+    if query["limit"] == 100:
         warnings.append("limit is capped at 100 for one Job-ALIO request.")
 
-    return kwargs, warnings, resolved_filters
+    return kwargs, query, warnings, resolved_filters, keyword_filter
+
+
+def _normalize_keyword_scope(value: Any) -> str:
+    scope = _to_text(value) or "title"
+    if scope not in _KEYWORD_SCOPES:
+        supported = ", ".join(sorted(_KEYWORD_SCOPES))
+        raise ValueError(f"unsupported keyword_scope: {scope}. supported: {supported}")
+    return scope
 
 
 def _normalize_detail_arguments(arguments: Mapping[str, Any]) -> str:
@@ -354,10 +428,12 @@ def _serialize_search_result(
     query: Mapping[str, Any],
     warnings: list[str],
     resolved_filters: Mapping[str, Any],
+    search_scope: Mapping[str, Any],
 ) -> dict[str, Any]:
     return {
         "source": "job_alio",
         "query": dict(query),
+        "search_scope": dict(search_scope),
         "resolved_filters": dict(resolved_filters),
         "page": result.page,
         "limit": result.limit,
@@ -366,6 +442,72 @@ def _serialize_search_result(
         "jobs": [_serialize_job(job) for job in result.jobs],
         "warnings": warnings,
     }
+
+
+def _apply_keyword_filter(
+    result: JobAlioSearchResult,
+    keyword_filter: Mapping[str, Any],
+    *,
+    requested_query: Mapping[str, Any],
+) -> tuple[JobAlioSearchResult, dict[str, Any]]:
+    keyword = keyword_filter.get("keyword")
+    keyword_scope = str(keyword_filter.get("keyword_scope") or "title")
+    searched_fields = list(keyword_filter.get("searched_fields") or _TITLE_FIELDS)
+    search_scope = {
+        "keyword": keyword,
+        "keyword_scope": keyword_scope,
+        "searched_fields": searched_fields,
+        "client_side_filtering": keyword_filter.get("client_side") is True,
+        "candidate_limit": keyword_filter.get("candidate_limit"),
+        "scanned_count": len(result.jobs),
+    }
+    if not keyword or keyword_scope == "title":
+        search_scope["matched_count"] = len(result.jobs)
+        return result, search_scope
+
+    matched_jobs = [
+        job
+        for job in result.jobs
+        if _job_matches_keyword_scope(job, keyword=str(keyword), fields=searched_fields)
+    ]
+    requested_limit = int(requested_query.get("limit", result.limit))
+    filtered_result = JobAlioSearchResult(
+        page=int(requested_query.get("page", result.page)),
+        limit=requested_limit,
+        total_count=len(matched_jobs),
+        jobs=matched_jobs[:requested_limit],
+    )
+    search_scope["matched_count"] = len(matched_jobs)
+    search_scope["returned_count"] = len(filtered_result.jobs)
+    return filtered_result, search_scope
+
+
+def _fields_for_keyword_scope(keyword_scope: str) -> tuple[str, ...]:
+    if keyword_scope == "title_and_ncs":
+        return _TITLE_AND_NCS_FIELDS
+    if keyword_scope == "summary_fields":
+        return _SUMMARY_FIELDS
+    return _TITLE_FIELDS
+
+
+def _job_matches_keyword_scope(job: JobAlioSummary, *, keyword: str, fields: list[str]) -> bool:
+    normalized_keyword = _normalize_search_text(keyword)
+    return any(
+        normalized_keyword in _normalize_search_text(value)
+        for field in fields
+        for value in _job_field_values(job, field)
+    )
+
+
+def _job_field_values(job: JobAlioSummary, field: str) -> list[Any]:
+    value = getattr(job, field)
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def _normalize_search_text(value: Any) -> str:
+    return "".join(str(value or "").lower().split())
 
 
 def _serialize_detail_result(

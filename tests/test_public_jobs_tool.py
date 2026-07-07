@@ -123,6 +123,109 @@ def test_search_public_jobs_caps_limit() -> None:
     assert result["warnings"] == ["limit is capped at 100 for one Job-ALIO request."]
 
 
+def test_search_public_jobs_title_scope_uses_job_alio_title_keyword() -> None:
+    captured_kwargs = {}
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_kwargs.update(kwargs)
+        return JobAlioSearchResult(page=kwargs["page"], limit=kwargs["limit"], total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"keyword": "정보보호"})
+
+    assert captured_kwargs["keyword"] == "정보보호"
+    assert captured_kwargs["limit"] == 20
+    assert result["search_scope"] == {
+        "keyword": "정보보호",
+        "keyword_scope": "title",
+        "searched_fields": ["title"],
+        "client_side_filtering": False,
+        "candidate_limit": 20,
+        "scanned_count": 0,
+        "matched_count": 0,
+    }
+    assert "posting title only" in result["warnings"][0]
+
+
+def test_search_public_jobs_title_and_ncs_scope_filters_list_rows() -> None:
+    captured_kwargs = {}
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_kwargs.update(kwargs)
+        return JobAlioSearchResult(
+            page=kwargs["page"],
+            limit=kwargs["limit"],
+            total_count=2,
+            jobs=[
+                JobAlioSummary(
+                    id="match-ncs",
+                    title="기술직 채용",
+                    ncs_codes=["R600020"],
+                    ncs_categories=["정보통신"],
+                ),
+                JobAlioSummary(
+                    id="miss",
+                    title="행정직 채용",
+                    ncs_codes=["R600002"],
+                    ncs_categories=["경영"],
+                ),
+            ],
+        )
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"keyword": "정보통신", "keyword_scope": "title_and_ncs", "limit": 3})
+
+    assert "keyword" not in captured_kwargs
+    assert captured_kwargs["limit"] == 50
+    assert result["limit"] == 3
+    assert result["total_count"] == 1
+    assert result["jobs"][0]["id"] == "match-ncs"
+    assert result["search_scope"]["keyword_scope"] == "title_and_ncs"
+    assert result["search_scope"]["searched_fields"] == ["title", "ncs_codes", "ncs_categories"]
+    assert result["search_scope"]["scanned_count"] == 2
+    assert result["search_scope"]["matched_count"] == 1
+
+
+def test_search_public_jobs_summary_scope_filters_qualification_fields() -> None:
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        return JobAlioSearchResult(
+            page=kwargs["page"],
+            limit=kwargs["limit"],
+            total_count=2,
+            jobs=[
+                JobAlioSummary(
+                    id="match-detail",
+                    title="전산직 채용",
+                    qualification="개인정보보호 및 보안 로그 분석 경력 3년 이상",
+                ),
+                JobAlioSummary(
+                    id="miss",
+                    title="일반행정 채용",
+                    qualification="행정 업무 경험",
+                ),
+            ],
+        )
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"keyword": "보안 로그", "keyword_scope": "summary_fields"})
+
+    assert result["jobs"][0]["id"] == "match-detail"
+    assert result["search_scope"]["keyword_scope"] == "summary_fields"
+    assert "qualification" in result["search_scope"]["searched_fields"]
+
+
+def test_search_public_jobs_rejects_unknown_keyword_scope() -> None:
+    tool = create_search_public_jobs_tool(
+        search_jobs=lambda **_kwargs: JobAlioSearchResult(page=1, limit=20, total_count=0)
+    )
+
+    with pytest.raises(ValueError, match="unsupported keyword_scope"):
+        tool.handler({"keyword": "정보보호", "keyword_scope": "attachments"})
+
+
 def test_search_public_jobs_resolves_region_name() -> None:
     captured_kwargs = {}
 
