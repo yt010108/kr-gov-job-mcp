@@ -77,6 +77,7 @@ kr-gov-job-mcp/
     job-alio-field-inventory.md
     alio-disclosure-field-inventory.md
     cleaneye-field-inventory.md
+    cleaneye-html-structure.md
   examples/
     kisa-demo-input.json
     kisa-demo-output.md
