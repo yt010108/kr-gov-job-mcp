@@ -72,6 +72,14 @@ python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 현재 HTTP 모드는 `/mcp`에서 JSON-RPC POST 요청을 처리하고 `/health`에서 readiness JSON을
 반환한다. SSE GET stream과 session resume은 아직 구현하지 않았다.
 
+브라우저 기반 클라이언트를 위해 `/mcp`와 `/health`는 `OPTIONS` preflight에 응답하고,
+`Origin` 헤더가 있는 요청에는 CORS 헤더를 붙인다. 기본값은 `*`이며, 운영 환경에서는 다음처럼
+허용 origin을 제한한다.
+
+```bash
+MCP_CORS_ALLOW_ORIGINS=https://playmcp.example,https://example.com
+```
+
 루트 `Dockerfile`은 이 HTTP 모드를 기본 실행한다. Git 소스 빌드 등록값은 다음처럼 둔다.
 
 | 항목 | 값 |

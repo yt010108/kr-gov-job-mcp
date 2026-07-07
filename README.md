@@ -129,6 +129,14 @@ python -m ruff check .
 | `/health` | 배포 health check |
 | `/mcp` | MCP JSON-RPC POST endpoint |
 
+HTTP endpoint는 브라우저 기반 클라이언트의 preflight를 위해 `OPTIONS` 요청과 CORS 응답 헤더를
+지원합니다. 기본 허용 origin은 `*`이며, 운영 환경에서는 다음처럼 쉼표 구분 allowlist로 제한할
+수 있습니다.
+
+```bash
+MCP_CORS_ALLOW_ORIGINS=https://playmcp.example,https://example.com
+```
+
 로컬 Docker 확인:
 
 ```bash
