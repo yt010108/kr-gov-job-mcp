@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from html.parser import HTMLParser
 from typing import Any
-from urllib.parse import urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import urljoin
 
 import httpx
 
@@ -44,11 +44,9 @@ class PressReleaseClient:
         "nttSn=",
         "list_no=",
         "boardDetail",
-        "boardView",
-        "boardNo=",
         "selectNttInfo",
         "/form?",
-        "seq=",
+        "view",
     )
     ATTACHMENT_HINTS = (
         ".hwp",
@@ -59,33 +57,12 @@ class PressReleaseClient:
         ".xls",
         ".xlsx",
         ".zip",
-        ".jpg",
-        ".jpeg",
-        ".png",
         "attach",
         "atch",
         "download",
         "file",
     )
-    FILE_EXTENSION_HINTS = (
-        ".hwp",
-        ".hwpx",
-        ".pdf",
-        ".doc",
-        ".docx",
-        ".xls",
-        ".xlsx",
-        ".zip",
-        ".jpg",
-        ".jpeg",
-        ".png",
-    )
     DATE_PATTERN = re.compile(r"(20\d{2})[.\-/](\d{1,2})[.\-/](\d{1,2})")
-    FN_DETAIL_PATTERN = re.compile(
-        r"fn_Detail\(\s*['\"](?P<board_mng_no>[^'\"]+)['\"]\s*,\s*"
-        r"['\"](?P<board_no>[^'\"]+)['\"]\s*\)",
-        re.IGNORECASE,
-    )
 
     def __init__(
         self,
@@ -169,7 +146,7 @@ class PressReleaseClient:
                 seen_urls.add(link.url)
                 items.append(
                     PressReleaseListItem(
-                        title=cls._without_first_date(link.text),
+                        title=link.text,
                         url=link.url,
                         published_date=date,
                         raw_text=row.text,
@@ -185,13 +162,7 @@ class PressReleaseClient:
             if link.url in seen_urls or not cls._looks_like_detail_link(link.url) or not link.text:
                 continue
             seen_urls.add(link.url)
-            items.append(
-                PressReleaseListItem(
-                    title=cls._without_first_date(link.text),
-                    url=link.url,
-                    published_date=cls._first_date(link.text),
-                )
-            )
+            items.append(PressReleaseListItem(title=link.text, url=link.url))
         return items
 
     @classmethod
@@ -260,16 +231,6 @@ class PressReleaseClient:
 
     @classmethod
     def _classify_link(cls, href: str, text: str | None) -> str:
-        lower_text = (text or "").lower()
-        fragment = urlsplit(href).fragment.lower()
-        if fragment:
-            has_file_name = any(hint in lower_text for hint in cls.FILE_EXTENSION_HINTS)
-            if "fnpostattachdownload" in fragment and (
-                has_file_name or "첨부파일" in (text or "")
-            ):
-                return "attachment_candidate"
-            return "other"
-
         haystack = f"{href} {text or ''}".lower()
         if any(hint in haystack for hint in cls.ATTACHMENT_HINTS):
             return "attachment_candidate"
@@ -281,23 +242,6 @@ class PressReleaseClient:
         return any(hint.lower() in lower_url for hint in cls.DETAIL_LINK_HINTS)
 
     @classmethod
-    def _javascript_detail_url(cls, href: str, *, base_url: str) -> str | None:
-        match = cls.FN_DETAIL_PATTERN.search(href)
-        if not match:
-            return None
-
-        parsed = urlsplit(base_url)
-        parent = parsed.path.rsplit("/", maxsplit=1)[0]
-        detail_path = f"{parent}/boardView.do"
-        query = urlencode(
-            {
-                "boardMngNo": match.group("board_mng_no"),
-                "boardNo": match.group("board_no"),
-            }
-        )
-        return urlunsplit((parsed.scheme, parsed.netloc, detail_path, query, ""))
-
-    @classmethod
     def _first_date(cls, text: str) -> str | None:
         match = cls.DATE_PATTERN.search(text)
         if not match:
@@ -306,19 +250,10 @@ class PressReleaseClient:
         return f"{year}-{int(month):02d}-{int(day):02d}"
 
     @classmethod
-    def _without_first_date(cls, text: str | None) -> str:
-        if not text:
-            return ""
-        match = cls.DATE_PATTERN.search(text)
-        if not match:
-            return text
-        return cls._squash_space(f"{text[: match.start()]} {text[match.end() :]}") or text
-
-    @classmethod
     def _dedupe_links(cls, links: list[PressReleaseLink]) -> list[PressReleaseLink]:
-        deduped: dict[tuple[str, str, str | None], PressReleaseLink] = {}
+        deduped: dict[tuple[str, str], PressReleaseLink] = {}
         for link in links:
-            key = (link.url, link.kind, link.text)
+            key = (link.url, link.kind)
             if key not in deduped:
                 deduped[key] = link
         return list(deduped.values())
@@ -358,13 +293,8 @@ class _PressReleaseListParser(HTMLParser):
             self._row_stack.append({"text_parts": [], "links": []})
         if tag == "a":
             href = attr_map.get("href")
-            if not href or href.startswith(("#", "mailto:", "tel:")):
+            if not href or href.startswith(("javascript:", "#", "mailto:", "tel:")):
                 return
-            if href.startswith("javascript:"):
-                detail_url = PressReleaseClient._javascript_detail_url(href, base_url=self.base_url)
-                if not detail_url:
-                    return
-                href = detail_url
             self._anchor_stack.append(
                 {
                     "url": urljoin(self.base_url, href),
@@ -424,9 +354,7 @@ class _PressReleaseDetailParser(HTMLParser):
             if self._skip_depth:
                 return
             href = attr_map.get("href")
-            if not href or href.startswith(("javascript:", "mailto:", "tel:")):
-                return
-            if href.startswith("#") and not self._is_download_fragment(href, attr_map):
+            if not href or href.startswith(("javascript:", "#", "mailto:", "tel:")):
                 return
             self._anchor_stack.append(
                 {
@@ -474,8 +402,3 @@ class _PressReleaseDetailParser(HTMLParser):
         self.body_parts.append(text)
         if self._anchor_stack:
             self._anchor_stack[-1]["text_parts"].append(text)
-
-    @staticmethod
-    def _is_download_fragment(href: str, attr_map: dict[str, str]) -> bool:
-        haystack = f"{href} {attr_map.get('onclick', '')} {attr_map.get('title', '')}".lower()
-        return "fnpostattachdownload" in haystack
