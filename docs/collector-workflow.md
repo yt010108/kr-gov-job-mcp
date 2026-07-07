@@ -267,7 +267,7 @@ Raw sample JSON은 다음 필드를 포함한다.
 1. Job-ALIO에서 한국인터넷진흥원 관련 공고 목록과 상세 raw sample을 만든다.
 2. ALIO 경영공시에서 한국인터넷진흥원 일반현황, 주요사업, 국회/감사 지적사항 raw sample을 만든다.
 3. 각 source별 field inventory에서 “분석에 바로 쓸 수 있는 필드”만 추려 분석 스키마 후보로 옮긴다.
-4. `examples/kisa-demo-output.md`의 리포트 형태와 비교해 부족한 근거 링크를 보강한다.
+4. `examples/kisa-demo-template.md`와 `examples/kisa-real-demo-output.md`를 비교해 부족한 근거 링크를 보강한다.
 
 데모 전에 확인할 결과물:
 
