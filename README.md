@@ -75,6 +75,7 @@ kr-gov-job-mcp/
     job-fit-report.md
     server-scaffold.md
     job-alio-field-inventory.md
+    job-alio-alio-b1020-linking.md
     alio-disclosure-field-inventory.md
     cleaneye-field-inventory.md
   examples/
