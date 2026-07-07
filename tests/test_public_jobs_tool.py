@@ -8,6 +8,7 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioSummary,
 )
 from kr_gov_job_mcp.tools.public_jobs import (
+    create_analyze_job_fit_report_tool,
     create_fetch_job_detail_tool,
     create_search_public_jobs_tool,
 )
@@ -263,3 +264,64 @@ def test_fetch_job_detail_rejects_missing_or_conflicting_ids() -> None:
 
     with pytest.raises(ValueError, match="conflicting fetch_job_detail ids"):
         tool.handler({"job_id": "302423", "source_job_id": "302424"})
+
+
+def test_analyze_job_fit_report_fetches_detail_and_returns_preparation_report() -> None:
+    captured_job_ids = []
+
+    def fake_fetch_job_detail(job_id: str) -> JobAlioDetail:
+        captured_job_ids.append(job_id)
+        return JobAlioDetail(
+            id=job_id,
+            institution_name="한국인터넷진흥원",
+            title="정보보호 분야 채용 공고",
+            source_url="https://example.test/job",
+            ncs_codes=["R600020"],
+            ncs_categories=["정보통신"],
+            qualification="정보보호 관련 지식 필요",
+            preferred_conditions="정보보안기사 우대",
+            screening_procedure="서류전형, 면접전형",
+            attachments=[
+                JobAlioAttachment(
+                    name="NCS 직무기술서.pdf",
+                    file_type="A",
+                    url="https://example.test/duty.pdf",
+                )
+            ],
+        )
+
+    tool = create_analyze_job_fit_report_tool(fetch_job_detail=fake_fetch_job_detail)
+
+    result = tool.handler(
+        {
+            "job_id": "302423",
+            "target_role": "정보보호",
+            "known_skills": ["웹 보안", "정보보안기사"],
+        }
+    )
+
+    assert captured_job_ids == ["302423"]
+    assert result["source"] == "job_alio"
+    assert result["query"] == {
+        "job_id": "302423",
+        "target_role": "정보보호",
+        "known_skills": ["웹 보안", "정보보안기사"],
+    }
+    assert result["job_id"] == "302423"
+    assert result["job_title"] == "정보보호 분야 채용 공고"
+    assert result["applicant_target_role"] == "정보보호"
+    assert any(item["priority"] == "P0" for item in result["preparation_items"])
+    assert any(item["source_type"] == "duty_description" for item in result["evidence_links"])
+    assert any(note["field"] == "institution_signals" for note in result["verification_notes"])
+
+
+def test_analyze_job_fit_report_rejects_unknown_arguments_and_bad_skills() -> None:
+    tool = create_analyze_job_fit_report_tool(
+        fetch_job_detail=lambda job_id: JobAlioDetail(id=job_id, title="상세 공고")
+    )
+
+    with pytest.raises(ValueError, match="unsupported analyze_job_fit_report arguments"):
+        tool.handler({"job_id": "302423", "extra": True})
+
+    with pytest.raises(ValueError, match="expected list value"):
+        tool.handler({"job_id": "302423", "known_skills": "정보보호"})
