@@ -9,6 +9,7 @@ from kr_gov_job_mcp.schemas.job import (
 )
 from kr_gov_job_mcp.tools.public_jobs import (
     create_analyze_job_fit_report_tool,
+    create_analyze_public_job_query_tool,
     create_fetch_job_detail_tool,
     create_search_public_jobs_tool,
 )
@@ -325,3 +326,116 @@ def test_analyze_job_fit_report_rejects_unknown_arguments_and_bad_skills() -> No
 
     with pytest.raises(ValueError, match="expected list value"):
         tool.handler({"job_id": "302423", "known_skills": "정보보호"})
+
+
+def test_analyze_public_job_query_runs_detail_and_fit_report_flow() -> None:
+    captured_searches = []
+    captured_details = []
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_searches.append(kwargs)
+        return JobAlioSearchResult(
+            page=1,
+            limit=kwargs["limit"],
+            total_count=1,
+            jobs=[
+                JobAlioSummary(
+                    id="302423",
+                    institution_name="한국인터넷진흥원",
+                    title="정보보호 분야 채용 공고",
+                    is_ongoing=True,
+                    ncs_categories=["정보통신"],
+                    source_url="https://example.test/job",
+                )
+            ],
+        )
+
+    def fake_fetch_job_detail(job_id: str) -> JobAlioDetail:
+        captured_details.append(job_id)
+        return JobAlioDetail(
+            id=job_id,
+            institution_name="한국인터넷진흥원",
+            title="정보보호 분야 채용 공고",
+            is_ongoing=True,
+            source_url="https://example.test/job",
+            ncs_categories=["정보통신"],
+            qualification="정보보호 관련 지식 필요",
+            preferred_conditions="정보보안기사 우대",
+            screening_procedure="서류전형, 면접전형",
+        )
+
+    tool = create_analyze_public_job_query_tool(
+        search_jobs=fake_search_jobs,
+        fetch_job_detail=fake_fetch_job_detail,
+    )
+
+    result = tool.handler(
+        {
+            "query": "한국인터넷진흥원 채용공고 분석해줘",
+            "analysis_depth": "fit_report",
+            "target_role": "정보보호",
+            "known_skills": ["정보보안기사"],
+        }
+    )
+
+    assert captured_searches == [
+        {"page": 1, "limit": 3, "ongoing_only": True, "keyword": "한국인터넷진흥원"}
+    ]
+    assert captured_details == ["302423"]
+    assert result["source"] == "public_job_query_orchestration"
+    assert result["interpreted_query"]["institution_name"] == "한국인터넷진흥원"
+    assert result["interpreted_query"]["analysis_depth"] == "fit_report"
+    assert result["search_attempts"][0]["result_count"] == 1
+    assert result["selected_jobs"][0]["source_job_id"] == "302423"
+    assert result["job_details"][0]["qualification"] == "정보보호 관련 지식 필요"
+    assert result["fit_reports"][0]["job_id"] == "302423"
+    assert result["no_result_diagnostics"] is None
+
+
+def test_analyze_public_job_query_returns_fallback_diagnostics_when_no_results() -> None:
+    captured_searches = []
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_searches.append(kwargs)
+        return JobAlioSearchResult(page=1, limit=kwargs["limit"], total_count=0, jobs=[])
+
+    tool = create_analyze_public_job_query_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler(
+        {
+            "query": "최근 공고 진행중인거 말고 전남대 병원",
+            "limit": 2,
+        }
+    )
+
+    assert captured_searches == [
+        {"page": 1, "limit": 2, "ongoing_only": False, "keyword": "전남대학교병원"}
+    ]
+    assert result["interpreted_query"]["institution_name"] == "전남대학교병원"
+    assert result["interpreted_query"]["ongoing_only"] is False
+    assert result["selected_jobs"] == []
+    assert result["no_result_diagnostics"]["reason"] == "검색 결과가 없습니다."
+    assert "기관명 기반 institution_code 조회가 필요할 수 있습니다." in result[
+        "no_result_diagnostics"
+    ]["possible_causes"]
+    assert "검색 결과가 없거나 현재 검색 방식으로 찾지 못했습니다." in result["warnings"]
+
+
+def test_analyze_public_job_query_rejects_bad_arguments() -> None:
+    tool = create_analyze_public_job_query_tool(
+        search_jobs=lambda **kwargs: JobAlioSearchResult(
+            page=1,
+            limit=kwargs["limit"],
+            total_count=0,
+            jobs=[],
+        )
+    )
+
+    with pytest.raises(ValueError, match="query is required"):
+        tool.handler({})
+
+    with pytest.raises(ValueError, match="unsupported analyze_public_job_query arguments"):
+        tool.handler({"query": "공고 찾아줘", "extra": True})
+
+    with pytest.raises(ValueError, match="unsupported analysis_depth"):
+        tool.handler({"query": "공고 찾아줘", "analysis_depth": "deep"})

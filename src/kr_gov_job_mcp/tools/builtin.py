@@ -13,6 +13,7 @@ from kr_gov_job_mcp.tools.institution_analysis import (
 )
 from kr_gov_job_mcp.tools.public_jobs import (
     create_analyze_job_fit_report_tool,
+    create_analyze_public_job_query_tool,
     create_fetch_job_detail_tool,
     create_search_public_jobs_tool,
 )
@@ -42,6 +43,7 @@ def create_default_registry() -> ToolRegistry:
     registry.register(create_analyze_institution_strategy_tool())
     registry.register(create_analyze_institution_weakness_tool())
     registry.register(create_analyze_job_fit_report_tool())
+    registry.register(create_analyze_public_job_query_tool())
     registry.register(create_fetch_job_detail_tool())
     registry.register(create_search_public_jobs_tool())
     return registry

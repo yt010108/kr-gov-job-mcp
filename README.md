@@ -17,6 +17,7 @@
 - Job-ALIO 공공기관 채용공고 검색
 - Job-ALIO 공고 상세 조회
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
+- 자연어 채용 질문 기반 검색, 상세 조회, 준비 리포트 orchestration
 - evidence 입력 기반 기관 사업 방향 signal 요약
 - evidence 입력 기반 기관 개선 과제 signal 요약
 - 첨부파일, 전형 단계, NCS 매핑 후보 구조화
@@ -55,6 +56,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 | `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
 | `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
 | `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
+| `analyze_public_job_query` | 구현됨 | `query`, `institution_name`, `keyword`, `analysis_depth`를 받아 공고 검색, 상세 조회, 준비 리포트 흐름을 한 응답으로 묶고 검색 시도와 다음 액션을 반환한다. |
 | `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`, `evidence`, `signals`를 받아 `strategy_signals`와 `verification_notes`를 반환한다. |
 | `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`, `evidence`, `signals`를 받아 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. |
 | `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
