@@ -28,7 +28,7 @@
 
 ## 예상 도구
 
-초기 설계 도구는 `docs/tool-design.md`에 정리되어 있습니다.
+초기 설계 도구는 `docs/tool-design/index.md`에 정리되어 있습니다.
 
 우선 구현 후보:
 
@@ -65,7 +65,15 @@ python -m ruff check .
 kr-gov-job-mcp/
   docs/
     proposal.md
-    tool-design.md
+    tool-design/
+      index.md
+      lookup-region-codes.md
+      search-public-jobs.md
+      fetch-job-detail.md
+      map-ncs-competencies.md
+      analyze-institution-strategy.md
+      analyze-institution-weakness.md
+      analyze-job-fit-report.md
     demo-scenario.md
     collector-layer.md
     collector-workflow.md
