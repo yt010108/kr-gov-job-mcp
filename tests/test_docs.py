@@ -22,6 +22,27 @@ def test_readme_links_collector_workflow_doc() -> None:
     assert "docs/collector-workflow.md" in text
 
 
+def test_source_data_erd_doc_covers_core_entities() -> None:
+    text = Path("docs/source-data-erd.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "erDiagram",
+        "RawSample",
+        "Institution",
+        "JobPosting",
+        "JobPostingAttachment",
+        "AlioDisclosureItem",
+        "DisclosureReport",
+        "DisclosureAttachment",
+        "EvidenceSource",
+        "disclosureNo",
+        "submissionNo",
+        "idx",
+        "NCS",
+    ]:
+        assert phrase in text
+
+
 def test_cleaneye_html_structure_doc_covers_parser_targets() -> None:
     text = Path("docs/cleaneye-html-structure.md").read_text(encoding="utf-8")
 
