@@ -22,6 +22,25 @@ def test_readme_links_collector_workflow_doc() -> None:
     assert "docs/collector-workflow.md" in text
 
 
+def test_job_alio_alio_b1020_linking_doc_covers_statuses() -> None:
+    text = Path("docs/job-alio-alio-b1020-linking.md").read_text(encoding="utf-8")
+
+    for phrase in [
+        "B1020",
+        "JobPostingSourceLink",
+        "exact_match",
+        "strong_candidate",
+        "needs_review",
+        "source_only_job_alio",
+        "source_only_alio",
+        "conflict",
+        "EvidenceSource",
+        "pblntInstCd",
+        "apbaId",
+    ]:
+        assert phrase in text
+
+
 def test_source_data_erd_doc_covers_core_entities() -> None:
     text = Path("docs/source-data-erd.md").read_text(encoding="utf-8")
 
