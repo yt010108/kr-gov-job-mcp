@@ -38,7 +38,7 @@ python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
 ```
 
-실제 KISA 기준 MVP 데모 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
+현재 MVP 데모 흐름은 `docs/demo-scenario.md`, 실제 KISA 기준 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
 
 | 도구 | 상태 | 간략 설명 |
 | --- | --- | --- |
@@ -130,7 +130,7 @@ kr-gov-job-mcp/
     cleaneye-html-structure.md
   examples/
     kisa-demo-input.json
-    kisa-demo-output.md
+    kisa-demo-template.md
     kisa-real-demo-output.md
     raw-data-inventory.json
   src/
