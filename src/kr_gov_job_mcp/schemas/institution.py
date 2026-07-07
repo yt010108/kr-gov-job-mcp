@@ -68,7 +68,16 @@ class InstitutionSignalCandidate(BaseModel):
 class InstitutionStrategySignal(BaseModel):
     category: InstitutionStrategySignalCategory
     summary: str
+    strategy_type: str | None = None
+    priority: int | None = None
+    confidence: Literal["low", "medium", "high"] = "medium"
+    source_reason: str | None = None
     job_connection: str | None = None
+    job_relevance: str | None = None
+    interview_talking_point: str | None = None
+    resume_angle: str | None = None
+    keywords: list[str] = Field(default_factory=list)
+    needs_verification: bool = False
     evidence: list[InstitutionEvidence] = Field(default_factory=list)
 
 
