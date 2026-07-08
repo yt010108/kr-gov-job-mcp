@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Mapping
+from datetime import date
 from typing import Any
 
 from kr_gov_job_mcp.analysis import generate_job_fit_report
@@ -320,6 +321,10 @@ def _normalize_search_arguments(
 
     if kwargs["limit"] == 100:
         warnings.append("limit is capped at 100 for one Job-ALIO request.")
+    if kwargs["ongoing_only"] is False:
+        warnings.append(
+            "ongoing_only=false disables the current-open filter; results may include both open and closed postings."
+        )
 
     return kwargs, warnings, resolved_filters
 
@@ -358,6 +363,8 @@ def _serialize_search_result(
     return {
         "source": "job_alio",
         "query": dict(query),
+        "requested_filters": _requested_filter_metadata(query),
+        "filter_notes": _filter_notes(query),
         "resolved_filters": dict(resolved_filters),
         "page": result.page,
         "limit": result.limit,
@@ -419,6 +426,8 @@ def _serialize_job(job: JobAlioSummary) -> dict[str, Any]:
         "start_date": job.start_date,
         "end_date": job.end_date,
         "is_ongoing": job.is_ongoing,
+        "status_label": _job_status_label(job),
+        "status_source": _job_status_source(job),
         "employment_types": job.employment_types,
         "recruitment_type": job.recruitment_type,
         "headcount": job.headcount,
@@ -426,6 +435,69 @@ def _serialize_job(job: JobAlioSummary) -> dict[str, Any]:
         "source_url": job.source_url,
         "ncs_mappings": _ncs_mappings(job),
     }
+
+
+def _requested_filter_metadata(query: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "ongoing_only": query.get("ongoing_only", True),
+    }
+
+
+def _filter_notes(query: Mapping[str, Any]) -> list[dict[str, Any]]:
+    ongoing_only = query.get("ongoing_only", True)
+    if ongoing_only is False:
+        return [
+            {
+                "field": "ongoing_only",
+                "value": False,
+                "meaning": (
+                    "잡알리오의 현재 접수 중 필터를 끈 상태입니다. "
+                    "결과에는 진행 중 공고와 마감 공고가 함께 포함될 수 있습니다."
+                ),
+            }
+        ]
+    return [
+        {
+            "field": "ongoing_only",
+            "value": True,
+            "meaning": "잡알리오 기준 현재 접수 중인 공고만 요청합니다.",
+        }
+    ]
+
+
+def _job_status_label(job: JobAlioSummary) -> str:
+    if job.is_ongoing is True:
+        return "open"
+    if job.is_ongoing is False:
+        return "closed"
+
+    today = date.today()
+    start_date = _parse_iso_date(job.start_date)
+    end_date = _parse_iso_date(job.end_date)
+    if end_date is not None and today > end_date:
+        return "closed"
+    if start_date is not None and today < start_date:
+        return "upcoming"
+    if end_date is not None and today <= end_date:
+        return "open"
+    return "unknown"
+
+
+def _job_status_source(job: JobAlioSummary) -> str:
+    if job.is_ongoing is not None:
+        return "job_alio_ongoingYn"
+    if _parse_iso_date(job.start_date) is not None or _parse_iso_date(job.end_date) is not None:
+        return "date_range"
+    return "unknown"
+
+
+def _parse_iso_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
 
 
 def _serialize_attachment(attachment: JobAlioAttachment) -> dict[str, Any]:

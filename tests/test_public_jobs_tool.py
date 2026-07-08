@@ -65,6 +65,8 @@ def test_search_public_jobs_serializes_job_alio_results() -> None:
         "announcement_end_date": "20260731",
     }
     assert result["source"] == "job_alio"
+    assert result["requested_filters"] == {"ongoing_only": True}
+    assert result["filter_notes"][0]["field"] == "ongoing_only"
     assert result["total_count"] == 2
     assert result["result_count"] == 1
     assert result["jobs"][0] == {
@@ -77,6 +79,8 @@ def test_search_public_jobs_serializes_job_alio_results() -> None:
         "start_date": "2026-07-06",
         "end_date": "2026-07-20",
         "is_ongoing": True,
+        "status_label": "open",
+        "status_source": "job_alio_ongoingYn",
         "employment_types": ["무기계약직"],
         "recruitment_type": "신입",
         "headcount": 2,
@@ -121,6 +125,78 @@ def test_search_public_jobs_caps_limit() -> None:
 
     assert captured_kwargs["limit"] == 100
     assert result["warnings"] == ["limit is capped at 100 for one Job-ALIO request."]
+
+
+def test_search_public_jobs_ongoing_false_warns_about_mixed_statuses() -> None:
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        return JobAlioSearchResult(
+            page=kwargs["page"],
+            limit=kwargs["limit"],
+            total_count=1,
+            jobs=[
+                JobAlioSummary(
+                    id="old-1",
+                    title="마감 공고",
+                    end_date="2020-01-01",
+                    is_ongoing=False,
+                )
+            ],
+        )
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"keyword": "정보보호", "ongoing_only": False})
+
+    assert result["requested_filters"] == {"ongoing_only": False}
+    assert "results may include both open and closed postings" in result["warnings"][0]
+    assert "진행 중 공고와 마감 공고" in result["filter_notes"][0]["meaning"]
+    assert result["jobs"][0]["status_label"] == "closed"
+    assert result["jobs"][0]["status_source"] == "job_alio_ongoingYn"
+
+
+def test_search_public_jobs_status_label_falls_back_to_dates() -> None:
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        return JobAlioSearchResult(
+            page=kwargs["page"],
+            limit=kwargs["limit"],
+            total_count=3,
+            jobs=[
+                JobAlioSummary(
+                    id="closed-by-date",
+                    title="날짜상 마감",
+                    start_date="2000-01-01",
+                    end_date="2000-01-31",
+                    is_ongoing=None,
+                ),
+                JobAlioSummary(
+                    id="upcoming-by-date",
+                    title="날짜상 예정",
+                    start_date="2999-01-01",
+                    end_date="2999-01-31",
+                    is_ongoing=None,
+                ),
+                JobAlioSummary(
+                    id="unknown-date",
+                    title="날짜 없음",
+                    is_ongoing=None,
+                ),
+            ],
+        )
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    result = tool.handler({"ongoing_only": False})
+
+    assert [job["status_label"] for job in result["jobs"]] == [
+        "closed",
+        "upcoming",
+        "unknown",
+    ]
+    assert [job["status_source"] for job in result["jobs"]] == [
+        "date_range",
+        "date_range",
+        "unknown",
+    ]
 
 
 def test_search_public_jobs_resolves_region_name() -> None:
