@@ -13,6 +13,13 @@ from kr_gov_job_mcp.schemas.institution import (
 
 
 _STRATEGY_CATEGORIES = {"business_direction", "job_connection"}
+_SOURCE_CONTEXTS = {
+    "major_business": "주요사업",
+    "business_report": "사업보고서",
+    "homepage_business": "기관 홈페이지 사업 소개",
+    "policy_research": "연구/정책 자료",
+    "job_notice": "채용공고",
+}
 
 
 def generate_institution_strategy_report(
@@ -77,7 +84,7 @@ def _signals_from_candidates(
             InstitutionStrategySignal(
                 category=signal.category,
                 summary=summary,
-                job_connection=_job_connection(summary, job_family),
+                job_connection=_job_connection(job_family, signal.evidence),
                 evidence=signal.evidence,
             )
         )
@@ -91,20 +98,36 @@ def _signal_from_evidence(
 ) -> InstitutionStrategySignal:
     summary = evidence.excerpt or evidence.title
     return InstitutionStrategySignal(
-        category="business_direction",
+        category=_category_from_evidence(evidence),
         summary=summary,
-        job_connection=_job_connection(summary, job_family),
+        job_connection=_job_connection(job_family, [evidence]),
         evidence=[evidence],
     )
 
 
-def _job_connection(summary: str, job_family: str | None) -> str | None:
+def _category_from_evidence(evidence: InstitutionEvidence) -> str:
+    category = evidence.fields.get("signal_category")
+    if category in _STRATEGY_CATEGORIES:
+        return str(category)
+    return "business_direction"
+
+
+def _job_connection(job_family: str | None, evidence: list[InstitutionEvidence]) -> str | None:
     if job_family is None:
         return None
+    source_context = _source_context(evidence)
     return (
-        f"{job_family} 직무 준비에서는 이 사업 방향을 지원자의 경험, 기술 역량, "
-        "기관 이해 근거와 연결해 설명할 수 있습니다."
+        f"{job_family} 관점에서는 이 signal을 {source_context} 근거로 삼아 기관이 중점 추진하는 "
+        "문제, 필요한 역량, 지원 직무의 기여 가능성을 분리해 검토합니다."
     )
+
+
+def _source_context(evidence: list[InstitutionEvidence]) -> str:
+    for item in evidence:
+        source_hint = item.fields.get("source_type") or item.fields.get("source_category")
+        if isinstance(source_hint, str) and source_hint in _SOURCE_CONTEXTS:
+            return _SOURCE_CONTEXTS[source_hint]
+    return "원문 evidence"
 
 
 def _has_usable_text(evidence: InstitutionEvidence) -> bool:

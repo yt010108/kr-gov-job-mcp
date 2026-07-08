@@ -10,6 +10,10 @@ from kr_gov_job_mcp.analysis import (
     generate_institution_weakness_report,
     prepare_institution_analysis_input,
 )
+from kr_gov_job_mcp.analysis.alio_institution_context import (
+    AlioInstitutionContext,
+    fetch_alio_institution_context_sync,
+)
 from kr_gov_job_mcp.schemas.institution import (
     InstitutionEvidence,
     InstitutionSignalCandidate,
@@ -31,6 +35,19 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
         "job_family": {
             "type": "string",
             "description": "목표 직무군입니다. 예: 정보보호, 전산",
+        },
+        "alio_id": {
+            "type": "string",
+            "description": "ALIO 기관 코드(apbaId)입니다. 예: C1304",
+        },
+        "apba_id": {
+            "type": "string",
+            "description": "ALIO 기관 코드(apbaId)의 별칭입니다.",
+        },
+        "fetch_live_alio": {
+            "type": "boolean",
+            "default": True,
+            "description": "evidence/signals가 없을 때 ALIO 공시를 실시간 조회할지 여부입니다.",
         },
         "evidence": {
             "type": "array",
@@ -62,6 +79,19 @@ ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA: dict[str, Any] = {
             "type": "integer",
             "description": "분석 기준 연도입니다.",
         },
+        "alio_id": {
+            "type": "string",
+            "description": "ALIO 기관 코드(apbaId)입니다. 예: C1304",
+        },
+        "apba_id": {
+            "type": "string",
+            "description": "ALIO 기관 코드(apbaId)의 별칭입니다.",
+        },
+        "fetch_live_alio": {
+            "type": "boolean",
+            "default": True,
+            "description": "evidence/signals가 없을 때 ALIO 공시를 실시간 조회할지 여부입니다.",
+        },
         "evidence": {
             "type": "array",
             "items": {"type": "object"},
@@ -92,10 +122,23 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
         institution_name = _required_text(arguments.get("institution_name"), "institution_name")
         year = _to_int(arguments.get("year"), field="year")
         job_family = _to_text(arguments.get("job_family"))
+        alio_id = _to_text(arguments.get("alio_id") or arguments.get("apba_id"))
         evidence = _model_list(arguments.get("evidence"), InstitutionEvidence, field="evidence")
         signals = _model_list(arguments.get("signals"), InstitutionSignalCandidate, field="signals")
+        alio_context = _live_alio_context(
+            institution_name=institution_name,
+            alio_id=alio_id,
+            evidence=evidence,
+            signals=signals,
+            fetch_live=_to_bool(arguments.get("fetch_live_alio"), default=True),
+        )
+        evidence = [*evidence, *alio_context.evidence]
+        signals = [*signals, *alio_context.signals]
+        resolved_alio_id = alio_id or alio_context.institution_id
         analysis_input = prepare_institution_analysis_input(
             institution_name=institution_name,
+            alio_id=resolved_alio_id,
+            identity_candidates=alio_context.identity_candidates,
             evidence=evidence,
             signals=signals,
         )
@@ -110,9 +153,10 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
                 "institution_name": institution_name,
                 "year": year,
                 "job_family": job_family,
+                "alio_id": resolved_alio_id,
             },
             **report.model_dump(mode="json"),
-            "warnings": [],
+            "warnings": alio_context.warnings,
         }
 
     return ToolDefinition(
@@ -136,10 +180,23 @@ def create_analyze_institution_weakness_tool() -> ToolDefinition:
 
         institution_name = _required_text(arguments.get("institution_name"), "institution_name")
         year = _to_int(arguments.get("year"), field="year")
+        alio_id = _to_text(arguments.get("alio_id") or arguments.get("apba_id"))
         evidence = _model_list(arguments.get("evidence"), InstitutionEvidence, field="evidence")
         signals = _model_list(arguments.get("signals"), InstitutionSignalCandidate, field="signals")
+        alio_context = _live_alio_context(
+            institution_name=institution_name,
+            alio_id=alio_id,
+            evidence=evidence,
+            signals=signals,
+            fetch_live=_to_bool(arguments.get("fetch_live_alio"), default=True),
+        )
+        evidence = [*evidence, *alio_context.evidence]
+        signals = [*signals, *alio_context.signals]
+        resolved_alio_id = alio_id or alio_context.institution_id
         analysis_input = prepare_institution_analysis_input(
             institution_name=institution_name,
+            alio_id=resolved_alio_id,
+            identity_candidates=alio_context.identity_candidates,
             evidence=evidence,
             signals=signals,
         )
@@ -149,9 +206,10 @@ def create_analyze_institution_weakness_tool() -> ToolDefinition:
             "query": {
                 "institution_name": institution_name,
                 "year": year,
+                "alio_id": resolved_alio_id,
             },
             **report.model_dump(mode="json"),
-            "warnings": [],
+            "warnings": alio_context.warnings,
         }
 
     return ToolDefinition(
@@ -171,6 +229,22 @@ def _model_list(value: Any, model_type: type, *, field: str) -> list[Any]:
     if not isinstance(value, list):
         raise ValueError(f"expected list value for {field}: {value}")
     return [model_type.model_validate(item) for item in value]
+
+
+def _live_alio_context(
+    *,
+    institution_name: str,
+    alio_id: str | None,
+    evidence: list[InstitutionEvidence],
+    signals: list[InstitutionSignalCandidate],
+    fetch_live: bool,
+) -> AlioInstitutionContext:
+    if not fetch_live or evidence or signals:
+        return AlioInstitutionContext()
+    return fetch_alio_institution_context_sync(
+        institution_name=institution_name,
+        alio_id=alio_id,
+    )
 
 
 def _required_text(value: Any, field: str) -> str:
@@ -194,3 +268,16 @@ def _to_int(value: Any, *, field: str) -> int | None:
         return int(str(value))
     except ValueError as exc:
         raise ValueError(f"expected integer value for {field}: {value}") from exc
+
+
+def _to_bool(value: Any, *, default: bool) -> bool:
+    if value is None or value == "":
+        return default
+    if isinstance(value, bool):
+        return value
+    text = str(value).strip().lower()
+    if text in {"1", "true", "t", "yes", "y"}:
+        return True
+    if text in {"0", "false", "f", "no", "n"}:
+        return False
+    raise ValueError(f"expected boolean value: {value}")

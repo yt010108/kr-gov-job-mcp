@@ -1,5 +1,11 @@
 import pytest
 
+from kr_gov_job_mcp.analysis.alio_institution_context import AlioInstitutionContext
+from kr_gov_job_mcp.schemas.institution import (
+    InstitutionEvidence,
+    InstitutionIdentityCandidate,
+    InstitutionSignalCandidate,
+)
 from kr_gov_job_mcp.tools.institution_analysis import (
     create_analyze_institution_strategy_tool,
     create_analyze_institution_weakness_tool,
@@ -20,6 +26,7 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
                     "source_type": "alio_disclosure",
                     "url": "https://example.test/alio",
                     "excerpt": "디지털 신뢰 기반 조성과 정보보호 산업 지원",
+                    "fields": {"source_type": "major_business"},
                 }
             ],
         }
@@ -35,8 +42,8 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
             "category": "business_direction",
             "summary": "디지털 신뢰 기반 조성과 정보보호 산업 지원",
             "job_connection": (
-                "정보보호 직무 준비에서는 이 사업 방향을 지원자의 경험, 기술 역량, "
-                "기관 이해 근거와 연결해 설명할 수 있습니다."
+                "정보보호 관점에서는 이 signal을 주요사업 근거로 삼아 기관이 중점 추진하는 "
+                "문제, 필요한 역량, 지원 직무의 기여 가능성을 분리해 검토합니다."
             ),
             "evidence": [
                 {
@@ -46,7 +53,7 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
                     "source_id": None,
                     "collected_at": None,
                     "excerpt": "디지털 신뢰 기반 조성과 정보보호 산업 지원",
-                    "fields": {},
+                    "fields": {"source_type": "major_business"},
                 }
             ],
         }
@@ -57,7 +64,9 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
 def test_analyze_institution_strategy_keeps_missing_evidence_as_verification_notes() -> None:
     tool = create_analyze_institution_strategy_tool()
 
-    result = tool.handler({"institution_name": "한국인터넷진흥원", "year": 2026})
+    result = tool.handler(
+        {"institution_name": "한국인터넷진흥원", "year": 2026, "fetch_live_alio": False}
+    )
 
     assert result["strategy_signals"] == []
     fields = {note["field"] for note in result["verification_notes"]}
@@ -75,6 +84,61 @@ def test_analyze_institution_strategy_rejects_invalid_arguments() -> None:
 
     with pytest.raises(ValueError, match="expected integer value for year"):
         tool.handler({"institution_name": "한국인터넷진흥원", "year": "올해"})
+
+
+def test_analyze_institution_strategy_uses_live_alio_context(monkeypatch: pytest.MonkeyPatch) -> None:
+    tool = create_analyze_institution_strategy_tool()
+    evidence = InstitutionEvidence(
+        title="ALIO 주요사업",
+        source_type="alio_disclosure",
+        source_id="2026041303152259",
+        url="https://www.alio.go.kr/item/itemReport.do?seq=2026041303152259",
+        excerpt="가장 큰 규모는 수탁사업으로 2026년 예산 56,012백만원입니다.",
+        fields={"source_type": "major_business", "alio_item_no": "40"},
+    )
+
+    def fake_context(*, institution_name: str, alio_id: str | None) -> AlioInstitutionContext:
+        assert institution_name == "(재)한국보건의료정보원"
+        assert alio_id is None
+        return AlioInstitutionContext(
+            institution_id="C1304",
+            institution_name="(재)한국보건의료정보원",
+            identity_candidates=[
+                InstitutionIdentityCandidate(
+                    name="(재)한국보건의료정보원",
+                    source_type="alio_disclosure",
+                    source_id="C1304",
+                    code_type="apbaId",
+                    confidence="high",
+                )
+            ],
+            evidence=[evidence],
+            signals=[
+                InstitutionSignalCandidate(
+                    category="business_direction",
+                    title="ALIO 주요사업",
+                    summary=evidence.excerpt,
+                    evidence=[evidence],
+                )
+            ],
+        )
+
+    monkeypatch.setattr(
+        "kr_gov_job_mcp.tools.institution_analysis.fetch_alio_institution_context_sync",
+        fake_context,
+    )
+
+    result = tool.handler(
+        {
+            "institution_name": "(재)한국보건의료정보원",
+            "year": 2026,
+            "job_family": "보건의료정보",
+        }
+    )
+
+    assert result["query"]["alio_id"] == "C1304"
+    assert result["strategy_signals"][0]["summary"] == evidence.excerpt
+    assert result["verification_notes"] == []
 
 
 def test_analyze_institution_weakness_returns_careful_evidence_backed_signal() -> None:
@@ -108,13 +172,41 @@ def test_analyze_institution_weakness_returns_careful_evidence_backed_signal() -
     assert result["weakness_signals"][0]["category"] == "improvement_task"
     assert result["weakness_signals"][0]["summary"] == "보안 운영 체계 고도화 필요"
     assert "단정적으로 비판하지 않고" in result["weakness_signals"][0]["careful_wording"]
-    assert "기여 포인트" in result["weakness_signals"][0]["applicant_connection"]
+    assert "호출 측 LLM" in result["weakness_signals"][0]["applicant_connection"]
+
+
+def test_analyze_institution_weakness_classifies_evidence_source_context() -> None:
+    tool = create_analyze_institution_weakness_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "year": 2026,
+            "evidence": [
+                {
+                    "title": "경영평가 지적사항",
+                    "source_type": "alio_disclosure",
+                    "url": "https://example.test/evaluation",
+                    "excerpt": "정보보호 서비스 운영 관리 체계 개선 필요",
+                    "fields": {"source_type": "management_evaluation"},
+                }
+            ],
+        }
+    )
+
+    signal = result["weakness_signals"][0]
+    assert signal["category"] == "management_evaluation"
+    assert signal["summary"] == "정보보호 서비스 운영 관리 체계 개선 필요"
+    assert "평가 의견" in signal["careful_wording"]
+    assert signal["evidence"][0]["fields"] == {"source_type": "management_evaluation"}
 
 
 def test_analyze_institution_weakness_keeps_missing_evidence_as_verification_notes() -> None:
     tool = create_analyze_institution_weakness_tool()
 
-    result = tool.handler({"institution_name": "한국인터넷진흥원", "year": 2026})
+    result = tool.handler(
+        {"institution_name": "한국인터넷진흥원", "year": 2026, "fetch_live_alio": False}
+    )
 
     assert result["weakness_signals"] == []
     fields = {note["field"] for note in result["verification_notes"]}

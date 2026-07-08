@@ -42,6 +42,65 @@ def test_server_call_tool_command_outputs_result(capsys) -> None:
     assert json.loads(captured.out)["status"] == "ok"
 
 
+def test_server_cli_calls_institution_analysis_without_evidence(capsys) -> None:
+    exit_code = main(
+        [
+            "--call-tool",
+            "analyze_institution_strategy",
+            "--input",
+            json.dumps(
+                {
+                    "institution_name": "한국인터넷진흥원",
+                    "year": 2026,
+                    "job_family": "정보보호",
+                    "fetch_live_alio": False,
+                },
+                ensure_ascii=False,
+            ),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    payload = json.loads(captured.out)
+    assert payload["strategy_signals"] == []
+    assert {note["field"] for note in payload["verification_notes"]}.issuperset(
+        {"identity_candidates", "evidence", "strategy_signals"}
+    )
+
+
+def test_server_cli_calls_institution_weakness_with_evidence(capsys) -> None:
+    exit_code = main(
+        [
+            "--call-tool",
+            "analyze_institution_weakness",
+            "--input",
+            json.dumps(
+                {
+                    "institution_name": "한국인터넷진흥원",
+                    "year": 2026,
+                    "evidence": [
+                        {
+                            "title": "국회 지적사항",
+                            "source_type": "alio_disclosure",
+                            "url": "https://example.test/audit",
+                            "excerpt": "정보보호 서비스 운영 체계의 개선 필요성이 지적되었다.",
+                            "fields": {"source_type": "audit_point"},
+                        }
+                    ],
+                },
+                ensure_ascii=False,
+            ),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    payload = json.loads(captured.out)
+    assert payload["weakness_signals"][0]["category"] == "improvement_task"
+    assert payload["weakness_signals"][0]["evidence"][0]["fields"] == {"source_type": "audit_point"}
+
+
 def test_server_call_tool_rejects_non_object_input(capsys) -> None:
     exit_code = main(["--call-tool", "health_check", "--input", "[]"])
 
