@@ -25,6 +25,9 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+kr_gov_job_mcp = ["resources/*.csv"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
