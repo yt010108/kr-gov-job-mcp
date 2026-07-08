@@ -185,6 +185,7 @@ python -m kr_gov_job_mcp.server --list-tools
 python -m kr_gov_job_mcp.server --stdio
 python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"query\":\"서울특별시\"}"
+python -m kr_gov_job_mcp.server --call-tool normalize_job_role --input "{\"query\":\"KISA 정보보안 면접준비\",\"target_role\":\"정보보안\",\"known_skills\":[\"웹 보안\"]}"
 python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
 python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
@@ -200,6 +201,7 @@ python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --inpu
 | `health_check` | 구현됨 | 서버 scaffold 상태, 서비스명, 버전, 등록 도구 수를 반환한다. |
 | `lookup_region_codes` | 구현됨 | `query`로 받은 지역명 또는 Job-ALIO 지역 코드를 조회해 `matches[].code`, `matches[].name`, `matches[].aliases`를 반환한다. 예: `서울특별시` → `R3010`. |
 | `lookup_job_alio_codes` | 구현됨 | 기관명, 기관 약칭, NCS명, 직무 키워드로 Job-ALIO 검색 후보를 조회한다. 기관명은 ALIO 기관 코드 확인에도 재사용한다. |
+| `normalize_job_role` | 구현됨 MVP | 정보보안/정보보호 계열 직무 표현을 취업 준비 맥락의 `정보통신` 직무군으로 정규화하고 원문 직무명을 보존한다. |
 | `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
 | `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
 | `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |

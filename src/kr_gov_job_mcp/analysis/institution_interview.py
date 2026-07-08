@@ -17,7 +17,7 @@ from kr_gov_job_mcp.schemas.institution import (
 )
 
 
-DEFAULT_FOCUS_AREAS = ("지원동기", "기관이해", "개선과제", "입사후포부")
+DEFAULT_FOCUS_AREAS = ("지원동기", "기관이해", "직무역량", "입사후포부", "상황면접")
 MATERIALS_TO_CHECK = ["주요사업", "연구/정책 자료", "국회 지적사항"]
 EXCLUDED_FOR_NOW = ["감사/경영평가 자료", "채용공고", "직무기술서", "NCS 정보"]
 
@@ -32,8 +32,12 @@ _FOCUS_ALIASES = {
     "개선 과제": "개선과제",
     "입사후포부": "입사후포부",
     "입사 후 포부": "입사후포부",
+    "직무역량": "직무 관심도",
+    "직무 역량": "직무 관심도",
     "직무 관심도": "직무 관심도",
     "전문성 어필": "전문성 어필",
+    "상황면접": "상황면접",
+    "상황 면접": "상황면접",
 }
 
 
@@ -117,7 +121,7 @@ def _build_card(
         return _improvement_card(institution_name, target_role, weakness_signals)
     if focus_area == "입사후포부":
         return _future_contribution_card(institution_name, target_role, strategy_signals)
-    if focus_area in {"직무 관심도", "전문성 어필"}:
+    if focus_area in {"직무 관심도", "전문성 어필", "상황면접"}:
         return _professional_interest_card(focus_area, institution_name, target_role, strategy_signals)
     return _unsupported_focus_card(focus_area)
 
@@ -353,7 +357,10 @@ def _unsupported_focus_card(
             InstitutionVerificationNote(
                 field=f"focus_areas.{focus_area}",
                 reason=f"{focus_area}는 이번 MVP의 기본 카드 유형이 아닙니다.",
-                suggested_check="지원동기, 기관이해, 개선과제, 입사후포부, 직무 관심도, 전문성 어필 중 하나로 지정합니다.",
+                suggested_check=(
+                    "지원동기, 기관이해, 직무역량, 입사후포부, 상황면접, 개선과제, 전문성 어필 중 "
+                    "하나로 지정합니다."
+                ),
             )
         ],
     )

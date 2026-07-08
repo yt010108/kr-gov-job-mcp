@@ -15,6 +15,7 @@ from kr_gov_job_mcp.tools.institution_analysis import (
     create_analyze_institution_weakness_tool,
     create_prepare_institution_interview_tool,
 )
+from kr_gov_job_mcp.tools.job_role import create_normalize_job_role_tool
 from kr_gov_job_mcp.tools.public_jobs import (
     create_analyze_job_fit_report_tool,
     create_fetch_job_detail_tool,
@@ -44,6 +45,7 @@ def create_default_registry() -> ToolRegistry:
     )
     registry.register(create_lookup_job_alio_codes_tool())
     registry.register(create_lookup_region_codes_tool())
+    registry.register(create_normalize_job_role_tool())
     registry.register(create_analyze_institution_strategy_tool())
     registry.register(create_analyze_institution_weakness_tool())
     registry.register(create_prepare_institution_interview_tool())

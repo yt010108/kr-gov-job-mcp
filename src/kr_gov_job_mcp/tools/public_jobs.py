@@ -143,7 +143,11 @@ ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
         },
         "target_role": {
             "type": "string",
-            "description": "지원자가 목표로 하는 직무 또는 준비 방향입니다.",
+            "description": (
+                "지원자가 목표로 하는 정규화된 직무 또는 준비 방향입니다. `정보보안`, `정보보호`, "
+                "`침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현은 먼저 "
+                "`normalize_job_role`로 정규화한 뒤 `정보통신`처럼 안전한 채용/NCS 직무군을 입력합니다."
+            ),
         },
         "known_skills": {
             "type": "array",
@@ -269,7 +273,9 @@ def create_analyze_job_fit_report_tool(
         name="analyze_job_fit_report",
         description=(
             "잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, 근거 링크, "
-            "검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다."
+            "검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다. `정보보안`, `정보보호`, "
+            "`침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현이 target_role, "
+            "known_skills, preparation_notes에 있으면 먼저 `normalize_job_role`을 호출합니다."
         ),
         input_schema=ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA,
         handler=handler,

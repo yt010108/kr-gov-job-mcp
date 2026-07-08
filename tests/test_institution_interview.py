@@ -84,7 +84,13 @@ def test_generate_institution_interview_report_keeps_missing_evidence_as_notes()
         target_role="정보보호",
     )
 
-    assert len(report.interview_cards) == 4
+    assert [card.question_type for card in report.interview_cards] == [
+        "지원동기",
+        "기관 현안 이해",
+        "직무 관심도",
+        "입사후포부",
+        "상황면접",
+    ]
     assert all(card.evidence == [] for card in report.interview_cards)
     assert all(card.sample_answer_sentence is None for card in report.interview_cards)
     note_fields = {note.field for note in report.verification_notes}
@@ -92,4 +98,5 @@ def test_generate_institution_interview_report_keeps_missing_evidence_as_notes()
     assert "strategy_signals" in note_fields
     assert "weakness_signals" in note_fields
     assert "interview_cards.지원동기.evidence" in note_fields
-    assert "interview_cards.개선과제.evidence" in note_fields
+    assert "interview_cards.직무 관심도.evidence" in note_fields
+    assert "interview_cards.상황면접.evidence" in note_fields

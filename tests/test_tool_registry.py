@@ -16,6 +16,7 @@ def test_default_registry_exposes_health_check() -> None:
         "health_check",
         "lookup_job_alio_codes",
         "lookup_region_codes",
+        "normalize_job_role",
         "prepare_institution_interview",
         "search_public_jobs",
     ]
@@ -37,6 +38,7 @@ def test_default_registry_exposes_health_check() -> None:
     assert tools[6]["input_schema"]["additionalProperties"] is False
     assert tools[7]["input_schema"]["additionalProperties"] is False
     assert tools[8]["input_schema"]["additionalProperties"] is False
+    assert tools[9]["input_schema"]["additionalProperties"] is False
 
 
 def test_health_check_returns_server_metadata() -> None:
@@ -48,7 +50,7 @@ def test_health_check_returns_server_metadata() -> None:
         "status": "ok",
         "service": "kr-gov-job-mcp",
         "version": "0.1.0",
-        "registered_tools": 9,
+        "registered_tools": 10,
     }
 
 

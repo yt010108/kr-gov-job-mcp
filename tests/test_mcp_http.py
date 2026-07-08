@@ -57,7 +57,7 @@ def test_mcp_http_health_endpoint() -> None:
 
     assert status == 200
     assert payload["status"] == "ok"
-    assert payload["registered_tools"] == 9
+    assert payload["registered_tools"] == 10
 
 
 def test_mcp_http_initialize_and_list_tools() -> None:
@@ -91,6 +91,7 @@ def test_mcp_http_initialize_and_list_tools() -> None:
     assert list_status == 200
     tool_names = {tool["name"] for tool in list_payload["result"]["tools"]}
     assert "lookup_region_codes" in tool_names
+    assert "normalize_job_role" in tool_names
     assert "search_public_jobs" in tool_names
 
 

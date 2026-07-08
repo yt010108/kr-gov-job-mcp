@@ -25,6 +25,8 @@
 ```
 
 `target_role`은 필수다. `job_family`는 `target_role` 별칭으로 받을 수 있다.
+`정보보안`, `정보보호`, `침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현은 먼저
+`normalize_job_role`로 `정보통신` 계열로 정규화한 뒤 호출한다. 원문 직무명은 `original_target_role`에 보존한다.
 
 `evidence`와 `signals`가 비어 있고 `fetch_live_alio`가 `true`면, 도구는 먼저
 `lookup_job_alio_codes` 기반 기관명 resolver로 ALIO 기관 코드를 찾고 40/47/50 항목을 조회한다.
@@ -61,7 +63,13 @@
 live ALIO 조회:
 
 ```bash
-python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input '{"institution_name":"(재)한국보건의료정보원","target_role":"보건의료정보","year":2026,"focus_areas":["지원동기","기관이해","개선과제","입사후포부"]}'
+python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input '{"institution_name":"(재)한국보건의료정보원","target_role":"보건의료정보","year":2026,"focus_areas":["지원동기","기관이해","직무역량","입사후포부"]}'
+```
+
+보안 직무명 정규화 후 호출:
+
+```bash
+python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input '{"institution_name":"한국인터넷진흥원","alio_id":"C0399","target_role":"정보통신","job_family":"정보통신","original_target_role":"정보보안","year":2026,"fetch_live_alio":false,"focus_areas":["지원동기","기관이해","직무역량","입사후포부"]}'
 ```
 
 수동 evidence 기반 호출:

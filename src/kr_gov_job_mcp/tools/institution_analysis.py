@@ -121,11 +121,19 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
         },
         "target_role": {
             "type": "string",
-            "description": "지원자가 목표로 하는 직무 또는 직무군입니다. 예: 정보보호, 전산",
+            "description": (
+                "지원자가 목표로 하는 정규화된 직무 또는 직무군입니다. `정보보안`, `정보보호`, "
+                "`침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현은 먼저 "
+                "`normalize_job_role`로 정규화한 뒤 `정보통신`처럼 안전한 채용/NCS 직무군을 입력합니다."
+            ),
         },
         "job_family": {
             "type": "string",
-            "description": "target_role의 별칭입니다.",
+            "description": "target_role의 별칭입니다. 보안 직무 표현은 `normalize_job_role` 결과를 사용합니다.",
+        },
+        "original_target_role": {
+            "type": "string",
+            "description": "정규화 전 사용자가 입력한 원문 직무명입니다. 예: 정보보안, 정보보호",
         },
         "year": {
             "type": "integer",
@@ -134,7 +142,7 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
         "focus_areas": {
             "type": "array",
             "items": {"type": "string"},
-            "default": ["지원동기", "기관이해", "개선과제", "입사후포부"],
+            "default": ["지원동기", "기관이해", "직무역량", "입사후포부", "상황면접"],
             "description": "생성할 면접 카드 유형입니다.",
         },
         "alio_id": {
@@ -294,6 +302,7 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
             arguments.get("target_role") or arguments.get("job_family"),
             "target_role",
         )
+        original_target_role = _to_text(arguments.get("original_target_role"))
         year = _to_int(arguments.get("year"), field="year")
         focus_areas = _text_list(arguments.get("focus_areas"), field="focus_areas")
         alio_id = _to_text(arguments.get("alio_id") or arguments.get("apba_id"))
@@ -322,15 +331,18 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
             target_role=target_role,
             focus_areas=focus_areas or None,
         )
+        query: dict[str, Any] = {
+            "institution_name": institution_name,
+            "year": year,
+            "target_role": target_role,
+            "focus_areas": focus_areas or None,
+            "alio_id": resolved_alio_id,
+        }
+        if original_target_role:
+            query["original_target_role"] = original_target_role
         return {
             "source": "institution_interview",
-            "query": {
-                "institution_name": institution_name,
-                "year": year,
-                "target_role": target_role,
-                "focus_areas": focus_areas or None,
-                "alio_id": resolved_alio_id,
-            },
+            "query": query,
             **report.model_dump(mode="json"),
             "warnings": alio_context.warnings,
         }
@@ -338,7 +350,9 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
     return ToolDefinition(
         name="prepare_institution_interview",
         description=(
-            "기관명과 목표 직무를 받아 주요사업, 연구/정책 자료, 국회 지적사항 근거를 면접 질문 카드로 변환합니다."
+            "기관명과 목표 직무를 받아 주요사업, 연구/정책 자료, 국회 지적사항 근거를 면접 질문 카드로 "
+            "변환합니다. `정보보안`, `정보보호`, `침해대응`, `취약점 분석`, `개인정보보호` 같은 "
+            "보안 직무 표현은 먼저 `normalize_job_role`로 `정보통신` 계열로 정규화한 뒤 호출합니다."
         ),
         input_schema=PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA,
         handler=handler,

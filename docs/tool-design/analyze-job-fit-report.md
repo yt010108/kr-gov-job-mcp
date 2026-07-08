@@ -16,6 +16,10 @@ NCS/KSA 상세 분석과 기관 signal 자동 연결은 아직 planned 단계다
 | `known_skills` | 지원자가 이미 보유한 기술, 자격, 경험 목록 |
 | `preparation_notes` | 지원자 준비 상태에 대한 추가 메모 |
 
+`정보보안`, `정보보호`, `침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현이
+`target_role`, `known_skills`, `preparation_notes`에 포함되면 먼저 `normalize_job_role`을 호출한다.
+이후 `normalized_target_role`을 `target_role`로 넘기고, 원문 직무 관점은 리포트 해석이나 메모에 보존한다.
+
 ## 출력
 
 | field | 한국어 설명 |
@@ -51,3 +55,4 @@ NCS/KSA 상세 분석과 기관 signal 자동 연결은 아직 planned 단계다
 - 공고, NCS, 기관 signal은 evidence가 연결된 항목만 강한 주장으로 사용한다.
 - 부족한 자료는 `verification_notes` 또는 `institution_materials_to_check`로 남긴다.
 - 리포트는 지원자가 다음에 확인하거나 준비해야 할 항목을 우선순위로 정리한다.
+- 보안 직무 관련 출력은 면접/적합도 준비 범위로 제한하며 공격 절차, 페이로드, 무단 접근 방법은 다루지 않는다.

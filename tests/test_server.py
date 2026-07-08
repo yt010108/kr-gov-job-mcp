@@ -11,7 +11,7 @@ def test_server_health_command_outputs_json(capsys) -> None:
     captured = capsys.readouterr()
     assert exit_code == 0
     assert json.loads(captured.out) == {
-        "registered_tools": 9,
+        "registered_tools": 10,
         "service": "kr-gov-job-mcp",
         "status": "ok",
         "version": "0.1.0",
@@ -31,8 +31,9 @@ def test_server_list_tools_command_outputs_registered_tools(capsys) -> None:
     assert payload["tools"][4]["name"] == "health_check"
     assert payload["tools"][5]["name"] == "lookup_job_alio_codes"
     assert payload["tools"][6]["name"] == "lookup_region_codes"
-    assert payload["tools"][7]["name"] == "prepare_institution_interview"
-    assert payload["tools"][8]["name"] == "search_public_jobs"
+    assert payload["tools"][7]["name"] == "normalize_job_role"
+    assert payload["tools"][8]["name"] == "prepare_institution_interview"
+    assert payload["tools"][9]["name"] == "search_public_jobs"
 
 
 def test_server_call_tool_command_outputs_result(capsys) -> None:
@@ -68,6 +69,36 @@ def test_server_cli_calls_institution_analysis_without_evidence(capsys) -> None:
     assert {note["field"] for note in payload["verification_notes"]}.issuperset(
         {"identity_candidates", "evidence", "strategy_signals"}
     )
+
+
+def test_server_cli_calls_normalize_job_role(capsys) -> None:
+    exit_code = main(
+        [
+            "--call-tool",
+            "normalize_job_role",
+            "--input",
+            json.dumps(
+                {
+                    "query": "KISA 정보보안 면접준비",
+                    "target_role": "정보보안",
+                    "known_skills": ["웹 보안"],
+                },
+                ensure_ascii=False,
+            ),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    payload = json.loads(captured.out)
+    assert payload["normalized_job_family"] == "정보통신"
+    assert payload["original_target_role"] == "정보보안"
+    assert payload["is_security_role"] is True
+    assert payload["recommended_next_arguments"] == {
+        "job_family": "정보통신",
+        "original_target_role": "정보보안",
+        "target_role": "정보통신",
+    }
 
 
 def test_server_cli_calls_institution_weakness_with_evidence(capsys) -> None:

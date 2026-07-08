@@ -57,6 +57,7 @@ def test_mcp_stdio_initialize_and_list_tools() -> None:
         "analyze_job_fit_report",
         "analyze_institution_strategy",
         "analyze_institution_weakness",
+        "normalize_job_role",
         "prepare_institution_interview",
     }
     lookup = next(tool for tool in tools if tool["name"] == "lookup_region_codes")

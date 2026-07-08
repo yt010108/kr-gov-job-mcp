@@ -51,6 +51,42 @@ def test_prepare_institution_interview_returns_cards_from_manual_signals() -> No
     assert result["warnings"] == []
 
 
+def test_prepare_institution_interview_accepts_normalized_security_role() -> None:
+    tool = create_prepare_institution_interview_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "alio_id": "C0399",
+            "target_role": "정보통신",
+            "job_family": "정보통신",
+            "original_target_role": "정보보안",
+            "year": 2026,
+            "fetch_live_alio": False,
+            "focus_areas": ["지원동기", "기관이해", "직무역량", "입사후포부"],
+        }
+    )
+
+    assert tool.input_schema["properties"]["focus_areas"]["default"] == [
+        "지원동기",
+        "기관이해",
+        "직무역량",
+        "입사후포부",
+        "상황면접",
+    ]
+    assert result["query"]["target_role"] == "정보통신"
+    assert result["query"]["original_target_role"] == "정보보안"
+    assert [card["question_type"] for card in result["interview_cards"]] == [
+        "지원동기",
+        "기관 현안 이해",
+        "직무 관심도",
+        "입사후포부",
+    ]
+    serialized = str(result).lower()
+    assert "exploit" not in serialized
+    assert "payload" not in serialized
+
+
 def test_prepare_institution_interview_uses_live_alio_context(monkeypatch) -> None:
     major_business = InstitutionEvidence(
         title="ALIO 주요사업",
