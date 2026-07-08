@@ -2,8 +2,12 @@
 
 ## 구현 상태
 
-MVP MCP tool 구현됨. 현재는 입력으로 받은 개선 과제 evidence와 signal 후보만 사용한다.
-ALIO/Cleaneye 자동 수집은 아직 별도 단계다.
+MVP MCP tool 구현됨. 입력 evidence와 signal 후보가 없으면 `lookup_job_alio_codes`와 같은
+기관명 resolver로 기관 코드를 먼저 확인한 뒤 ALIO 항목별 공시를 실시간 조회해 개선 과제 signal을
+만든다. Cleaneye 자동 수집은 아직 별도 단계다.
+
+이 도구는 `47-1 국회지적사항`을 근거로 “기관의 부족한 점” 질문에 연결할 수 있는 개선 과제를
+구조화한다. 감사원/주무부처 지적사항은 현재 수집 범위에서 제외한다.
 
 ## 입력
 
@@ -11,6 +15,9 @@ ALIO/Cleaneye 자동 수집은 아직 별도 단계다.
 | --- | --- |
 | `institution_name` | 분석 대상 기관명 |
 | `year` | 분석 기준 연도 |
+| `alio_id` | ALIO/Job-ALIO 기관 코드. 기관명 resolver 결과를 우회하고 직접 지정할 때 사용 |
+| `apba_id` | `alio_id` 별칭 |
+| `fetch_live_alio` | evidence/signals가 없을 때 ALIO를 실시간 조회할지 여부. 기본값 `true` |
 | `evidence` | ALIO, Cleaneye, 수동 입력에서 온 개선 과제 근거 후보 목록 |
 | `signals` | 사전에 추출된 개선 과제 signal 후보 목록 |
 
@@ -32,15 +39,52 @@ ALIO/Cleaneye 자동 수집은 아직 별도 단계다.
 | `verification_notes` | 근거 부족 또는 확인 필요 사항 |
 | `warnings` | 호출 경고 목록 |
 
+## CLI 점검 예시
+
+도구 등록 확인:
+
+```bash
+python -m kr_gov_job_mcp.server --list-tools
+```
+
+기관명만 넣어 ALIO를 실시간 조회하는 경우:
+
+```bash
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input '{"institution_name":"(재)한국보건의료정보원","year":2026}'
+```
+
+이 호출은 기관명 resolver로 `alio_id`를 찾고, `47-1 국회지적사항`을 조회해
+`weakness_signals`를 반환해야 한다.
+
+ALIO 조회를 끄고 evidence 부족 안내만 확인하는 경우:
+
+```bash
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input '{"institution_name":"한국인터넷진흥원","year":2026,"fetch_live_alio":false}'
+```
+
+이 호출은 `weakness_signals`를 비워 두고 `verification_notes`에 확인 필요 항목을 반환해야 한다.
+
+evidence가 있는 경우:
+
+```bash
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input '{"institution_name":"한국인터넷진흥원","year":2026,"evidence":[{"title":"국회 지적사항","source_type":"alio_disclosure","url":"https://example.test/audit","excerpt":"정보보호 서비스 운영 체계의 개선 필요성이 지적되었다.","fields":{"source_type":"audit_point"}}]}'
+```
+
+이 호출은 `weakness_signals[].category`, `summary`, `careful_wording`, `applicant_connection`,
+`evidence`를 반환해야 한다. `fields.source_type`은 `audit_point`, `management_evaluation`,
+`financial`, `operational`처럼 후속 LLM이 면접 질문 유형을 나눌 때 참고할 수 있는 source 구분값으로
+보존한다.
+
 ## 데이터 소스
 
 - ALIO 국회 지적사항
 - ALIO 감사/평가 후보 항목
 - Cleaneye 경영평가, 부채, 외부기관 감사결과
-- 현재 tool은 위 자료를 직접 수집하지 않고, 입력으로 전달된 `evidence`와 `signals`만 사용한다.
+- 입력으로 전달된 `evidence`와 `signals`가 있으면 이를 우선 사용하고, 없으면 기관명 resolver와 ALIO `47-1`을 실시간 조회한다.
 
 ## 처리 원칙
 
 - 국회 지적사항, 감사결과, 경영평가성 자료는 원문 근거 링크와 함께만 사용한다.
 - 개선 과제는 지원자가 자기소개서나 면접에서 활용 가능한 표현으로 바꾸되, 원문 의미를 과장하지 않는다.
 - 현재 ALIO `47-2`, `47-3`은 수집 범위에서 제외되어 있으므로 근거로 쓰지 않는다.
+- `applicant_connection`은 지원자 맞춤 답변이 아니라, 후속 면접 준비 단계가 재가공할 때 지켜야 할 연결 기준이다.
