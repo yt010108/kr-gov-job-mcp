@@ -4,66 +4,6 @@
 
 채용공고, 직무기술서, NCS 역량, ALIO/클린아이 기관 분석을 근거 기반으로 연결하는 것을 목표로 합니다.
 
-## 현재 MVP 상태
-
-확인 기준은 `python -m kr_gov_job_mcp.server --list-tools`로 등록되는 기본 도구입니다.
-
-### 현재 구현됨
-
-- 서버 상태 확인
-- MCP stdio 서버 실행
-- MCP Streamable HTTP POST 엔드포인트 실행
-- Job-ALIO 지역 코드 조회
-- Job-ALIO 기관명/NCS 코드 조회
-- Job-ALIO 공공기관 채용공고 검색
-- Job-ALIO 공고 상세 조회
-- Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
-- evidence 입력 기반 기관 사업 방향 signal 요약
-- evidence 입력 기반 기관 개선 과제 signal 요약
-- ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 면접 카드 생성
-- 첨부파일, 전형 단계, NCS 매핑 후보 구조화
-
-### 아직 미구현
-
-- MCP SSE GET stream, resumable session 같은 고급 HTTP transport 기능
-- NCS/KSA 상세 역량 분석
-- 클린아이 자료 자동 수집 기반 기관 분석
-- 채용공고와 기관 면접 카드까지 연결하는 흐름
-
-### 다음 MVP 목표
-
-공고 검색, 상세 조회, 준비 항목 리포트 생성까지 한 번에 확인 가능한 세로 흐름을 데모 문서와 실제 출력 예시로 고정합니다.
-
-현재 실행 가능한 명령:
-
-```powershell
-python -m kr_gov_job_mcp.server --list-tools
-python -m kr_gov_job_mcp.server --stdio
-python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
-python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"query\":\"서울특별시\"}"
-python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
-python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
-python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
-python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input "{\"institution_name\":\"(재)한국보건의료정보원\",\"target_role\":\"보건의료정보\",\"year\":2026}"
-```
-
-현재 MVP 데모 흐름은 `docs/demo-scenario.md`, 실제 KISA 기준 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
-
-| 도구 | 상태 | 간략 설명 |
-| --- | --- | --- |
-| `health_check` | 구현됨 | 서버 scaffold 상태, 서비스명, 버전, 등록 도구 수를 반환한다. |
-| `lookup_region_codes` | 구현됨 | `query`로 받은 지역명 또는 Job-ALIO 지역 코드를 조회해 `matches[].code`, `matches[].name`, `matches[].aliases`를 반환한다. 예: `서울특별시` → `R3010`. |
-| `lookup_job_alio_codes` | 구현됨 | 기관명, 기관 약칭, NCS명, 직무 키워드로 Job-ALIO 검색 후보를 조회한다. 기관명은 ALIO 기관 코드 확인에도 재사용한다. |
-| `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
-| `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
-| `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
-| `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`를 받아 ALIO 주요사업과 연구/정책 자료 기반 `strategy_signals`를 반환한다. `evidence`, `signals` 수동 입력도 지원한다. |
-| `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`를 받아 ALIO 국회 지적사항 기반 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. `evidence`, `signals` 수동 입력도 지원한다. |
-| `prepare_institution_interview` | 구현됨 MVP | `institution_name`, `target_role`, `focus_areas`를 받아 ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 `interview_cards`를 반환한다. |
-| `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
-
 ## 문제 정의
 
 공공기관 취업 준비자는 보통 다음 자료를 따로 확인해야 합니다.
@@ -207,6 +147,66 @@ kr-gov-job-mcp/
   .gitignore
   pyproject.toml
 ```
+
+## 현재 MVP 상태
+
+확인 기준은 `python -m kr_gov_job_mcp.server --list-tools`로 등록되는 기본 도구입니다.
+
+### 현재 구현됨
+
+- 서버 상태 확인
+- MCP stdio 서버 실행
+- MCP Streamable HTTP POST 엔드포인트 실행
+- Job-ALIO 지역 코드 조회
+- Job-ALIO 기관명/NCS 코드 조회
+- Job-ALIO 공공기관 채용공고 검색
+- Job-ALIO 공고 상세 조회
+- Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
+- evidence 입력 기반 기관 사업 방향 signal 요약
+- evidence 입력 기반 기관 개선 과제 signal 요약
+- ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 면접 카드 생성
+- 첨부파일, 전형 단계, NCS 매핑 후보 구조화
+
+### 아직 미구현
+
+- MCP SSE GET stream, resumable session 같은 고급 HTTP transport 기능
+- NCS/KSA 상세 역량 분석
+- 클린아이 자료 자동 수집 기반 기관 분석
+- 채용공고와 기관 면접 카드까지 연결하는 흐름
+
+### 다음 MVP 목표
+
+공고 검색, 상세 조회, 준비 항목 리포트 생성까지 한 번에 확인 가능한 세로 흐름을 데모 문서와 실제 출력 예시로 고정합니다.
+
+현재 실행 가능한 명령:
+
+```powershell
+python -m kr_gov_job_mcp.server --list-tools
+python -m kr_gov_job_mcp.server --stdio
+python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
+python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"query\":\"서울특별시\"}"
+python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
+python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
+python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
+python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input "{\"institution_name\":\"(재)한국보건의료정보원\",\"target_role\":\"보건의료정보\",\"year\":2026}"
+```
+
+현재 MVP 데모 흐름은 `docs/demo-scenario.md`, 실제 KISA 기준 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
+
+| 도구 | 상태 | 간략 설명 |
+| --- | --- | --- |
+| `health_check` | 구현됨 | 서버 scaffold 상태, 서비스명, 버전, 등록 도구 수를 반환한다. |
+| `lookup_region_codes` | 구현됨 | `query`로 받은 지역명 또는 Job-ALIO 지역 코드를 조회해 `matches[].code`, `matches[].name`, `matches[].aliases`를 반환한다. 예: `서울특별시` → `R3010`. |
+| `lookup_job_alio_codes` | 구현됨 | 기관명, 기관 약칭, NCS명, 직무 키워드로 Job-ALIO 검색 후보를 조회한다. 기관명은 ALIO 기관 코드 확인에도 재사용한다. |
+| `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
+| `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
+| `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
+| `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`를 받아 ALIO 주요사업과 연구/정책 자료 기반 `strategy_signals`를 반환한다. `evidence`, `signals` 수동 입력도 지원한다. |
+| `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`를 받아 ALIO 국회 지적사항 기반 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. `evidence`, `signals` 수동 입력도 지원한다. |
+| `prepare_institution_interview` | 구현됨 MVP | `institution_name`, `target_role`, `focus_areas`를 받아 ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 `interview_cards`를 반환한다. |
+| `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
 
 ## 개발 시작
 
