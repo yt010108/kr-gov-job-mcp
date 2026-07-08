@@ -62,14 +62,20 @@ def create_lookup_job_alio_codes_tool() -> ToolDefinition:
             )
         elif code_type == "institution" and any(candidate.code is None for candidate, _score in matches):
             warnings.append(
-                "일부 기관명 후보는 기관코드가 확인되지 않아 search_public_jobs의 institution_code로 바로 사용할 수 없습니다."
+                "일부 기관명 후보는 기관코드가 확인되지 않아 search_public_jobs의 institution_code로 바로 사용할 수 없습니다. fallback_search.arguments.keyword로 기관명을 검색하세요."
             )
         return {
             "source": "job_alio",
             "code_type": code_type,
             "query": query,
             "result_count": len(matches),
-            "codes": [candidate.public_dict(score=score) for candidate, score in matches],
+            "codes": [
+                candidate.public_dict(
+                    score=score,
+                    keyword_fallback=code_type == "institution" and candidate.code is None,
+                )
+                for candidate, score in matches
+            ],
             "warnings": warnings,
         }
 
@@ -78,7 +84,8 @@ def create_lookup_job_alio_codes_tool() -> ToolDefinition:
         description=(
             "자연어 기관명, 기관 약칭, NCS명, 직무 키워드를 Job-ALIO 검색 후보로 "
             "조회합니다. NCS는 검색 필터 코드를 반환하고, 기관명은 코드가 확인된 후보와 "
-            "코드가 없는 표시명 후보를 함께 반환할 수 있습니다."
+            "코드가 없는 표시명 후보를 함께 반환할 수 있습니다. 코드가 없는 기관명 후보는 "
+            "`fallback_search`의 `keyword`로 검색을 이어갑니다."
         ),
         input_schema=LOOKUP_JOB_ALIO_CODES_INPUT_SCHEMA,
         handler=handler,

@@ -16,14 +16,21 @@ class JobAlioCodeCandidate:
     aliases: tuple[str, ...] = ()
     source: str = "job_alio_seed_table"
 
-    def public_dict(self, *, score: float) -> dict[str, Any]:
-        return {
+    def public_dict(self, *, score: float, keyword_fallback: bool = False) -> dict[str, Any]:
+        payload: dict[str, Any] = {
             "code": self.code,
             "name": self.name,
             "aliases": list(self.aliases),
             "score": score,
             "source": self.source,
         }
+        if keyword_fallback:
+            payload["fallback_search"] = {
+                "tool": "search_public_jobs",
+                "arguments": {"keyword": self.name},
+                "reason": "기관코드가 확인되지 않아 기관명을 공고 키워드로 검색합니다.",
+            }
+        return payload
 
 
 VERIFIED_INSTITUTION_CODES: tuple[JobAlioCodeCandidate, ...] = (

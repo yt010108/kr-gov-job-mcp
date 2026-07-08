@@ -62,9 +62,14 @@ def test_lookup_job_alio_codes_returns_institution_name_candidate_without_code()
         "aliases": [],
         "score": 0.98,
         "source": "alio_open_data_recruit_filter_2026_07_08",
+        "fallback_search": {
+            "tool": "search_public_jobs",
+            "arguments": {"keyword": "한국농수산식품유통공사"},
+            "reason": "기관코드가 확인되지 않아 기관명을 공고 키워드로 검색합니다.",
+        },
     }
     assert result["warnings"] == [
-        "일부 기관명 후보는 기관코드가 확인되지 않아 search_public_jobs의 institution_code로 바로 사용할 수 없습니다."
+        "일부 기관명 후보는 기관코드가 확인되지 않아 search_public_jobs의 institution_code로 바로 사용할 수 없습니다. fallback_search.arguments.keyword로 기관명을 검색하세요."
     ]
 
 

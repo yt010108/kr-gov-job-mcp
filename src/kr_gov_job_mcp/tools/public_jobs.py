@@ -200,7 +200,8 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
             "잡알리오 공공기관 채용공고를 검색하고 정규화된 공고 요약과 NCS 매핑 후보를 "
             "반환합니다. 기관명, 기관 약칭, NCS명, 직무 키워드처럼 자연어 코드 후보가 "
             "필요한 경우 먼저 `lookup_job_alio_codes`를 호출합니다. 기관명 후보는 "
-            "`code`가 있는 경우에만 `institution_code`로 전달합니다."
+            "`code`가 있는 경우에만 `institution_code`로 전달하고, `code`가 없으면 "
+            "`fallback_search.arguments.keyword`의 기관명으로 검색합니다."
         ),
         input_schema=SEARCH_PUBLIC_JOBS_INPUT_SCHEMA,
         handler=handler,

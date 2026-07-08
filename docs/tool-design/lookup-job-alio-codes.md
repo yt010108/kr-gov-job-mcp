@@ -27,6 +27,7 @@ NCS는 JOB-ALIO 화면에 노출된 25개 표준직무 코드를 제공한다.
 | `codes[].aliases` | 자연어 alias 후보 |
 | `codes[].score` | 간단한 매칭 점수 |
 | `codes[].source` | 후보 출처 |
+| `codes[].fallback_search` | 기관코드가 없는 기관명 후보에서 사용할 `search_public_jobs` keyword 검색 인자 |
 | `warnings` | 0건 또는 제한 사항 |
 
 ## 처리 원칙
@@ -35,4 +36,6 @@ NCS는 JOB-ALIO 화면에 노출된 25개 표준직무 코드를 제공한다.
 - `search_public_jobs` 내부에서 자동 resolver를 실행하지 않는다.
 - 후보가 여러 개면 LLM이나 사용자가 확인한 뒤 `search_public_jobs`에 코드를 전달한다.
 - 기관명 후보 중 `code`가 `null`인 항목은 `search_public_jobs.institution_code`로 바로 전달하지 않는다.
+- 기관명 후보 중 `code`가 `null`인 항목은 `fallback_search.arguments.keyword`의 기관명으로
+  `search_public_jobs` 검색을 이어간다.
 - seed table에 없는 후보는 빈 결과와 warning으로 안전하게 반환한다.
