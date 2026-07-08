@@ -13,7 +13,8 @@
 | 05 | `map_ncs_competencies` | 분석 | P0 | [map-ncs-competencies.md](map-ncs-competencies.md) | 공고와 직무기술서에서 NCS/KSA 역량을 추출한다. |
 | 06 | `analyze_institution_strategy` | 분석 | P0 | [analyze-institution-strategy.md](analyze-institution-strategy.md) | 기관의 최근 사업 방향과 직무 연결 포인트를 요약한다. |
 | 07 | `analyze_institution_weakness` | 분석 | P0 | [analyze-institution-weakness.md](analyze-institution-weakness.md) | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리한다. |
-| 08 | `analyze_job_fit_report` | 분석 | P0 | [analyze-job-fit-report.md](analyze-job-fit-report.md) | 공고 내용, NCS, 기관 정보를 연결해 준비 리포트를 만든다. |
+| 08 | `prepare_institution_interview` | 분석 | P0 | [prepare-institution-interview.md](prepare-institution-interview.md) | 주요사업, 연구/정책 자료, 국회 지적사항을 면접 질문 카드로 변환한다. |
+| 09 | `analyze_job_fit_report` | 분석 | P0 | [analyze-job-fit-report.md](analyze-job-fit-report.md) | 공고 내용, NCS, 기관 정보를 연결해 준비 리포트를 만든다. |
 
 ## 구현 순서
 
@@ -21,9 +22,10 @@
 2. 02 `lookup_job_alio_codes`
 3. 03 `search_public_jobs`
 4. 04 `fetch_job_detail`
-5. 08 `analyze_job_fit_report`
+5. 09 `analyze_job_fit_report`
 6. 06 `analyze_institution_strategy`
 7. 07 `analyze_institution_weakness`
-8. `collect_institution_context`
+8. 08 `prepare_institution_interview`
+9. `collect_institution_context`
 
 05 `map_ncs_competencies`는 현재 분석 helper와 schema는 있으나 MCP tool로는 아직 분리 구현하지 않았다.

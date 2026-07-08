@@ -11,7 +11,7 @@ def test_server_health_command_outputs_json(capsys) -> None:
     captured = capsys.readouterr()
     assert exit_code == 0
     assert json.loads(captured.out) == {
-        "registered_tools": 8,
+        "registered_tools": 9,
         "service": "kr-gov-job-mcp",
         "status": "ok",
         "version": "0.1.0",
@@ -31,7 +31,8 @@ def test_server_list_tools_command_outputs_registered_tools(capsys) -> None:
     assert payload["tools"][4]["name"] == "health_check"
     assert payload["tools"][5]["name"] == "lookup_job_alio_codes"
     assert payload["tools"][6]["name"] == "lookup_region_codes"
-    assert payload["tools"][7]["name"] == "search_public_jobs"
+    assert payload["tools"][7]["name"] == "prepare_institution_interview"
+    assert payload["tools"][8]["name"] == "search_public_jobs"
 
 
 def test_server_call_tool_command_outputs_result(capsys) -> None:
@@ -99,6 +100,56 @@ def test_server_cli_calls_institution_weakness_with_evidence(capsys) -> None:
     payload = json.loads(captured.out)
     assert payload["weakness_signals"][0]["category"] == "improvement_task"
     assert payload["weakness_signals"][0]["evidence"][0]["fields"] == {"source_type": "audit_point"}
+
+
+def test_server_cli_calls_prepare_institution_interview_with_evidence(capsys) -> None:
+    exit_code = main(
+        [
+            "--call-tool",
+            "prepare_institution_interview",
+            "--input",
+            json.dumps(
+                {
+                    "institution_name": "한국인터넷진흥원",
+                    "target_role": "정보보호",
+                    "year": 2026,
+                    "fetch_live_alio": False,
+                    "focus_areas": ["지원동기"],
+                    "evidence": [
+                        {
+                            "title": "ALIO 주요사업",
+                            "source_type": "alio_disclosure",
+                            "excerpt": "디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.",
+                            "fields": {"source_type": "major_business", "alio_item_no": "40"},
+                        }
+                    ],
+                    "signals": [
+                        {
+                            "category": "business_direction",
+                            "title": "주요사업",
+                            "summary": "디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.",
+                            "evidence": [
+                                {
+                                    "title": "ALIO 주요사업",
+                                    "source_type": "alio_disclosure",
+                                    "excerpt": "디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.",
+                                    "fields": {"source_type": "major_business", "alio_item_no": "40"},
+                                }
+                            ],
+                        }
+                    ],
+                },
+                ensure_ascii=False,
+            ),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    assert exit_code == 0
+    payload = json.loads(captured.out)
+    assert payload["source"] == "institution_interview"
+    assert payload["interview_cards"][0]["question_type"] == "지원동기"
+    assert payload["interview_cards"][0]["evidence"][0]["fields"]["alio_item_no"] == "40"
 
 
 def test_server_call_tool_rejects_non_object_input(capsys) -> None:
