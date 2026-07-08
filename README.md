@@ -19,14 +19,15 @@
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
 - evidence 입력 기반 기관 사업 방향 signal 요약
 - evidence 입력 기반 기관 개선 과제 signal 요약
+- ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 면접 카드 생성
 - 첨부파일, 전형 단계, NCS 매핑 후보 구조화
 
 ### 아직 미구현
 
 - MCP SSE GET stream, resumable session 같은 고급 HTTP transport 기능
 - NCS/KSA 상세 역량 분석
-- ALIO/클린아이 자료 자동 수집 기반 기관 분석
-- 기관 signal을 준비 리포트에 자동 연결하는 흐름
+- 클린아이 자료 자동 수집 기반 기관 분석
+- 채용공고와 기관 면접 카드까지 연결하는 흐름
 
 ### 다음 MVP 목표
 
@@ -44,6 +45,7 @@ python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
 python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
+python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input "{\"institution_name\":\"(재)한국보건의료정보원\",\"target_role\":\"보건의료정보\",\"year\":2026}"
 ```
 
 현재 MVP 데모 흐름은 `docs/demo-scenario.md`, 실제 KISA 기준 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
@@ -57,6 +59,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 | `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
 | `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`, `evidence`, `signals`를 받아 `strategy_signals`와 `verification_notes`를 반환한다. |
 | `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`, `evidence`, `signals`를 받아 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. |
+| `prepare_institution_interview` | 구현됨 MVP | `institution_name`, `target_role`, `focus_areas`를 받아 주요사업, 연구/정책 자료, 국회 지적사항 기반 `interview_cards`를 반환한다. |
 | `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
 
 ## 문제 정의

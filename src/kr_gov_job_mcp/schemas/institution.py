@@ -97,6 +97,28 @@ class InstitutionWeaknessReport(BaseModel):
     verification_notes: list[InstitutionVerificationNote] = Field(default_factory=list)
 
 
+class InstitutionInterviewCard(BaseModel):
+    question_type: str
+    likely_question: str
+    answer_strategy: str
+    answer_points: list[str] = Field(default_factory=list)
+    sample_answer_sentence: str | None = None
+    evidence: list[InstitutionEvidence] = Field(default_factory=list)
+    caution: str
+    safe_framing: str | None = None
+
+
+class InstitutionInterviewReport(BaseModel):
+    institution_name: str
+    normalized_name: str
+    year: int | None = None
+    target_role: str
+    interview_cards: list[InstitutionInterviewCard] = Field(default_factory=list)
+    materials_to_check: list[str] = Field(default_factory=list)
+    excluded_for_now: list[str] = Field(default_factory=list)
+    verification_notes: list[InstitutionVerificationNote] = Field(default_factory=list)
+
+
 class InstitutionAnalysisInput(BaseModel):
     institution_name: str
     normalized_name: str

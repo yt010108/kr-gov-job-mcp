@@ -57,7 +57,7 @@ def test_mcp_http_health_endpoint() -> None:
 
     assert status == 200
     assert payload["status"] == "ok"
-    assert payload["registered_tools"] == 8
+    assert payload["registered_tools"] == 9
 
 
 def test_mcp_http_initialize_and_list_tools() -> None:
