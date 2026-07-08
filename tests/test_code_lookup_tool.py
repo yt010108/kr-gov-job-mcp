@@ -1,5 +1,6 @@
 import pytest
 
+from kr_gov_job_mcp.codes import list_job_alio_codes
 from kr_gov_job_mcp.tools.code_lookup import (
     create_lookup_job_alio_codes_tool,
     create_lookup_region_codes_tool,
@@ -45,6 +46,77 @@ def test_lookup_job_alio_codes_returns_ncs_candidate_by_keyword() -> None:
         "source": "job_alio_seed_table",
     }
     assert result["warnings"] == []
+
+
+def test_lookup_job_alio_codes_returns_institution_name_candidate_without_code() -> None:
+    tool = create_lookup_job_alio_codes_tool()
+
+    result = tool.handler({"code_type": "institution", "query": "한국농수산식품유통공사"})
+
+    assert result["code_type"] == "institution"
+    assert result["query"] == "한국농수산식품유통공사"
+    assert result["result_count"] == 1
+    assert result["codes"][0] == {
+        "code": None,
+        "name": "한국농수산식품유통공사",
+        "aliases": [],
+        "score": 0.98,
+        "source": "alio_open_data_recruit_filter_2026_07_08",
+    }
+    assert result["warnings"] == [
+        "일부 기관명 후보는 기관코드가 확인되지 않아 search_public_jobs의 institution_code로 바로 사용할 수 없습니다."
+    ]
+
+
+def test_lookup_job_alio_codes_contains_institution_filter_names() -> None:
+    institutions = list_job_alio_codes("institution")
+
+    assert len(institutions) == 405
+    assert sum(1 for candidate in institutions if candidate.code is None) == 403
+    assert "한국농수산식품유통공사" in {candidate.name for candidate in institutions}
+    assert "대구경북과학기술원" in {candidate.name for candidate in institutions}
+
+
+def test_lookup_job_alio_codes_contains_full_ncs_filter_names() -> None:
+    codes = {candidate.name: candidate.code for candidate in list_job_alio_codes("ncs")}
+
+    assert codes == {
+        "사업관리": "R600001",
+        "경영·회계·사무": "R600002",
+        "금융·보험": "R600003",
+        "교육·자연·사회과학": "R600004",
+        "법률·경찰·소방·교도·국방": "R600005",
+        "보건·의료": "R600006",
+        "사회복지·종교": "R600007",
+        "문화·예술·디자인·방송": "R600008",
+        "운전·운송": "R600009",
+        "영업판매": "R600010",
+        "경비·청소": "R600011",
+        "이용·숙박·여행·오락·스포츠": "R600012",
+        "음식서비스": "R600013",
+        "건설": "R600014",
+        "기계": "R600015",
+        "재료": "R600016",
+        "화학": "R600017",
+        "섬유·의복": "R600018",
+        "전기·전자": "R600019",
+        "정보통신": "R600020",
+        "식품가공": "R600021",
+        "인쇄·목재·가구·공예": "R600022",
+        "환경·에너지·안전": "R600023",
+        "농림어업": "R600024",
+        "연구": "R600025",
+    }
+
+
+def test_lookup_job_alio_codes_returns_food_processing_ncs_code() -> None:
+    tool = create_lookup_job_alio_codes_tool()
+
+    result = tool.handler({"code_type": "ncs", "query": "식품가공"})
+
+    assert result["result_count"] >= 1
+    assert result["codes"][0]["code"] == "R600021"
+    assert result["codes"][0]["name"] == "식품가공"
 
 
 def test_lookup_job_alio_codes_returns_warning_without_matches() -> None:

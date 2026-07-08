@@ -2,8 +2,9 @@
 
 ## 구현 상태
 
-MCP tool 구현됨. Job-ALIO 검색 필터에 사용할 기관 코드와 NCS 코드 후보를 조회한다.
-현재는 자주 쓰는 기관/NCS 후보를 작은 seed table로 제공하며, 자동 갱신은 후속 범위다.
+MCP tool 구현됨. Job-ALIO 검색 필터에 사용할 NCS 코드 후보와 기관명 후보를 조회한다.
+NCS는 JOB-ALIO 화면에 노출된 25개 표준직무 코드를 제공한다.
+기관명은 ALIO 채용정보 필터 화면에 노출된 표시명 후보를 제공하며, 기관코드가 확인된 일부 후보를 제외하면 `code`가 `null`일 수 있다.
 
 ## 입력
 
@@ -21,7 +22,7 @@ MCP tool 구현됨. Job-ALIO 검색 필터에 사용할 기관 코드와 NCS 코
 | `code_type` | 조회한 코드 유형 |
 | `query` | 정규화 전 입력 query |
 | `result_count` | 반환된 후보 수 |
-| `codes[].code` | Job-ALIO 검색 필터에 넣을 코드 |
+| `codes[].code` | Job-ALIO 검색 필터에 넣을 코드. 기관명 표시명 후보는 `null`일 수 있음 |
 | `codes[].name` | 코드 표시명 |
 | `codes[].aliases` | 자연어 alias 후보 |
 | `codes[].score` | 간단한 매칭 점수 |
@@ -33,4 +34,5 @@ MCP tool 구현됨. Job-ALIO 검색 필터에 사용할 기관 코드와 NCS 코
 - 이 도구는 코드 후보 조회만 담당한다.
 - `search_public_jobs` 내부에서 자동 resolver를 실행하지 않는다.
 - 후보가 여러 개면 LLM이나 사용자가 확인한 뒤 `search_public_jobs`에 코드를 전달한다.
+- 기관명 후보 중 `code`가 `null`인 항목은 `search_public_jobs.institution_code`로 바로 전달하지 않는다.
 - seed table에 없는 후보는 빈 결과와 warning으로 안전하게 반환한다.

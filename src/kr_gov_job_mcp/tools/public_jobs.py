@@ -52,7 +52,7 @@ SEARCH_PUBLIC_JOBS_INPUT_SCHEMA: dict[str, Any] = {
             "type": "string",
             "description": (
                 "잡알리오 기관 코드입니다. 자연어 기관명이나 약칭은 먼저 "
-                "`lookup_job_alio_codes`로 조회한 뒤 확인된 코드를 입력합니다."
+                "`lookup_job_alio_codes`로 조회하고, 코드가 확인된 후보만 입력합니다."
             ),
         },
         "ncs_code": {
@@ -199,8 +199,8 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
         description=(
             "잡알리오 공공기관 채용공고를 검색하고 정규화된 공고 요약과 NCS 매핑 후보를 "
             "반환합니다. 기관명, 기관 약칭, NCS명, 직무 키워드처럼 자연어 코드 후보가 "
-            "필요한 경우 먼저 `lookup_job_alio_codes`로 `institution_code` 또는 "
-            "`ncs_code` 후보를 확인한 뒤 이 도구를 호출합니다."
+            "필요한 경우 먼저 `lookup_job_alio_codes`를 호출합니다. 기관명 후보는 "
+            "`code`가 있는 경우에만 `institution_code`로 전달합니다."
         ),
         input_schema=SEARCH_PUBLIC_JOBS_INPUT_SCHEMA,
         handler=handler,
