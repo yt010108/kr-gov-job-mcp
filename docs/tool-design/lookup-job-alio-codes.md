@@ -4,7 +4,8 @@
 
 MCP tool 구현됨. Job-ALIO 검색 필터에 사용할 NCS 코드 후보와 기관명 후보를 조회한다.
 NCS는 JOB-ALIO 화면에 노출된 25개 표준직무 코드를 제공한다.
-기관명은 ALIO 채용정보 필터 화면에 노출된 표시명 후보를 제공하며, 기관코드가 확인된 일부 후보를 제외하면 `code`가 `null`일 수 있다.
+기관명은 패키지에 포함된 `alio_institution_codes.csv`의 기관코드를 우선 사용하고,
+CSV에 없는 ALIO 채용정보 필터 표시명은 `code`가 `null`인 fallback 후보로 제공한다.
 
 ## 입력
 
@@ -38,4 +39,4 @@ NCS는 JOB-ALIO 화면에 노출된 25개 표준직무 코드를 제공한다.
 - 기관명 후보 중 `code`가 `null`인 항목은 `search_public_jobs.institution_code`로 바로 전달하지 않는다.
 - 기관명 후보 중 `code`가 `null`인 항목은 `fallback_search.arguments.keyword`의 기관명으로
   `search_public_jobs` 검색을 이어간다.
-- seed table에 없는 후보는 빈 결과와 warning으로 안전하게 반환한다.
+- 코드 테이블과 필터 표시명 목록에 없는 후보는 빈 결과와 warning으로 안전하게 반환한다.

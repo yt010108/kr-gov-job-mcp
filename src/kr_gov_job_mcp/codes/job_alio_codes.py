@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass
+from functools import lru_cache
+from importlib import resources
+from io import StringIO
 from typing import Any, Literal
 
 
@@ -33,18 +37,13 @@ class JobAlioCodeCandidate:
         return payload
 
 
-VERIFIED_INSTITUTION_CODES: tuple[JobAlioCodeCandidate, ...] = (
-    JobAlioCodeCandidate(
-        "C0399",
-        "한국인터넷진흥원",
-        ("KISA", "인터넷진흥원"),
-    ),
-    JobAlioCodeCandidate(
-        "B552909",
-        "창업진흥원",
-        ("KISED",),
-    ),
-)
+INSTITUTION_CODES_CSV = "resources/alio_institution_codes.csv"
+INSTITUTION_CODE_SOURCE = "alio_institution_codes_csv_2026_07_08"
+INSTITUTION_FILTER_SOURCE = "alio_open_data_recruit_filter_2026_07_08"
+MANUAL_INSTITUTION_ALIASES: dict[str, tuple[str, ...]] = {
+    "C0399": ("인터넷진흥원",),
+    "C0451": ("KISED",),
+}
 
 INSTITUTION_FILTER_NAMES: tuple[str, ...] = (
     "국제방송교류재단",
@@ -454,18 +453,6 @@ INSTITUTION_FILTER_NAMES: tuple[str, ...] = (
     "한국스포츠레저(주)",
 )
 
-_VERIFIED_INSTITUTION_NAMES = {candidate.name for candidate in VERIFIED_INSTITUTION_CODES}
-
-INSTITUTION_CODES: tuple[JobAlioCodeCandidate, ...] = VERIFIED_INSTITUTION_CODES + tuple(
-    JobAlioCodeCandidate(
-        None,
-        name,
-        source="alio_open_data_recruit_filter_2026_07_08",
-    )
-    for name in INSTITUTION_FILTER_NAMES
-    if name not in _VERIFIED_INSTITUTION_NAMES
-)
-
 NCS_CODES: tuple[JobAlioCodeCandidate, ...] = (
     JobAlioCodeCandidate(
         "R600001",
@@ -533,7 +520,7 @@ NCS_CODES: tuple[JobAlioCodeCandidate, ...] = (
 
 def list_job_alio_codes(code_type: JobAlioCodeType) -> list[JobAlioCodeCandidate]:
     if code_type == "institution":
-        return list(INSTITUTION_CODES)
+        return list(_institution_codes())
     if code_type == "ncs":
         return list(NCS_CODES)
     raise ValueError(f"unsupported Job-ALIO code_type: {code_type}")
@@ -573,6 +560,87 @@ def _match_score(candidate: JobAlioCodeCandidate, normalized_query: str) -> floa
     if normalized_name in normalized_query or any(alias and alias in normalized_query for alias in normalized_aliases):
         return 0.68
     return 0.0
+
+
+@lru_cache(maxsize=1)
+def _institution_codes() -> tuple[JobAlioCodeCandidate, ...]:
+    coded_candidates = _load_institution_codes_from_csv()
+    known_names = {
+        normalized
+        for candidate in coded_candidates
+        for normalized in (_normalize(candidate.name), *(_normalize(alias) for alias in candidate.aliases))
+        if normalized
+    }
+    filter_candidates = tuple(
+        JobAlioCodeCandidate(
+            None,
+            name,
+            source=INSTITUTION_FILTER_SOURCE,
+        )
+        for name in INSTITUTION_FILTER_NAMES
+        if _normalize(name) not in known_names
+    )
+    return coded_candidates + filter_candidates
+
+
+def _load_institution_codes_from_csv() -> tuple[JobAlioCodeCandidate, ...]:
+    csv_text = (
+        resources.files("kr_gov_job_mcp")
+        .joinpath(INSTITUTION_CODES_CSV)
+        .read_text(encoding="utf-8-sig")
+    )
+    candidates: list[JobAlioCodeCandidate] = []
+    for row in csv.DictReader(StringIO(csv_text)):
+        code = _clean_text(row.get("institution_code"))
+        name = _clean_text(row.get("institution_name"))
+        if not code or not name:
+            continue
+        aliases = _institution_aliases(
+            name=name,
+            normalized_name=row.get("normalized_name"),
+            aliases=row.get("aliases"),
+            manual_aliases=MANUAL_INSTITUTION_ALIASES.get(code, ()),
+        )
+        candidates.append(
+            JobAlioCodeCandidate(
+                code,
+                name,
+                aliases,
+                source=INSTITUTION_CODE_SOURCE,
+            )
+        )
+    return tuple(candidates)
+
+
+def _institution_aliases(
+    *,
+    name: str,
+    normalized_name: str | None,
+    aliases: str | None,
+    manual_aliases: tuple[str, ...],
+) -> tuple[str, ...]:
+    raw_aliases = [
+        normalized_name,
+        *(aliases or "").split("|"),
+        *manual_aliases,
+    ]
+    unique_aliases: list[str] = []
+    seen = {_normalize(name)}
+    for alias in raw_aliases:
+        text = _clean_text(alias)
+        normalized = _normalize(text)
+        if not text or not normalized or normalized in seen:
+            continue
+        unique_aliases.append(text)
+        seen.add(normalized)
+    return tuple(unique_aliases)
+
+
+def _clean_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _normalize(value: str | None) -> str:

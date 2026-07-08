@@ -23,7 +23,7 @@ def test_lookup_job_alio_codes_returns_institution_candidate_by_alias() -> None:
                 "name": "한국인터넷진흥원",
                 "aliases": ["KISA", "인터넷진흥원"],
                 "score": 0.92,
-                "source": "job_alio_seed_table",
+                "source": "alio_institution_codes_csv_2026_07_08",
             }
         ],
         "warnings": [],
@@ -48,7 +48,7 @@ def test_lookup_job_alio_codes_returns_ncs_candidate_by_keyword() -> None:
     assert result["warnings"] == []
 
 
-def test_lookup_job_alio_codes_returns_institution_name_candidate_without_code() -> None:
+def test_lookup_job_alio_codes_returns_institution_candidate_from_csv() -> None:
     tool = create_lookup_job_alio_codes_tool()
 
     result = tool.handler({"code_type": "institution", "query": "한국농수산식품유통공사"})
@@ -57,14 +57,32 @@ def test_lookup_job_alio_codes_returns_institution_name_candidate_without_code()
     assert result["query"] == "한국농수산식품유통공사"
     assert result["result_count"] == 1
     assert result["codes"][0] == {
-        "code": None,
+        "code": "C0045",
         "name": "한국농수산식품유통공사",
+        "aliases": [],
+        "score": 0.98,
+        "source": "alio_institution_codes_csv_2026_07_08",
+    }
+    assert result["warnings"] == []
+
+
+def test_lookup_job_alio_codes_returns_filter_name_fallback_without_code() -> None:
+    tool = create_lookup_job_alio_codes_tool()
+
+    result = tool.handler({"code_type": "institution", "query": "대구경북과학기술원"})
+
+    assert result["code_type"] == "institution"
+    assert result["query"] == "대구경북과학기술원"
+    assert result["result_count"] == 1
+    assert result["codes"][0] == {
+        "code": None,
+        "name": "대구경북과학기술원",
         "aliases": [],
         "score": 0.98,
         "source": "alio_open_data_recruit_filter_2026_07_08",
         "fallback_search": {
             "tool": "search_public_jobs",
-            "arguments": {"keyword": "한국농수산식품유통공사"},
+            "arguments": {"keyword": "대구경북과학기술원"},
             "reason": "기관코드가 확인되지 않아 기관명을 공고 키워드로 검색합니다.",
         },
     }
@@ -73,11 +91,23 @@ def test_lookup_job_alio_codes_returns_institution_name_candidate_without_code()
     ]
 
 
+def test_lookup_job_alio_codes_keeps_manual_institution_aliases() -> None:
+    tool = create_lookup_job_alio_codes_tool()
+
+    result = tool.handler({"code_type": "institution", "query": "KISED"})
+
+    assert result["result_count"] == 1
+    assert result["codes"][0]["code"] == "C0451"
+    assert result["codes"][0]["name"] == "창업진흥원"
+    assert result["codes"][0]["aliases"] == ["KISED"]
+    assert result["warnings"] == []
+
+
 def test_lookup_job_alio_codes_contains_institution_filter_names() -> None:
     institutions = list_job_alio_codes("institution")
 
     assert len(institutions) == 405
-    assert sum(1 for candidate in institutions if candidate.code is None) == 403
+    assert sum(1 for candidate in institutions if candidate.code is None) == 50
     assert "한국농수산식품유통공사" in {candidate.name for candidate in institutions}
     assert "대구경북과학기술원" in {candidate.name for candidate in institutions}
 
