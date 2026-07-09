@@ -53,7 +53,7 @@ def test_server_cli_calls_institution_analysis_without_evidence(capsys) -> None:
                 {
                     "institution_name": "한국인터넷진흥원",
                     "year": 2026,
-                    "job_family": "정보보호",
+                    "job_family": "정보통신",
                     "fetch_live_alio": False,
                 },
                 ensure_ascii=False,
@@ -111,7 +111,7 @@ def test_server_cli_calls_prepare_institution_interview_with_evidence(capsys) ->
             json.dumps(
                 {
                     "institution_name": "한국인터넷진흥원",
-                    "target_role": "정보보호",
+                    "target_role": "정보통신",
                     "year": 2026,
                     "fetch_live_alio": False,
                     "focus_areas": ["지원동기"],

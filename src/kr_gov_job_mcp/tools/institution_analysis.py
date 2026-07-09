@@ -19,7 +19,7 @@ from kr_gov_job_mcp.schemas.institution import (
     InstitutionEvidence,
     InstitutionSignalCandidate,
 )
-from kr_gov_job_mcp.tools.registry import ToolDefinition
+from kr_gov_job_mcp.tools.registry import ToolDefinition, read_only_tool_annotations
 
 
 ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
@@ -35,7 +35,7 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
         },
         "job_family": {
             "type": "string",
-            "description": "목표 직무군입니다. 예: 정보보호, 전산",
+            "description": "목표 직무군입니다. 보안 직무는 정보보안/정보보호가 아니라 Job-ALIO NCS 대분류명 정보통신으로 입력합니다.",
         },
         "alio_id": {
             "type": "string",
@@ -121,7 +121,7 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
         },
         "target_role": {
             "type": "string",
-            "description": "지원자가 목표로 하는 직무 또는 직무군입니다. 예: 정보보호, 전산",
+            "description": "지원자가 목표로 하는 직무 또는 직무군입니다. 보안 직무는 정보보안/정보보호가 아니라 Job-ALIO NCS 대분류명 정보통신으로 입력합니다.",
         },
         "job_family": {
             "type": "string",
@@ -168,6 +168,11 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
 
 _INTERVIEW_ARGUMENTS = set(PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA["properties"])
 
+_UNSUPPORTED_JOB_FAMILY_HINTS = {
+    "정보보안": "정보통신",
+    "정보보호": "정보통신",
+}
+
 
 def create_analyze_institution_strategy_tool() -> ToolDefinition:
     """Create the institution business-direction analysis tool."""
@@ -179,7 +184,11 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
 
         institution_name = _required_text(arguments.get("institution_name"), "institution_name")
         year = _to_int(arguments.get("year"), field="year")
-        job_family = _to_text(arguments.get("job_family"))
+        job_family = _validate_job_family(
+            _to_text(arguments.get("job_family")),
+            field="job_family",
+            tool_name="analyze_institution_strategy",
+        )
         alio_id = _to_text(arguments.get("alio_id") or arguments.get("apba_id"))
         evidence = _model_list(arguments.get("evidence"), InstitutionEvidence, field="evidence")
         signals = _model_list(arguments.get("signals"), InstitutionSignalCandidate, field="signals")
@@ -220,10 +229,11 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
     return ToolDefinition(
         name="analyze_institution_strategy",
         description=(
-            "명시적인 근거를 바탕으로 기관의 사업 방향 signal과 직무 연결 포인트를 요약하고, "
-            "근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
+            "kr-gov-job-mcp 서비스에서 명시적인 근거를 바탕으로 기관의 사업 방향 signal과 "
+            "직무 연결 포인트를 요약하고, 근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
         ),
         input_schema=ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Analyze Institution Strategy", open_world=True),
         handler=handler,
     )
 
@@ -273,10 +283,11 @@ def create_analyze_institution_weakness_tool() -> ToolDefinition:
     return ToolDefinition(
         name="analyze_institution_weakness",
         description=(
-            "명시적인 근거를 바탕으로 기관의 개선 과제 signal을 요약하고, 단정적 표현을 피하면서 "
-            "근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
+            "kr-gov-job-mcp 서비스에서 명시적인 근거를 바탕으로 기관의 개선 과제 signal을 요약하고, "
+            "단정적 표현을 피하면서 근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
         ),
         input_schema=ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Analyze Institution Weakness", open_world=True),
         handler=handler,
     )
 
@@ -290,9 +301,13 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
             raise ValueError("unsupported prepare_institution_interview arguments: " + ", ".join(unknown))
 
         institution_name = _required_text(arguments.get("institution_name"), "institution_name")
-        target_role = _required_text(
-            arguments.get("target_role") or arguments.get("job_family"),
-            "target_role",
+        target_role = _validate_job_family(
+            _required_text(
+                arguments.get("target_role") or arguments.get("job_family"),
+                "target_role",
+            ),
+            field="target_role",
+            tool_name="prepare_institution_interview",
         )
         year = _to_int(arguments.get("year"), field="year")
         focus_areas = _text_list(arguments.get("focus_areas"), field="focus_areas")
@@ -338,9 +353,11 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
     return ToolDefinition(
         name="prepare_institution_interview",
         description=(
-            "기관명과 목표 직무를 받아 주요사업, 연구/정책 자료, 국회 지적사항 근거를 면접 질문 카드로 변환합니다."
+            "kr-gov-job-mcp 서비스에서 기관명과 목표 직무를 받아 주요사업, 연구/정책 자료, "
+            "국회 지적사항 근거를 면접 질문 카드로 변환합니다."
         ),
         input_schema=PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Prepare Institution Interview", open_world=True),
         handler=handler,
     )
 
@@ -387,6 +404,22 @@ def _required_text(value: Any, field: str) -> str:
     if text is None:
         raise ValueError(f"{field} is required")
     return text
+
+
+def _validate_job_family(value: str | None, *, field: str, tool_name: str) -> str | None:
+    if value is None:
+        return None
+    replacement = _UNSUPPORTED_JOB_FAMILY_HINTS.get(_normalize_job_family(value))
+    if replacement is None:
+        return value
+    raise ValueError(
+        f"{tool_name} does not support {field}='{value}'. "
+        f"Use the Job-ALIO NCS category '{replacement}' instead."
+    )
+
+
+def _normalize_job_family(value: str) -> str:
+    return "".join(str(value).split())
 
 
 def _to_text(value: Any) -> str | None:

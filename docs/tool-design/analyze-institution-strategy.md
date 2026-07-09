@@ -15,7 +15,7 @@ MVP MCP tool 구현됨. 입력 evidence와 signal 후보가 없으면 `lookup_jo
 | --- | --- |
 | `institution_name` | 분석 대상 기관명 |
 | `year` | 분석 기준 연도 |
-| `job_family` | 직무군. 예: 정보보호, 전산, 사업관리 |
+| `job_family` | 직무군. 보안 직무는 `정보보안`/`정보보호`가 아니라 Job-ALIO NCS 대분류명 `정보통신`으로 입력한다. |
 | `alio_id` | ALIO/Job-ALIO 기관 코드. 기관명 resolver 결과를 우회하고 직접 지정할 때 사용 |
 | `apba_id` | `alio_id` 별칭 |
 | `fetch_live_alio` | evidence/signals가 없을 때 ALIO를 실시간 조회할지 여부. 기본값 `true` |
@@ -60,7 +60,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 ALIO 조회를 끄고 evidence 부족 안내만 확인하는 경우:
 
 ```bash
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input '{"institution_name":"한국인터넷진흥원","year":2026,"job_family":"정보보호","fetch_live_alio":false}'
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input '{"institution_name":"한국인터넷진흥원","year":2026,"job_family":"정보통신","fetch_live_alio":false}'
 ```
 
 이 호출은 `strategy_signals`를 비워 두고 `verification_notes`에 확인 필요 항목을 반환해야 한다.
@@ -68,7 +68,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 evidence가 있는 경우:
 
 ```bash
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input '{"institution_name":"한국인터넷진흥원","year":2026,"job_family":"정보보호","evidence":[{"title":"ALIO 주요사업","source_type":"alio_disclosure","url":"https://example.test/alio","excerpt":"디지털 신뢰 기반 조성과 정보보호 산업 지원을 주요사업으로 제시했다.","fields":{"source_type":"major_business"}}]}'
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input '{"institution_name":"한국인터넷진흥원","year":2026,"job_family":"정보통신","evidence":[{"title":"ALIO 주요사업","source_type":"alio_disclosure","url":"https://example.test/alio","excerpt":"디지털 신뢰 기반 조성과 정보보호 산업 지원을 주요사업으로 제시했다.","fields":{"source_type":"major_business"}}]}'
 ```
 
 이 호출은 `strategy_signals[].category`, `summary`, `job_connection`, `evidence`를 반환해야 한다.

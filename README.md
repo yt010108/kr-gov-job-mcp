@@ -188,7 +188,7 @@ python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"quer
 python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
 python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보통신\"}"
 python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
 python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input "{\"institution_name\":\"(재)한국보건의료정보원\",\"target_role\":\"보건의료정보\",\"year\":2026}"
 ```

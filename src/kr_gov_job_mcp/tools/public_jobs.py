@@ -18,7 +18,7 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioSummary,
 )
 from kr_gov_job_mcp.schemas.job_fit import ApplicantReadinessInput, JobFitPreparationReport
-from kr_gov_job_mcp.tools.registry import ToolDefinition
+from kr_gov_job_mcp.tools.registry import ToolDefinition, read_only_tool_annotations
 
 
 SearchJobsRunner = Callable[..., JobAlioSearchResult]
@@ -198,13 +198,14 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
     return ToolDefinition(
         name="search_public_jobs",
         description=(
-            "잡알리오 공공기관 채용공고를 검색하고 정규화된 공고 요약과 NCS 매핑 후보를 "
-            "반환합니다. 기관명, 기관 약칭, NCS명, 직무 키워드처럼 자연어 코드 후보가 "
-            "필요한 경우 먼저 `lookup_job_alio_codes`를 호출합니다. 기관명 후보는 "
+            "kr-gov-job-mcp 서비스에서 잡알리오 공공기관 채용공고를 검색하고 정규화된 "
+            "공고 요약과 NCS 매핑 후보를 반환합니다. 기관명, 기관 약칭, NCS명, "
+            "직무 키워드처럼 자연어 코드 후보가 필요한 경우 먼저 `lookup_job_alio_codes`를 호출합니다. 기관명 후보는 "
             "`code`가 있는 경우에만 `institution_code`로 전달하고, `code`가 없으면 "
             "`fallback_search.arguments.keyword`의 기관명으로 검색합니다."
         ),
         input_schema=SEARCH_PUBLIC_JOBS_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Search Public Jobs", open_world=True),
         handler=handler,
     )
 
@@ -226,10 +227,11 @@ def create_fetch_job_detail_tool(
     return ToolDefinition(
         name="fetch_job_detail",
         description=(
-            "잡알리오 공고 ID로 상세 공고를 조회하고 지원자격, 첨부파일, 전형 단계, "
-            "NCS 매핑 후보를 반환합니다."
+            "kr-gov-job-mcp 서비스에서 잡알리오 공고 ID로 상세 공고를 조회하고 지원자격, "
+            "첨부파일, 전형 단계, NCS 매핑 후보를 반환합니다."
         ),
         input_schema=FETCH_JOB_DETAIL_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Fetch Job Detail", open_world=True),
         handler=handler,
     )
 
@@ -268,10 +270,11 @@ def create_analyze_job_fit_report_tool(
     return ToolDefinition(
         name="analyze_job_fit_report",
         description=(
-            "잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, 근거 링크, "
-            "검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다."
+            "kr-gov-job-mcp 서비스에서 잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, "
+            "근거 링크, 검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다."
         ),
         input_schema=ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Analyze Job Fit Report", open_world=True),
         handler=handler,
     )
 

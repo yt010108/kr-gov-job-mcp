@@ -89,9 +89,14 @@ def test_mcp_http_initialize_and_list_tools() -> None:
     assert init_status == 200
     assert init_payload["result"]["serverInfo"]["name"] == "kr-gov-job-mcp"
     assert list_status == 200
-    tool_names = {tool["name"] for tool in list_payload["result"]["tools"]}
+    tools = list_payload["result"]["tools"]
+    tool_names = {tool["name"] for tool in tools}
     assert "lookup_region_codes" in tool_names
     assert "search_public_jobs" in tool_names
+    search_public_jobs = next(tool for tool in tools if tool["name"] == "search_public_jobs")
+    assert "kr-gov-job-mcp" in search_public_jobs["description"]
+    assert search_public_jobs["annotations"]["readOnlyHint"] is True
+    assert search_public_jobs["annotations"]["openWorldHint"] is True
 
 
 def test_mcp_http_call_tool_returns_structured_content() -> None:

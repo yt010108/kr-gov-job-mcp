@@ -46,7 +46,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input '{"jo
 기관 사업 방향 분석:
 
 ```bash
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input '{"institution_name":"한국인터넷진흥원","year":2026,"job_family":"정보보호"}'
+python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input '{"institution_name":"한국인터넷진흥원","year":2026,"job_family":"정보통신"}'
 ```
 
 기관 개선 과제 분석:
