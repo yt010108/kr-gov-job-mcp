@@ -1,8 +1,26 @@
 # kr-gov-job-mcp
 
-한국 공공기관 NCS 취업 준비 MCP입니다.
+한국 공공기관 NCS 및 채용 정보 분석을 위한 MCP(Model Context Protocol) 서버입니다.
+단순 공고 검색을 넘어 **채용공고 · 직무기술서 · NCS 역량 · 기관 분석**의 파편화된 정보를 근거 기반으로 연결해 취업 준비 전략을 정리합니다.
 
-채용공고, 직무기술서, NCS 역량, ALIO/클린아이 기관 분석을 근거 기반으로 연결하는 것을 목표로 합니다.
+## 취업 정보 분석 워크플로우
+
+이 MCP는 다음 3단계로 활용할 수 있습니다.
+
+1. **발굴 (Search)** — `search_public_jobs`로 조건에 맞는 채용공고를 찾습니다.
+2. **분석 (Deep Dive)** — `fetch_job_detail`로 직무를 확인하고 `analyze_institution_strategy`로 기관의 사업 방향을 살펴봅니다.
+3. **전략 (Fit Analysis)** — `analyze_job_fit_report`로 지원 직무와 보유 역량의 준비 항목·지식 갭을 정리합니다.
+
+에이전트에는 예를 들어 다음과 같이 요청할 수 있습니다.
+
+> "KISA 공고를 검색하고, 직무기술서와 기관 사업 전략을 바탕으로 준비 전략을 정리해줘."
+
+| 도구 | 역할 |
+| --- | --- |
+| `search_public_jobs` | Job-ALIO 채용공고를 조건별로 검색 |
+| `fetch_job_detail` | 공고 상세·첨부파일·전형 단계·NCS 매핑을 구조화 |
+| `analyze_job_fit_report` | 지원 직무 적합도와 준비 전략을 정리 |
+| `analyze_institution_strategy` | ALIO 및 연구·정책 자료 기반 기관 전략 신호를 분석 |
 
 ## 문제 정의
 
