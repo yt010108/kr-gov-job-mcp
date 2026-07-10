@@ -384,7 +384,92 @@ def _serialize_search_result(
         "result_count": len(result.jobs),
         "jobs": [_serialize_job(job) for job in result.jobs],
         "warnings": warnings,
+        "diagnostics": _no_result_diagnostics(query) if not result.jobs else None,
     }
+
+
+def _no_result_diagnostics(query: Mapping[str, Any]) -> dict[str, Any]:
+    """Explain a zero-result search and return safe, directly callable retries."""
+    suggestions: list[dict[str, Any]] = []
+    keyword = _to_text(query.get("keyword"))
+
+    if query.get("ongoing_only", True):
+        retry_arguments = dict(query)
+        retry_arguments["ongoing_only"] = False
+        suggestions.append(
+            {
+                "tool": "search_public_jobs",
+                "arguments": retry_arguments,
+                "reason": "현재 접수 중 필터를 해제해 마감 공고를 포함해 다시 검색합니다.",
+            }
+        )
+
+    if keyword:
+        code_type = "institution" if _looks_like_institution_name(keyword) else "ncs"
+        suggestions.append(
+            {
+                "tool": "lookup_job_alio_codes",
+                "arguments": {"code_type": code_type, "query": keyword},
+                "reason": (
+                    "기관명 후보와 Job-ALIO 기관 코드를 확인합니다."
+                    if code_type == "institution"
+                    else "직무 키워드에 맞는 Job-ALIO NCS 코드 후보를 확인합니다."
+                ),
+            }
+        )
+
+    restricted_filters = {
+        "institution_code",
+        "ncs_code",
+        "region_code",
+        "academic_condition_code",
+        "employment_type_code",
+        "recruitment_type",
+        "replacement_only",
+        "announcement_start_date",
+        "announcement_end_date",
+        "institution_type",
+        "institution_classification",
+    }
+    relaxed_arguments = {key: value for key, value in query.items() if key not in restricted_filters}
+    removed_filters = sorted(set(query) & restricted_filters)
+    if removed_filters:
+        suggestions.append(
+            {
+                "tool": "search_public_jobs",
+                "arguments": relaxed_arguments,
+                "reason": "세부 필터를 해제해 필터 조합 때문에 결과가 제외됐는지 확인합니다.",
+                "removed_filters": removed_filters,
+            }
+        )
+
+    return {
+        "reason": "no_results",
+        "message": "조건에 맞는 Job-ALIO 공고를 찾지 못했습니다. 공고 부재, 제목 검색 범위, 또는 필터 조합을 확인하세요.",
+        "keyword_search_scope": "keyword는 현재 Job-ALIO 공고 제목 검색에 사용됩니다.",
+        "recommended_next_calls": suggestions,
+    }
+
+
+def _looks_like_institution_name(value: str) -> bool:
+    normalized = "".join(value.split()).lower()
+    institution_hints = (
+        "공사",
+        "공단",
+        "병원",
+        "대학교",
+        "대학",
+        "연구원",
+        "진흥원",
+        "재단",
+        "협회",
+        "센터",
+        "원",
+        "청",
+        "kisa",
+        "kised",
+    )
+    return normalized.endswith(institution_hints)
 
 
 def _serialize_detail_result(

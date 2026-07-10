@@ -11,10 +11,12 @@ from kr_gov_job_mcp.tools import create_default_registry
 
 
 @contextmanager
-def _mcp_http_server() -> Iterator[tuple[str, int]]:
+def _mcp_http_server(
+    *, allowed_origins: set[str] | None = None
+) -> Iterator[tuple[str, int]]:
     server = ThreadingHTTPServer(
         ("127.0.0.1", 0),
-        make_mcp_http_handler(create_default_registry()),
+        make_mcp_http_handler(create_default_registry(), allowed_origins=allowed_origins),
     )
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -34,19 +36,32 @@ def _request(
     path: str,
     payload: Any | None = None,
 ) -> tuple[int, Any]:
+    status, parsed, _headers = _request_with_headers(host, port, method, path, payload)
+    return status, parsed
+
+
+def _request_with_headers(
+    host: str,
+    port: int,
+    method: str,
+    path: str,
+    payload: Any | None = None,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, Any, dict[str, str]]:
     body = None if payload is None else json.dumps(payload, ensure_ascii=False).encode("utf-8")
-    headers = {
+    request_headers = {
         "Accept": "application/json, text/event-stream",
         "Content-Type": "application/json",
         "MCP-Protocol-Version": "2025-11-25",
     }
+    request_headers.update(headers or {})
     connection = HTTPConnection(host, port, timeout=5)
     try:
-        connection.request(method, path, body=body, headers=headers)
+        connection.request(method, path, body=body, headers=request_headers)
         response = connection.getresponse()
         response_body = response.read().decode("utf-8")
         parsed = json.loads(response_body) if response_body else None
-        return response.status, parsed
+        return response.status, parsed, dict(response.getheaders())
     finally:
         connection.close()
 
@@ -139,3 +154,64 @@ def test_mcp_http_notification_returns_accepted_without_body() -> None:
 
     assert status == 202
     assert payload is None
+
+
+def test_mcp_http_rejects_disallowed_origin() -> None:
+    with _mcp_http_server(allowed_origins={"https://allowed.example"}) as (host, port):
+        status, payload, response_headers = _request_with_headers(
+            host,
+            port,
+            "POST",
+            "/mcp",
+            {"jsonrpc": "2.0", "id": 1, "method": "ping"},
+            headers={"Origin": "https://evil.example"},
+        )
+
+    assert status == 403
+    assert payload == {"error": "Origin is not allowed."}
+    assert "Access-Control-Allow-Origin" not in response_headers
+
+
+def test_mcp_http_handles_allowed_cors_preflight() -> None:
+    with _mcp_http_server(allowed_origins={"https://client.example"}) as (host, port):
+        status, payload, response_headers = _request_with_headers(
+            host,
+            port,
+            "OPTIONS",
+            "/mcp",
+            headers={
+                "Origin": "https://client.example",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type,accept,mcp-protocol-version",
+            },
+        )
+
+    assert status == 204
+    assert payload is None
+    assert response_headers["Access-Control-Allow-Origin"] == "https://client.example"
+    assert response_headers["Access-Control-Allow-Methods"] == "GET, POST, OPTIONS"
+    assert "MCP-Protocol-Version" in response_headers["Access-Control-Allow-Headers"]
+
+
+def test_mcp_http_rejects_unsupported_protocol_version() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload, _headers = _request_with_headers(
+            host,
+            port,
+            "POST",
+            "/mcp",
+            {"jsonrpc": "2.0", "id": 1, "method": "ping"},
+            headers={"MCP-Protocol-Version": "unsupported"},
+        )
+
+    assert status == 400
+    assert payload["error"].startswith("Unsupported MCP-Protocol-Version")
+
+
+def test_mcp_http_delete_returns_json_method_not_allowed() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload, response_headers = _request_with_headers(host, port, "DELETE", "/mcp")
+
+    assert status == 405
+    assert payload == {"error": "MCP sessions are not implemented; DELETE is unsupported."}
+    assert response_headers["Allow"] == "POST, OPTIONS"
