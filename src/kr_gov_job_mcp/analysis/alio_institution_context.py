@@ -7,15 +7,17 @@ import html
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from typing import Any
 
 from kr_gov_job_mcp.clients.alio_disclosure_client import (
     AlioDisclosureClient,
     AlioDisclosureClientError,
+    AlioDisclosureItemConfig,
 )
 from kr_gov_job_mcp.codes import find_job_alio_codes
-from kr_gov_job_mcp.schemas.alio import AlioInstitution, AlioReportDisclosure
+from kr_gov_job_mcp.schemas.alio import AlioInstitution, AlioReportDisclosure, AlioReportSearchResult
 from kr_gov_job_mcp.schemas.institution import (
     InstitutionEvidence,
     InstitutionIdentityCandidate,
@@ -45,11 +47,16 @@ def fetch_alio_institution_context_sync(
     *,
     institution_name: str,
     alio_id: str | None = None,
+    year: int | None = None,
 ) -> AlioInstitutionContext:
     """Fetch ALIO context from a synchronous tool handler."""
 
     return asyncio.run(
-        fetch_alio_institution_context(institution_name=institution_name, alio_id=alio_id)
+        fetch_alio_institution_context(
+            institution_name=institution_name,
+            alio_id=alio_id,
+            year=year,
+        )
     )
 
 
@@ -57,6 +64,7 @@ async def fetch_alio_institution_context(
     *,
     institution_name: str,
     alio_id: str | None = None,
+    year: int | None = None,
     client: AlioDisclosureClient | None = None,
 ) -> AlioInstitutionContext:
     """Fetch strategy and weakness evidence from ALIO item disclosures."""
@@ -64,6 +72,7 @@ async def fetch_alio_institution_context(
     owns_client = client is None
     active_client = client or AlioDisclosureClient()
     context = AlioInstitutionContext()
+    retrieved_at = datetime.now(timezone.utc).isoformat()
 
     try:
         institution, institution_type = await _resolve_institution(
@@ -88,9 +97,30 @@ async def fetch_alio_institution_context(
             )
         )
 
-        await _append_main_business_context(active_client, context, institution, institution_type)
-        await _append_point_context(active_client, context, institution, institution_type)
-        await _append_research_context(active_client, context, institution, institution_type)
+        await _append_main_business_context(
+            active_client,
+            context,
+            institution,
+            institution_type,
+            year=year,
+            retrieved_at=retrieved_at,
+        )
+        await _append_point_context(
+            active_client,
+            context,
+            institution,
+            institution_type,
+            year=year,
+            retrieved_at=retrieved_at,
+        )
+        await _append_research_context(
+            active_client,
+            context,
+            institution,
+            institution_type,
+            year=year,
+            retrieved_at=retrieved_at,
+        )
     finally:
         if owns_client:
             await active_client.aclose()
@@ -190,19 +220,35 @@ async def _append_main_business_context(
     context: AlioInstitutionContext,
     institution: AlioInstitution,
     institution_type: str | None,
+    *,
+    year: int | None,
+    retrieved_at: str,
 ) -> None:
     item = client.TARGET_ITEM_REPORTS["40"]
     try:
-        reports = await client.list_item_reports(
-            institution_code=institution.id,
+        reports = await _list_context_reports(
+            client,
+            institution=institution,
             institution_type=institution_type,
             item=item,
+            year=year,
         )
     except AlioDisclosureClientError as exc:
         context.warnings.append(f"ALIO item 40 주요사업 failed: {exc}")
         return
 
-    report = reports.reports[0] if reports.reports else None
+    if not reports.reports:
+        context.warnings.append("ALIO item 40 주요사업 returned 0 reports")
+
+    selected_reports = _select_reports_for_year(
+        reports.reports,
+        year=year,
+        context=context,
+        source_label="ALIO item 40 주요사업",
+    )
+    report = selected_reports[0] if selected_reports else None
+    if year is not None and report is None:
+        return
     rows: list[dict[str, Any]] = []
     if report and report.disclosure_no:
         try:
@@ -225,9 +271,14 @@ async def _append_main_business_context(
             "alio_item_no": "40",
             "report_form_root_no": item.report_form_root_no,
             "total_count": reports.total_count,
+            "disclosed_date": report.disclosed_date if report else None,
             "business_rows": rows,
             "institution_main_business": institution.main_business,
         },
+        collected_at=retrieved_at,
+        evidence_year=_report_year(report),
+        disclosed_at=_report_disclosed_at(report),
+        retrieved_at=retrieved_at,
     )
     context.evidence.append(evidence)
     context.signals.append(
@@ -245,23 +296,35 @@ async def _append_point_context(
     context: AlioInstitutionContext,
     institution: AlioInstitution,
     institution_type: str | None,
+    *,
+    year: int | None,
+    retrieved_at: str,
 ) -> None:
     item = client.TARGET_ITEM_REPORTS["47-1"]
     try:
-        reports = await client.list_item_reports(
-            institution_code=institution.id,
+        reports = await _list_context_reports(
+            client,
+            institution=institution,
             institution_type=institution_type,
             item=item,
+            year=year,
         )
     except AlioDisclosureClientError as exc:
         context.warnings.append(f"ALIO item 47-1 국회지적사항 failed: {exc}")
         return
 
-    if not reports.reports:
-        context.warnings.append("ALIO item 47-1 국회지적사항 returned 0 reports")
+    selected_reports = _select_reports_for_year(
+        reports.reports,
+        year=year,
+        context=context,
+        source_label="ALIO item 47-1 국회지적사항",
+    )
+    if not selected_reports:
+        if not reports.reports:
+            context.warnings.append("ALIO item 47-1 국회지적사항 returned 0 reports")
         return
 
-    for report in reports.reports[:_MAX_POINT_REPORTS]:
+    for report in selected_reports[:_MAX_POINT_REPORTS]:
         fields: dict[str, str] = {}
         try:
             fields = extract_board_fields(await client.fetch_board_report_html(report))
@@ -278,6 +341,7 @@ async def _append_point_context(
             source_type="audit_point",
             item_no="47-1",
             total_count=reports.total_count,
+            retrieved_at=retrieved_at,
             extra_fields={"board_fields": fields},
         )
         context.evidence.append(evidence)
@@ -296,23 +360,37 @@ async def _append_research_context(
     context: AlioInstitutionContext,
     institution: AlioInstitution,
     institution_type: str | None,
+    *,
+    year: int | None,
+    retrieved_at: str,
 ) -> None:
     reports_by_item: list[tuple[str, AlioReportDisclosure, int | None]] = []
     for item_no in ("50-1", "50-2"):
         item = client.TARGET_ITEM_REPORTS[item_no]
         try:
-            reports = await client.list_item_reports(
-                institution_code=institution.id,
+            reports = await _list_context_reports(
+                client,
+                institution=institution,
                 institution_type=institution_type,
                 item=item,
+                year=year,
             )
         except AlioDisclosureClientError as exc:
             context.warnings.append(f"ALIO item {item_no} {item.name} failed: {exc}")
             continue
-        if not reports.reports:
-            context.warnings.append(f"ALIO item {item_no} {item.name} returned 0 reports")
+        selected_reports = _select_reports_for_year(
+            reports.reports,
+            year=year,
+            context=context,
+            source_label=f"ALIO item {item_no} {item.name}",
+        )
+        if not selected_reports:
+            if not reports.reports:
+                context.warnings.append(f"ALIO item {item_no} {item.name} returned 0 reports")
             continue
-        reports_by_item.extend((item_no, report, reports.total_count) for report in reports.reports)
+        reports_by_item.extend(
+            (item_no, report, reports.total_count) for report in selected_reports
+        )
 
     for item_no, report, total_count in reports_by_item[:_MAX_RESEARCH_REPORTS]:
         item = client.TARGET_ITEM_REPORTS[item_no]
@@ -327,6 +405,7 @@ async def _append_research_context(
             source_type="policy_research",
             item_no=item_no,
             total_count=total_count,
+            retrieved_at=retrieved_at,
             extra_fields={"research_kind": item.name},
         )
         context.evidence.append(evidence)
@@ -350,6 +429,7 @@ def _report_evidence(
     source_type: str,
     item_no: str,
     total_count: int | None,
+    retrieved_at: str,
     extra_fields: dict[str, Any] | None = None,
 ) -> InstitutionEvidence:
     fields = {
@@ -366,10 +446,119 @@ def _report_evidence(
         source_type="alio_disclosure",
         url=report.source_url,
         source_id=_report_source_id(report),
-        collected_at=report.disclosed_date,
+        collected_at=retrieved_at,
+        evidence_year=_report_year(report),
+        disclosed_at=_report_disclosed_at(report),
+        retrieved_at=retrieved_at,
         excerpt=excerpt,
         fields=fields,
     )
+
+
+async def _list_context_reports(
+    client: AlioDisclosureClient,
+    *,
+    institution: AlioInstitution,
+    institution_type: str | None,
+    item: AlioDisclosureItemConfig,
+    year: int | None,
+) -> AlioReportSearchResult:
+    first_page = await client.list_item_reports(
+        institution_code=institution.id,
+        institution_type=institution_type,
+        item=item,
+    )
+    if year is None or item.kind == "regular":
+        return first_page
+
+    reports = list(first_page.reports)
+    total_count = first_page.total_count or len(reports)
+    page = 2
+    while reports and len(reports) < total_count:
+        next_page = await client.list_item_reports(
+            institution_code=institution.id,
+            institution_type=institution_type,
+            item=item,
+            page=page,
+        )
+        if not next_page.reports:
+            break
+        reports.extend(next_page.reports)
+        total_count = max(total_count, next_page.total_count or 0)
+        page += 1
+
+    return first_page.model_copy(update={"reports": reports, "total_count": total_count})
+
+
+def _select_reports_for_year(
+    reports: Sequence[AlioReportDisclosure],
+    *,
+    year: int | None,
+    context: AlioInstitutionContext,
+    source_label: str,
+) -> list[AlioReportDisclosure]:
+    if year is None:
+        for report in reports:
+            if report.disclosed_date and _report_disclosed_at(report) is None:
+                context.warnings.append(
+                    f"{source_label} report {_report_source_id(report) or report.title or 'unknown'} "
+                    f"has malformed disclosed date {report.disclosed_date!r}; "
+                    "its evidence time needs verification."
+                )
+        return list(reports)
+
+    selected: list[AlioReportDisclosure] = []
+    for report in reports:
+        disclosed_at, evidence_year = _normalize_disclosed_at(report.disclosed_date)
+        if disclosed_at is None:
+            context.warnings.append(
+                f"{source_label} report {_report_source_id(report) or report.title or 'unknown'} "
+                f"has missing or malformed disclosed date {report.disclosed_date!r}; "
+                f"it cannot satisfy requested year {year}."
+            )
+        elif evidence_year == year:
+            selected.append(report)
+
+    if reports and not selected:
+        context.warnings.append(
+            f"{source_label} has reports but none match requested year {year}; no fallback was used."
+        )
+    return selected
+
+
+def _report_disclosed_at(report: AlioReportDisclosure | None) -> str | None:
+    if report is None:
+        return None
+    return _normalize_disclosed_at(report.disclosed_date)[0]
+
+
+def _report_year(report: AlioReportDisclosure | None) -> int | None:
+    if report is None:
+        return None
+    return _normalize_disclosed_at(report.disclosed_date)[1]
+
+
+def _normalize_disclosed_at(value: str | None) -> tuple[str | None, int | None]:
+    if not value:
+        return None, None
+    text = value.strip()
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        match = re.fullmatch(r"(\d{4})[./-](\d{1,2})[./-](\d{1,2})", text)
+        if not match:
+            return None, None
+        try:
+            parsed = datetime(
+                int(match.group(1)),
+                int(match.group(2)),
+                int(match.group(3)),
+            )
+        except ValueError:
+            return None, None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.isoformat(), parsed.year
 
 
 def extract_main_business_rows(html_text: str) -> list[dict[str, Any]]:

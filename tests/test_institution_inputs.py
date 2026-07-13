@@ -80,3 +80,18 @@ def test_signal_without_evidence_is_marked_for_verification() -> None:
     )
 
     assert prepared.verification_notes[0].field == "signals[0].evidence"
+
+
+def test_institution_evidence_provenance_round_trips() -> None:
+    evidence = InstitutionEvidence(
+        title="ALIO 보고서",
+        source_type="alio_disclosure",
+        collected_at="2026-07-14T01:02:03+00:00",
+        evidence_year=2025,
+        disclosed_at="2025-05-12T00:00:00+00:00",
+        retrieved_at="2026-07-14T01:02:03+00:00",
+    )
+
+    restored = InstitutionEvidence.model_validate(evidence.model_dump())
+
+    assert restored == evidence

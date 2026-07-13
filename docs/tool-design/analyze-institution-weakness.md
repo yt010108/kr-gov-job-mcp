@@ -85,6 +85,8 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 ## 처리 원칙
 
 - 국회 지적사항, 감사결과, 경영평가성 자료는 원문 근거 링크와 함께만 사용한다.
+- `year`를 지정한 live ALIO 조회는 같은 공시 연도의 자료만 사용한다. 일치 자료가 없으면 다른 연도 자료로 대체하지 않고 `warnings`로 반환한다.
+- 자동 수집 evidence에는 근거 연도 `evidence_year`, 공시 시점 `disclosed_at`, 실제 수집 시각 `retrieved_at`을 보존한다. 기존 `collected_at`은 호환을 위해 실제 수집 시각과 같은 값으로 유지한다.
 - 개선 과제는 지원자가 자기소개서나 면접에서 활용 가능한 표현으로 바꾸되, 원문 의미를 과장하지 않는다.
 - 현재 ALIO `47-2`, `47-3`은 수집 범위에서 제외되어 있으므로 근거로 쓰지 않는다.
 - `applicant_connection`은 지원자 맞춤 답변이 아니라, 후속 면접 준비 단계가 재가공할 때 지켜야 할 연결 기준이다.

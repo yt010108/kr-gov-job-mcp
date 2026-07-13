@@ -55,6 +55,10 @@ def test_prepare_institution_interview_uses_live_alio_context(monkeypatch) -> No
     major_business = InstitutionEvidence(
         title="ALIO 주요사업",
         source_type="alio_disclosure",
+        evidence_year=2026,
+        disclosed_at="2026-04-13T00:00:00+00:00",
+        retrieved_at="2026-07-14T00:00:00+00:00",
+        collected_at="2026-07-14T00:00:00+00:00",
         excerpt="가장 큰 규모는 한국보건의료정보원 사업입니다.",
         fields={"source_type": "major_business", "alio_item_no": "40"},
     )
@@ -71,9 +75,12 @@ def test_prepare_institution_interview_uses_live_alio_context(monkeypatch) -> No
         fields={"source_type": "audit_point", "alio_item_no": "47-1"},
     )
 
-    def fake_fetch_alio_context(*, institution_name: str, alio_id: str | None = None):
+    def fake_fetch_alio_context(
+        *, institution_name: str, alio_id: str | None = None, year: int | None = None
+    ):
         assert institution_name == "(재)한국보건의료정보원"
         assert alio_id is None
+        assert year == 2026
         return AlioInstitutionContext(
             institution_id="C1304",
             institution_name="(재)한국보건의료정보원",
@@ -122,6 +129,9 @@ def test_prepare_institution_interview_uses_live_alio_context(monkeypatch) -> No
         "개선과제",
     ]
     assert result["interview_cards"][0]["evidence"][0]["fields"]["source_type"] == "major_business"
+    assert result["interview_cards"][0]["evidence"][0]["evidence_year"] == 2026
+    assert result["interview_cards"][0]["evidence"][0]["disclosed_at"] == "2026-04-13T00:00:00+00:00"
+    assert result["interview_cards"][0]["evidence"][0]["retrieved_at"] == "2026-07-14T00:00:00+00:00"
     assert result["interview_cards"][1]["evidence"][0]["fields"]["source_type"] == "policy_research"
     assert result["interview_cards"][2]["evidence"][0]["fields"]["source_type"] == "audit_point"
 
