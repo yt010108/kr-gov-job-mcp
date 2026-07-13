@@ -189,8 +189,20 @@ def test_prepare_institution_interview_role_alias_contract() -> None:
     assert result["query"]["target_role"] == "정보통신"
     with pytest.raises(ValueError, match="institution_name is required"):
         tool.handler({"target_role": "정보통신", "fetch_live_alio": False})
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler(
+            {"institution_name": "   ", "target_role": "정보통신", "fetch_live_alio": False}
+        )
     with pytest.raises(ValueError, match="target_role is required"):
         tool.handler({"institution_name": "한국인터넷진흥원", "fetch_live_alio": False})
+    with pytest.raises(ValueError, match="target_role is required"):
+        tool.handler(
+            {
+                "institution_name": "한국인터넷진흥원",
+                "job_family": "   ",
+                "fetch_live_alio": False,
+            }
+        )
 
     preferred_result = tool.handler(
         {

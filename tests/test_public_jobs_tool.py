@@ -424,6 +424,8 @@ def test_fetch_job_detail_rejects_missing_or_conflicting_ids() -> None:
 
     with pytest.raises(ValueError, match="fetch_job_detail requires job_id"):
         tool.handler({})
+    with pytest.raises(ValueError, match="fetch_job_detail requires job_id"):
+        tool.handler({"job_id": "   "})
 
     with pytest.raises(ValueError, match="conflicting fetch_job_detail ids"):
         tool.handler({"job_id": "302423", "source_job_id": "302424"})
@@ -524,5 +526,7 @@ def test_analyze_job_fit_report_accepts_same_id_aliases_and_rejects_invalid_ids(
     assert result["job_id"] == "302423"
     with pytest.raises(ValueError, match="analyze_job_fit_report requires job_id"):
         tool.handler({})
+    with pytest.raises(ValueError, match="analyze_job_fit_report requires job_id"):
+        tool.handler({"job_id": "   "})
     with pytest.raises(ValueError, match="conflicting analyze_job_fit_report ids"):
         tool.handler({"job_id": "302423", "source_job_id": "302424"})

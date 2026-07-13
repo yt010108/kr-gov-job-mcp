@@ -41,6 +41,16 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         {"required": ["target_role"]},
         {"required": ["job_family"]},
     ]
+    required_strings = {
+        "analyze_institution_strategy": ["institution_name"],
+        "analyze_institution_weakness": ["institution_name"],
+        "fetch_job_detail": ["job_id", "source_job_id", "recruitment_notice_sn"],
+        "analyze_job_fit_report": ["job_id", "source_job_id", "recruitment_notice_sn"],
+        "prepare_institution_interview": ["institution_name", "target_role", "job_family"],
+    }
+    for tool_name, fields in required_strings.items():
+        for field in fields:
+            assert schemas[tool_name]["properties"][field]["pattern"] == r"\S"
 
 
 def test_mcp_stdio_initialize_and_list_tools() -> None:
@@ -91,6 +101,10 @@ def test_mcp_stdio_initialize_and_list_tools() -> None:
         "openWorldHint": False,
     }
     assert "kr-gov-job-mcp" in lookup["description"]
+    expected_schemas = {
+        tool["name"]: tool["input_schema"] for tool in create_default_registry().list_tools()
+    }
+    assert {tool["name"]: tool["inputSchema"] for tool in tools} == expected_schemas
     _assert_issue_112_input_schemas(tools)
 
 
