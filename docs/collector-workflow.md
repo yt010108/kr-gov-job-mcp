@@ -117,28 +117,33 @@ data/raw_samples/
   <source>/
     <raw_type>/
       <YYYY-MM-DD>/
-        <sample_id_slug>-<sample_id_sha256>-<collected_at_token>.json
+        <sample_id_slug>-<sample_id_hash>-<collected_at_token>.json
 ```
 
 예시:
 
 ```txt
-data/raw_samples/job_alio/list/2026-07-07/kisa-search-<sample_id_sha256>-2026-07-07T00-01-02Z-<collected_at_sha256>.json
-data/raw_samples/alio_disclosure/detail/2026-07-07/C0399-institution-detail-<sample_id_sha256>-2026-07-07T00-01-02Z-<collected_at_sha256>.json
-data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list-<sample_id_sha256>-2026-07-07T00-01-02Z-<collected_at_sha256>.json
+data/raw_samples/job_alio/list/2026-07-07/kisa-search-<sample_id_hash>-2026-07-07T00-01-02Z-<collected_at_hash>.json
+data/raw_samples/alio_disclosure/detail/2026-07-07/C0399-institution-detail-<sample_id_hash>-2026-07-07T00-01-02Z-<collected_at_hash>.json
+data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list-<sample_id_hash>-2026-07-07T00-01-02Z-<collected_at_hash>.json
 ```
 
 파일명의 `sample_id_slug`와 `collected_at_token`은 Windows와 Linux에서 쓸 수 있는 ASCII로
 정규화한다. `sample_id_slug`는 최대 48자이며, 한글처럼 ASCII slug가 없는 값은 `unknown`이
-될 수 있다. 이 경우에도 원문 `sample_id` 전체의 SHA-256 digest를 파일명에 넣으므로 서로
-다른 ID를 충돌 가능성이 매우 낮은 별도 경로로 구분한다. `collected_at_token`에도 원문 수집
-시각의 SHA-256 digest를 넣어 정규화 결과가 같아져도 구분한다. Windows 예약명과 끝 공백·
-마침표, 예약명에 붙은 확장자도 저장 경로에서 정리한다.
+될 수 있다. 이 경우에도 원문 `sample_id` SHA-256 digest의 앞 32 hex 문자(128 bit)를
+파일명에 넣으므로 서로 다른 ID를 충돌 가능성이 매우 낮은 별도 경로로 구분한다.
+`collected_at_token`에도 원문 수집 시각 digest의 128 bit를 넣어 정규화 결과가 같아져도
+구분한다. 파일명은 최대 160자 이내로 유지해 Windows의 전체 경로 길이에 여유를 두며,
+Windows 예약명과 끝 공백·마침표, 예약명에 붙은 확장자도 저장 경로에서 정리한다. 다만
+전체 경로 한도는 사용자가 선택한 저장 root 길이와 Windows long-path 설정에도 좌우된다.
 
 같은 `sample_id`를 다른 `collected_at`으로 재수집하면 별도 파일로 저장한다. 정확히 같은
 최종 경로에 다시 쓰려 하면 기존 raw JSON을 덮어쓰지 않고 `FileExistsError`로 실패한다.
 쓰기는 같은 디렉터리의 임시 파일을 완전히 기록한 뒤 no-clobber 방식으로 publish하므로,
-실패한 쓰기가 target JSON 또는 임시 partial JSON을 남기지 않는다.
+일반적인 write/publish 예외가 발생하면 target JSON이나 임시 파일을 남기지 않는다. 프로세스가
+강제 종료되거나 시스템 전원이 끊기면 숨김 `.tmp` 파일이 남을 수 있지만, 불완전한 내용이
+최종 `.json` 경로로 publish되지는 않는다. 이런 orphan `.tmp`는 최종 JSON이 아니므로 확인 후
+삭제할 수 있다.
 
 기존 `<sample_id>.json` 형태의 raw 파일은 자동 migration하지 않는다. 다만 `read_sample()`은
 전달된 경로의 JSON을 그대로 읽으므로 기존 경로와 새 경로 모두 호환된다.

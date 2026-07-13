@@ -1,5 +1,8 @@
 import hashlib
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import PureWindowsPath
+from threading import Barrier
 from typing import Any
 
 import pytest
@@ -44,8 +47,8 @@ def test_raw_sample_store_writes_partitioned_json(tmp_path) -> None:
 
     path = store.write_sample(sample)
 
-    sample_digest = hashlib.sha256(sample.sample_id.encode("utf-8")).hexdigest()
-    time_digest = hashlib.sha256(sample.collected_at.encode("utf-8")).hexdigest()
+    sample_digest = hashlib.sha256(sample.sample_id.encode("utf-8")).hexdigest()[:32]
+    time_digest = hashlib.sha256(sample.collected_at.encode("utf-8")).hexdigest()[:32]
     assert path == (
         tmp_path
         / "job_alio"
@@ -116,8 +119,20 @@ def test_raw_sample_store_limits_long_sample_id_filename(tmp_path) -> None:
     store = RawSampleStore(tmp_path)
     path = store.write_sample(make_raw_sample(sample_id="long-id-" * 300))
 
-    assert len(path.name) <= 255
+    assert len(path.name) <= 160
     assert store.read_sample(path).sample_id == "long-id-" * 300
+
+
+def test_raw_sample_store_leaves_room_for_legacy_windows_path_limit(tmp_path) -> None:
+    store = RawSampleStore(tmp_path)
+    path = store.path_for(make_raw_sample(sample_id="long-id-" * 300))
+    relative_path = path.relative_to(tmp_path)
+    representative_root = PureWindowsPath(
+        "C:/Users/runner/work/kr-gov-job-mcp/kr-gov-job-mcp/data/raw_samples"
+    )
+    windows_path = representative_root.joinpath(*relative_path.parts)
+
+    assert len(str(windows_path)) <= 260
 
 
 def test_raw_sample_store_keeps_same_id_from_different_collection_times(tmp_path) -> None:
@@ -142,6 +157,35 @@ def test_raw_sample_store_rejects_existing_final_path_without_overwriting(tmp_pa
         store.write_sample(sample)
 
     assert store.read_sample(path) == sample
+
+
+def test_raw_sample_store_allows_exactly_one_concurrent_writer(tmp_path, monkeypatch) -> None:
+    store = RawSampleStore(tmp_path)
+    sample = make_raw_sample()
+    publish_barrier = Barrier(2)
+    original_link = raw_store.os.link
+
+    def synchronized_link(source, destination):
+        publish_barrier.wait(timeout=5)
+        return original_link(source, destination)
+
+    monkeypatch.setattr(raw_store.os, "link", synchronized_link)
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(store.write_sample, sample) for _ in range(2)]
+
+    successful_paths = []
+    failures = []
+    for future in futures:
+        try:
+            successful_paths.append(future.result())
+        except FileExistsError as error:
+            failures.append(error)
+
+    assert successful_paths == [store.path_for(sample)]
+    assert len(failures) == 1
+    assert store.read_sample(successful_paths[0]) == sample
+    assert not list(successful_paths[0].parent.glob("*.tmp"))
 
 
 def test_raw_sample_store_reads_existing_legacy_path(tmp_path) -> None:

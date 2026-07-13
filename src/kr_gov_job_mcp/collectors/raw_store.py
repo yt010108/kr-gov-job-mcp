@@ -15,8 +15,9 @@ from kr_gov_job_mcp.collectors.base import RawSample
 class RawSampleStore:
     """Write raw samples to a stable, git-ignored directory layout."""
 
+    _DIGEST_HEX_LENGTH = 32
     _MAX_SAMPLE_SLUG_LENGTH = 48
-    _MAX_TIME_TOKEN_LENGTH = 48
+    _MAX_TIME_TOKEN_LENGTH = 24
     _MAX_SEGMENT_LENGTH = 80
     _WINDOWS_RESERVED_SEGMENTS = frozenset(
         {
@@ -77,14 +78,14 @@ class RawSampleStore:
     @classmethod
     def _filename_for(cls, sample: RawSample) -> str:
         sample_slug = cls._safe_segment(sample.sample_id, cls._MAX_SAMPLE_SLUG_LENGTH)
-        sample_digest = sha256(sample.sample_id.encode("utf-8")).hexdigest()
+        sample_digest = sha256(sample.sample_id.encode("utf-8")).hexdigest()[: cls._DIGEST_HEX_LENGTH]
         time_token = cls._time_token(sample.collected_at)
         return f"{sample_slug}-{sample_digest}-{time_token}.json"
 
     @classmethod
     def _time_token(cls, collected_at: str) -> str:
         safe_time = cls._safe_segment(collected_at, cls._MAX_TIME_TOKEN_LENGTH)
-        time_digest = sha256(collected_at.encode("utf-8")).hexdigest()
+        time_digest = sha256(collected_at.encode("utf-8")).hexdigest()[: cls._DIGEST_HEX_LENGTH]
         return f"{safe_time}-{time_digest}"
 
     @staticmethod
