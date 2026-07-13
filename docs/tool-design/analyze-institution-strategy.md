@@ -92,5 +92,5 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 - 기관 홈페이지는 구조가 기관마다 다르므로 출처 URL과 excerpt를 함께 보존한다.
 - ALIO 주요사업은 최신 예산 규모와 직전 결산 대비 성장성을 함께 반환한다.
 - `year`를 지정한 live ALIO 조회는 같은 공시 연도의 자료만 사용한다. 일치 자료가 없으면 다른 연도 자료로 대체하지 않고 `warnings`로 반환한다.
-- 자동 수집 evidence에는 근거 연도 `evidence_year`, 공시 시점 `disclosed_at`, 실제 수집 시각 `retrieved_at`을 보존한다. 기존 `collected_at`은 호환을 위해 실제 수집 시각과 같은 값으로 유지한다.
+- 자동 수집 evidence에는 근거 연도 `evidence_year`, timezone이 확인된 공시 시점 `disclosed_at`, 실제 수집 시각 `retrieved_at`을 보존한다. 정기공시는 `critYyyy`를 근거 연도로 사용한다. 날짜만 제공된 공시는 임의 timezone을 붙이지 않고 원문을 `fields.disclosed_date`와 기존 `collected_at`에 유지하며 `disclosed_at`은 비워 둔다.
 - `job_connection`은 최종 답변 문장이 아니라, 직무/경험과 연결할 때 사용할 검토 축이다.

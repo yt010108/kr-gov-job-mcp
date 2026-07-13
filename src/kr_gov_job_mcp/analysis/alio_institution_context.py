@@ -271,11 +271,12 @@ async def _append_main_business_context(
             "alio_item_no": "40",
             "report_form_root_no": item.report_form_root_no,
             "total_count": reports.total_count,
+            "criterion_year": report.criterion_year if report else None,
             "disclosed_date": report.disclosed_date if report else None,
             "business_rows": rows,
             "institution_main_business": institution.main_business,
         },
-        collected_at=retrieved_at,
+        collected_at=report.disclosed_date if report else None,
         evidence_year=_report_year(report),
         disclosed_at=_report_disclosed_at(report),
         retrieved_at=retrieved_at,
@@ -437,6 +438,7 @@ def _report_evidence(
         "alio_item_no": item_no,
         "report_form_no": report.report_form_no,
         "total_count": total_count,
+        "criterion_year": report.criterion_year,
         "disclosed_date": report.disclosed_date,
     }
     if extra_fields:
@@ -446,7 +448,7 @@ def _report_evidence(
         source_type="alio_disclosure",
         url=report.source_url,
         source_id=_report_source_id(report),
-        collected_at=retrieved_at,
+        collected_at=report.disclosed_date,
         evidence_year=_report_year(report),
         disclosed_at=_report_disclosed_at(report),
         retrieved_at=retrieved_at,
@@ -499,7 +501,7 @@ def _select_reports_for_year(
 ) -> list[AlioReportDisclosure]:
     if year is None:
         for report in reports:
-            if report.disclosed_date and _report_disclosed_at(report) is None:
+            if report.disclosed_date and _report_year_from_disclosed_date(report) is None:
                 context.warnings.append(
                     f"{source_label} report {_report_source_id(report) or report.title or 'unknown'} "
                     f"has malformed disclosed date {report.disclosed_date!r}; "
@@ -509,11 +511,11 @@ def _select_reports_for_year(
 
     selected: list[AlioReportDisclosure] = []
     for report in reports:
-        disclosed_at, evidence_year = _normalize_disclosed_at(report.disclosed_date)
-        if disclosed_at is None:
+        evidence_year = _report_year(report)
+        if evidence_year is None:
             context.warnings.append(
                 f"{source_label} report {_report_source_id(report) or report.title or 'unknown'} "
-                f"has missing or malformed disclosed date {report.disclosed_date!r}; "
+                f"has no usable criterion year or disclosed date {report.disclosed_date!r}; "
                 f"it cannot satisfy requested year {year}."
             )
         elif evidence_year == year:
@@ -535,6 +537,12 @@ def _report_disclosed_at(report: AlioReportDisclosure | None) -> str | None:
 def _report_year(report: AlioReportDisclosure | None) -> int | None:
     if report is None:
         return None
+    if report.criterion_year is not None:
+        return report.criterion_year
+    return _report_year_from_disclosed_date(report)
+
+
+def _report_year_from_disclosed_date(report: AlioReportDisclosure) -> int | None:
     return _normalize_disclosed_at(report.disclosed_date)[1]
 
 
@@ -556,8 +564,10 @@ def _normalize_disclosed_at(value: str | None) -> tuple[str | None, int | None]:
             )
         except ValueError:
             return None, None
+    # A calendar date or timezone-naive datetime does not identify an instant.
+    # Preserve its year for selection, but do not invent an offset for disclosed_at.
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
+        return None, parsed.year
     return parsed.isoformat(), parsed.year
 
 

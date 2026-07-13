@@ -74,10 +74,16 @@ class _PagedFakeAlioClient(_FakeAlioClient):
         )
 
 
-def _report(disclosure_no: str, disclosed_date: str | None) -> AlioReportDisclosure:
+def _report(
+    disclosure_no: str,
+    disclosed_date: str | None,
+    *,
+    criterion_year: int | None = None,
+) -> AlioReportDisclosure:
     return AlioReportDisclosure(
         disclosure_no=disclosure_no,
         title=disclosure_no,
+        criterion_year=criterion_year,
         disclosed_date=disclosed_date,
         report_form_no="FORM",
         source_url=f"https://alio.go.kr/{disclosure_no}",
@@ -193,17 +199,55 @@ def test_context_year_filter_keeps_source_order_and_provenance() -> None:
         "research-50-2-a",
     ]
     assert {evidence.evidence_year for evidence in context.evidence} == {2025}
-    assert {evidence.collected_at for evidence in context.evidence} == {
-        context.evidence[0].retrieved_at
-    }
-    assert all(evidence.collected_at == evidence.retrieved_at for evidence in context.evidence)
+    assert context.evidence[0].collected_at == "2025.01.02"
     assert all(
-        datetime.fromisoformat(evidence.retrieved_at or "").tzinfo is not None
-        and datetime.fromisoformat(evidence.disclosed_at or "").tzinfo is not None
+        evidence.collected_at == evidence.fields["disclosed_date"]
         for evidence in context.evidence
     )
-    assert context.evidence[0].disclosed_at == "2025-01-02T00:00:00+00:00"
+    assert all(
+        datetime.fromisoformat(evidence.retrieved_at or "").tzinfo is not None
+        for evidence in context.evidence
+    )
+    assert all(evidence.disclosed_at is None for evidence in context.evidence)
     assert context.evidence[0].fields["disclosed_date"] == "2025.01.02"
+
+
+def test_context_year_filter_uses_regular_criterion_year_without_inventing_timestamp() -> None:
+    regular_report = AlioDisclosureClient.normalize_report_disclosure(
+        {
+            "apbaId": "C0001",
+            "apbaNa": "테스트 기관",
+            "reportFormNo": "31501",
+            "critYyyy": "2025",
+            "submissionNo": "2026041310382324",
+            "disclosureNo": "2026041303151983",
+        },
+        source_url="https://alio.go.kr/2026041303151983",
+    )
+
+    context = _fetch_context({"40": [regular_report]}, year=2025)
+
+    evidence = context.evidence[0]
+    assert evidence.source_id == "2026041303151983"
+    assert evidence.evidence_year == 2025
+    assert evidence.fields["criterion_year"] == 2025
+    assert evidence.fields["disclosed_date"] is None
+    assert evidence.disclosed_at is None
+    assert evidence.collected_at is None
+    assert datetime.fromisoformat(evidence.retrieved_at or "").tzinfo is not None
+    assert not any("no fallback was used" in warning for warning in context.warnings)
+
+
+def test_context_preserves_timezone_aware_disclosed_timestamp() -> None:
+    context = _fetch_context(
+        {"40": [_report("main-2025", "2025-01-02T09:30:00+09:00")]},
+        year=2025,
+    )
+
+    evidence = context.evidence[0]
+    assert evidence.evidence_year == 2025
+    assert evidence.disclosed_at == "2025-01-02T09:30:00+09:00"
+    assert evidence.collected_at == "2025-01-02T09:30:00+09:00"
 
 
 def test_context_without_year_keeps_existing_source_order() -> None:
@@ -277,8 +321,11 @@ def test_context_year_filter_warns_for_malformed_disclosed_date() -> None:
     )
 
     assert context.evidence == []
-    assert any("missing or malformed disclosed date 'not-a-date'" in warning for warning in context.warnings)
-    assert any("ALIO item 40 주요사업 has reports but none match requested year 2025" in warning for warning in context.warnings)
+    assert any("no usable criterion year or disclosed date 'not-a-date'" in warning for warning in context.warnings)
+    assert any(
+        "ALIO item 40 주요사업 has reports but none match requested year 2025" in warning
+        for warning in context.warnings
+    )
 
 
 def test_context_warns_when_main_business_reports_are_empty() -> None:

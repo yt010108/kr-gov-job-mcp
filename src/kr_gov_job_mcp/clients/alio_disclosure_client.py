@@ -555,6 +555,7 @@ class AlioDisclosureClient:
             report_form_no=report_form_no,
             title=cls._to_text(raw.get("title") or raw.get("rtitle")),
             report_kind=report_kind,
+            criterion_year=cls._to_int(raw.get("critYyyy")),
             disclosed_date=cls._to_date(raw.get("idate")),
             institution_id=institution_id,
             institution_name=cls._to_text(raw.get("pname") or raw.get("apbaNa")),
