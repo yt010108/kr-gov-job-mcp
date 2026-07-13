@@ -87,7 +87,6 @@ python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 ```bash
 docker build -t kr-gov-job-mcp .
 docker run --rm -p 8000:8000 kr-gov-job-mcp
-curl http://localhost:8000/health
 ```
 
 ## 도구 등록 구조
@@ -121,7 +120,6 @@ registry.register(
 ```bash
 python -m kr_gov_job_mcp.server --health
 python -m kr_gov_job_mcp.server --list-tools
-python -m kr_gov_job_mcp.server --http --host 127.0.0.1 --port 8000
 python -m pytest -q
 ```
 
