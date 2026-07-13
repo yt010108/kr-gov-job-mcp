@@ -103,6 +103,21 @@ def test_search_public_jobs_serializes_job_alio_results() -> None:
     }
 
 
+def test_search_public_jobs_forwards_institution_code_without_keyword_fallback() -> None:
+    captured_kwargs = {}
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_kwargs.update(kwargs)
+        return JobAlioSearchResult(page=1, limit=20, total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    tool.handler({"institution_code": "C0251"})
+
+    assert captured_kwargs["institution_code"] == "C0251"
+    assert "keyword" not in captured_kwargs
+
+
 def test_search_public_jobs_rejects_unknown_arguments() -> None:
     tool = create_search_public_jobs_tool(
         search_jobs=lambda **_kwargs: JobAlioSearchResult(page=1, limit=20, total_count=0)
