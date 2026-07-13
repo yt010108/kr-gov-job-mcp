@@ -79,6 +79,34 @@ python -m pytest -q
 python -m ruff check .
 ```
 
+## CI 검증
+
+GitHub Actions는 pull request와 `main` 브랜치 push에서 Python 3.11/3.12로 Ruff와 pytest를
+실행하고, Python 3.12에서 sdist/wheel을 빌드합니다. Docker 이미지는 별도로 빌드한 뒤 `/health`와
+`POST /mcp`의 `tools/list` 응답을 확인합니다. 외부 Job-ALIO, ALIO 등 live API 호출은 필수 CI에
+포함하지 않아 네트워크와 원본 데이터 변동이 PR 결과에 영향을 주지 않도록 합니다. 실시간 외부
+소스 검증은 필수 체크와 분리한 수동 또는 정기 canary로 운영합니다.
+
+로컬에서 같은 범위를 확인하려면 다음을 실행합니다.
+
+```bash
+python -m ruff check .
+python -m pytest -q
+python -m pip install build
+python -m build
+docker build -t kr-gov-job-mcp:local .
+docker run --detach --rm --name kr-gov-job-mcp-local -p 8000:8000 kr-gov-job-mcp:local
+curl --fail http://localhost:8000/health
+curl --fail -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+docker stop kr-gov-job-mcp-local
+```
+
+workflow가 `main`에 반영된 뒤 저장소 보호 규칙에서 `Test (Python 3.11)`, `Test (Python 3.12)`,
+`Build package`, `Container smoke test`를 필수 체크로 지정합니다. 보호 규칙은 GitHub 저장소 설정에서
+별도로 적용해야 합니다.
+
 ## Docker / Git 소스 빌드 배포
 
 루트 `Dockerfile`은 Git 소스 빌드 화면에서 바로 사용할 수 있다. 컨테이너는 기본적으로
