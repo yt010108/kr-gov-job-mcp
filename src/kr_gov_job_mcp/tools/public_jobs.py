@@ -18,7 +18,11 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioSummary,
 )
 from kr_gov_job_mcp.schemas.job_fit import ApplicantReadinessInput, JobFitPreparationReport
-from kr_gov_job_mcp.tools.registry import ToolDefinition, read_only_tool_annotations
+from kr_gov_job_mcp.tools.registry import (
+    ToolDefinition,
+    non_blank_string_schema,
+    read_only_tool_annotations,
+)
 
 
 SearchJobsRunner = Callable[..., JobAlioSearchResult]
@@ -110,37 +114,36 @@ SEARCH_PUBLIC_JOBS_INPUT_SCHEMA: dict[str, Any] = {
 FETCH_JOB_DETAIL_INPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "job_id": {
-            "type": "string",
-            "description": "search_public_jobs가 반환한 잡알리오 채용공고 ID입니다.",
-        },
-        "source_job_id": {
-            "type": "string",
-            "description": "search_public_jobs의 source_job_id를 그대로 넘길 때 쓰는 job_id 별칭입니다.",
-        },
-        "recruitment_notice_sn": {
-            "type": "string",
-            "description": "잡알리오 채용공고 일련번호(recrutPblntSn)입니다.",
-        },
+        "job_id": non_blank_string_schema(
+            "search_public_jobs가 반환한 잡알리오 채용공고 ID입니다."
+        ),
+        "source_job_id": non_blank_string_schema(
+            "search_public_jobs의 source_job_id를 그대로 넘길 때 쓰는 job_id 별칭입니다."
+        ),
+        "recruitment_notice_sn": non_blank_string_schema(
+            "잡알리오 채용공고 일련번호(recrutPblntSn)입니다."
+        ),
     },
+    "anyOf": [
+        {"required": ["job_id"]},
+        {"required": ["source_job_id"]},
+        {"required": ["recruitment_notice_sn"]},
+    ],
     "additionalProperties": False,
 }
 
 ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "job_id": {
-            "type": "string",
-            "description": "search_public_jobs가 반환한 잡알리오 채용공고 ID입니다.",
-        },
-        "source_job_id": {
-            "type": "string",
-            "description": "search_public_jobs의 source_job_id를 그대로 넘길 때 쓰는 job_id 별칭입니다.",
-        },
-        "recruitment_notice_sn": {
-            "type": "string",
-            "description": "잡알리오 채용공고 일련번호(recrutPblntSn)입니다.",
-        },
+        "job_id": non_blank_string_schema(
+            "search_public_jobs가 반환한 잡알리오 채용공고 ID입니다."
+        ),
+        "source_job_id": non_blank_string_schema(
+            "search_public_jobs의 source_job_id를 그대로 넘길 때 쓰는 job_id 별칭입니다."
+        ),
+        "recruitment_notice_sn": non_blank_string_schema(
+            "잡알리오 채용공고 일련번호(recrutPblntSn)입니다."
+        ),
         "target_role": {
             "type": "string",
             "description": "지원자가 목표로 하는 직무 또는 준비 방향입니다.",
@@ -156,6 +159,11 @@ ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
             "description": "준비 리포트에 반영할 지원자 메모입니다.",
         },
     },
+    "anyOf": [
+        {"required": ["job_id"]},
+        {"required": ["source_job_id"]},
+        {"required": ["recruitment_notice_sn"]},
+    ],
     "additionalProperties": False,
 }
 

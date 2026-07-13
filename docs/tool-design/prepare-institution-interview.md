@@ -24,7 +24,8 @@
 }
 ```
 
-`target_role`은 필수다. `job_family`는 `target_role` 별칭으로 받을 수 있다.
+`institution_name`은 필수다. `target_role` 또는 그 별칭인 `job_family` 중 하나는 반드시 입력한다.
+둘을 함께 입력하면 기존 호출 호환성을 위해 `target_role`을 우선 사용한다.
 보안 직무는 `정보보안`/`정보보호`가 아니라 Job-ALIO NCS 대분류명 `정보통신`으로 입력한다.
 
 `evidence`와 `signals`가 비어 있고 `fetch_live_alio`가 `true`면, 도구는 먼저

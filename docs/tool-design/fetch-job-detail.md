@@ -2,16 +2,16 @@
 
 ## 구현 상태
 
-Job-ALIO `recrutPblntSn` 기반 1차 구현 완료. `search_public_jobs`가 반환한 `id` 또는
-`source_job_id`를 입력으로 사용한다.
+Job-ALIO `recrutPblntSn` 기반 1차 구현 완료. `job_id`, `source_job_id`,
+`recruitment_notice_sn` 중 하나는 반드시 입력한다.
 
 ## 입력
 
 | field | 한국어 설명 |
 | --- | --- |
-| `job_id` | Job-ALIO 공고 ID |
-| `source_job_id` | `search_public_jobs`가 반환한 Job-ALIO 원본 공고 ID alias |
-| `recruitment_notice_sn` | Job-ALIO 채용공고 일련번호 alias |
+| `job_id` | Job-ALIO 공고 ID. 세 ID alias 중 하나는 필수 |
+| `source_job_id` | `search_public_jobs`가 반환한 Job-ALIO 원본 공고 ID alias. 세 ID alias 중 하나는 필수 |
+| `recruitment_notice_sn` | Job-ALIO 채용공고 일련번호 alias. 세 ID alias 중 하나는 필수 |
 
 ## 출력
 

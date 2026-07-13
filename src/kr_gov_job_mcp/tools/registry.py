@@ -10,6 +10,11 @@ from typing import Any
 ToolHandler = Callable[[Mapping[str, Any]], Mapping[str, Any]]
 
 
+def non_blank_string_schema(description: str) -> dict[str, Any]:
+    """Return a string schema that matches the runtime's stripped-text contract."""
+    return {"type": "string", "pattern": r"\S", "description": description}
+
+
 @dataclass(frozen=True)
 class ToolDefinition:
     """Description and handler for one callable MCP-style tool."""
