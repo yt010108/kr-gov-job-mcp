@@ -123,6 +123,11 @@ FETCH_JOB_DETAIL_INPUT_SCHEMA: dict[str, Any] = {
             "description": "잡알리오 채용공고 일련번호(recrutPblntSn)입니다.",
         },
     },
+    "anyOf": [
+        {"required": ["job_id"]},
+        {"required": ["source_job_id"]},
+        {"required": ["recruitment_notice_sn"]},
+    ],
     "additionalProperties": False,
 }
 
@@ -156,6 +161,11 @@ ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA: dict[str, Any] = {
             "description": "준비 리포트에 반영할 지원자 메모입니다.",
         },
     },
+    "anyOf": [
+        {"required": ["job_id"]},
+        {"required": ["source_job_id"]},
+        {"required": ["recruitment_notice_sn"]},
+    ],
     "additionalProperties": False,
 }
 

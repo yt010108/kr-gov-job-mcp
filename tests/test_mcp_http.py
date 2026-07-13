@@ -51,6 +51,27 @@ def _request(
         connection.close()
 
 
+def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
+    schemas = {tool["name"]: tool["inputSchema"] for tool in tools}
+    id_aliases = [
+        {"required": ["job_id"]},
+        {"required": ["source_job_id"]},
+        {"required": ["recruitment_notice_sn"]},
+    ]
+
+    assert schemas["analyze_institution_strategy"]["required"] == ["institution_name"]
+    assert "anyOf" not in schemas["analyze_institution_strategy"]
+    assert schemas["analyze_institution_weakness"]["required"] == ["institution_name"]
+    assert "anyOf" not in schemas["analyze_institution_weakness"]
+    assert schemas["fetch_job_detail"]["anyOf"] == id_aliases
+    assert schemas["analyze_job_fit_report"]["anyOf"] == id_aliases
+    assert schemas["prepare_institution_interview"]["required"] == ["institution_name"]
+    assert schemas["prepare_institution_interview"]["anyOf"] == [
+        {"required": ["target_role"]},
+        {"required": ["job_family"]},
+    ]
+
+
 def test_mcp_http_health_endpoint() -> None:
     with _mcp_http_server() as (host, port):
         status, payload = _request(host, port, "GET", "/health")
@@ -97,6 +118,7 @@ def test_mcp_http_initialize_and_list_tools() -> None:
     assert "kr-gov-job-mcp" in search_public_jobs["description"]
     assert search_public_jobs["annotations"]["readOnlyHint"] is True
     assert search_public_jobs["annotations"]["openWorldHint"] is True
+    _assert_issue_112_input_schemas(tools)
 
 
 def test_mcp_http_call_tool_returns_structured_content() -> None:

@@ -63,6 +63,7 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
             "description": "근거가 연결된 사전 추출 기관 signal 후보입니다.",
         },
     },
+    "required": ["institution_name"],
     "additionalProperties": False,
 }
 
@@ -106,6 +107,7 @@ ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA: dict[str, Any] = {
             "description": "근거가 연결된 사전 추출 개선 과제 signal 후보입니다.",
         },
     },
+    "required": ["institution_name"],
     "additionalProperties": False,
 }
 
@@ -163,6 +165,11 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
             "description": "근거가 연결된 사전 추출 기관 signal 후보입니다.",
         },
     },
+    "required": ["institution_name"],
+    "anyOf": [
+        {"required": ["target_role"]},
+        {"required": ["job_family"]},
+    ],
     "additionalProperties": False,
 }
 
