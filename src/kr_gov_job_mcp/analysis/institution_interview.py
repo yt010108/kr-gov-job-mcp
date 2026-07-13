@@ -121,7 +121,9 @@ def _build_card(
         return _improvement_card(institution_name, target_role, weakness_signals)
     if focus_area == "입사후포부":
         return _future_contribution_card(institution_name, target_role, strategy_signals)
-    if focus_area in {"직무 관심도", "전문성 어필", "상황면접"}:
+    if focus_area == "상황면접":
+        return _situational_interview_card(institution_name, target_role)
+    if focus_area in {"직무 관심도", "전문성 어필"}:
         return _professional_interest_card(focus_area, institution_name, target_role, strategy_signals)
     return _unsupported_focus_card(focus_area)
 
@@ -305,6 +307,35 @@ def _professional_interest_card(
             ),
             evidence=signal.evidence,
             caution="자료 제목만 보고 연구 내용 전체를 읽은 것처럼 말하지 않습니다.",
+        ),
+        [],
+    )
+
+
+def _situational_interview_card(
+    institution_name: str,
+    target_role: str,
+) -> tuple[InstitutionInterviewCard, list[InstitutionVerificationNote]]:
+    return (
+        InstitutionInterviewCard(
+            question_type="상황면접",
+            likely_question=(
+                f"{institution_name}에서 {target_role} 업무 중 예상하지 못한 문제나 이해관계 충돌이 "
+                "발생하면 어떻게 대응하겠습니까?"
+            ),
+            answer_strategy=(
+                "가정된 상황임을 분명히 하고, 상황 파악, 규정과 우선순위 확인, 관계자 소통, "
+                "조치와 회고 순서로 답합니다."
+            ),
+            answer_points=[
+                "확인되지 않은 기관 내부 절차를 가정하지 않고 먼저 사실과 영향 범위를 파악합니다.",
+                "적용 규정과 업무 우선순위를 확인한 뒤 필요한 관계자에게 상황과 선택지를 공유합니다.",
+                "실제 경험을 덧붙일 때는 본인이 수행한 행동과 확인 가능한 결과만 설명합니다.",
+            ],
+            sample_answer_sentence=None,
+            evidence=[],
+            caution="기관 내부 상황이나 본인의 경험을 사실처럼 꾸며내지 않습니다.",
+            safe_framing="공개 근거가 필요 없는 가상 질문으로 두고, 답변 구조와 판단 원칙만 준비합니다.",
         ),
         [],
     )

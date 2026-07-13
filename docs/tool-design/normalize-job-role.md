@@ -31,7 +31,7 @@
 - `is_security_role`: 보안 직무 표현 감지 여부
 - `matched_aliases`: 감지된 보안 직무 별칭
 - `matched_fields`: 별칭이 발견된 입력 필드
-- `recommended_next_arguments`: 후속 도구 호출에 넘기기 쉬운 인자 묶음
+- `recommended_next_arguments`: 후속 도구별 입력 계약에 맞춘 인자 묶음
 - `safe_context`: 취업 준비용 허용 출력과 금지 출력 범위
 
 예시:
@@ -45,9 +45,14 @@
   "is_security_role": true,
   "matched_aliases": ["정보보안", "정보보호"],
   "recommended_next_arguments": {
-    "target_role": "정보통신",
-    "job_family": "정보통신",
-    "original_target_role": "정보보안"
+    "prepare_institution_interview": {
+      "target_role": "정보통신",
+      "job_family": "정보통신",
+      "original_target_role": "정보보안"
+    },
+    "analyze_job_fit_report": {
+      "target_role": "정보통신"
+    }
   }
 }
 ```
@@ -66,6 +71,9 @@
 - 정보통신 보안
 - 웹 보안
 - 네트워크 보안
+
+단독 `보안`은 독립된 단어로 입력된 경우에만 감지한다. `보안요원`, `보안검색`, `시설보안`처럼
+물리·시설 보안을 뜻하는 직무는 `정보통신`으로 정규화하지 않는다.
 
 ## 안전 범위
 

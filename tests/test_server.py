@@ -95,9 +95,12 @@ def test_server_cli_calls_normalize_job_role(capsys) -> None:
     assert payload["original_target_role"] == "정보보안"
     assert payload["is_security_role"] is True
     assert payload["recommended_next_arguments"] == {
-        "job_family": "정보통신",
-        "original_target_role": "정보보안",
-        "target_role": "정보통신",
+        "prepare_institution_interview": {
+            "job_family": "정보통신",
+            "original_target_role": "정보보안",
+            "target_role": "정보통신",
+        },
+        "analyze_job_fit_report": {"target_role": "정보통신"},
     }
 
 

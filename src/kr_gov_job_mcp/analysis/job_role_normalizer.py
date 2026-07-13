@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -19,6 +20,15 @@ SECURITY_JOB_ALIASES: Mapping[str, str] = {
     "네트워크 보안": SECURITY_NORMALIZED_JOB_FAMILY,
     "보안": SECURITY_NORMALIZED_JOB_FAMILY,
 }
+_GENERIC_SECURITY_ALIAS = "보안"
+_PHYSICAL_SECURITY_TERMS = (
+    "보안요원",
+    "보안검색",
+    "시설보안",
+    "경비보안",
+    "청사보안",
+    "항공보안",
+)
 SAFE_JOB_PREPARATION_CONTEXT: dict[str, Any] = {
     "purpose": "public_sector_job_interview_preparation",
     "allowed_outputs": [
@@ -124,7 +134,7 @@ def _find_security_aliases(
                 reverse=True,
             ):
                 compact_alias = _compact(alias)
-                if compact_alias not in compact_value:
+                if not _matches_security_alias(value, alias, compact_value=compact_value):
                     continue
                 if any(compact_alias in _compact(existing) for existing in matched_for_value):
                     continue
@@ -137,6 +147,14 @@ def _find_security_aliases(
                 seen_aliases.add(alias)
                 matched_aliases.append(alias)
     return matched_aliases, matched_fields
+
+
+def _matches_security_alias(value: str, alias: str, *, compact_value: str) -> bool:
+    if alias != _GENERIC_SECURITY_ALIAS:
+        return _compact(alias) in compact_value
+    if any(term in compact_value for term in _PHYSICAL_SECURITY_TERMS):
+        return False
+    return re.search(r"(?<![0-9A-Za-z가-힣])보안(?![0-9A-Za-z가-힣])", value) is not None
 
 
 def _is_security_role(
@@ -200,18 +218,23 @@ def _recommended_next_arguments(
     normalized_job_family: str | None,
     is_security_role: bool,
     matched_fields: Mapping[str, list[str]],
-) -> dict[str, Any]:
+) -> dict[str, dict[str, Any]]:
     original_target_role = target_role or job_family
     if original_target_role is None and is_security_role and query:
         original_target_role = matched_fields.get("query", [None])[0]
-    arguments = {}
+    interview_arguments = {}
+    job_fit_arguments = {}
     if normalized_target_role is not None:
-        arguments["target_role"] = normalized_target_role
+        interview_arguments["target_role"] = normalized_target_role
+        job_fit_arguments["target_role"] = normalized_target_role
     if normalized_job_family is not None:
-        arguments["job_family"] = normalized_job_family
+        interview_arguments["job_family"] = normalized_job_family
     if is_security_role and original_target_role:
-        arguments["original_target_role"] = original_target_role
-    return arguments
+        interview_arguments["original_target_role"] = original_target_role
+    return {
+        "prepare_institution_interview": interview_arguments,
+        "analyze_job_fit_report": job_fit_arguments,
+    }
 
 
 def _compact(value: str) -> str:

@@ -99,4 +99,44 @@ def test_generate_institution_interview_report_keeps_missing_evidence_as_notes()
     assert "weakness_signals" in note_fields
     assert "interview_cards.지원동기.evidence" in note_fields
     assert "interview_cards.직무 관심도.evidence" in note_fields
-    assert "interview_cards.상황면접.evidence" in note_fields
+    assert "interview_cards.상황면접.evidence" not in note_fields
+    situation_card = report.interview_cards[-1]
+    assert situation_card.question_type == "상황면접"
+    assert "예상하지 못한 문제" in situation_card.likely_question
+    assert "상황 파악" in situation_card.answer_strategy
+    assert situation_card.sample_answer_sentence is None
+    assert situation_card.evidence == []
+
+
+def test_situational_interview_card_does_not_reuse_institution_evidence() -> None:
+    evidence = InstitutionEvidence(
+        title="기관 연구자료",
+        source_type="alio_disclosure",
+        excerpt="기관 연구자료의 공개 요약",
+        fields={"source_type": "policy_research"},
+    )
+    analysis_input = prepare_institution_analysis_input(
+        institution_name="한국인터넷진흥원",
+        evidence=[evidence],
+        signals=[
+            InstitutionSignalCandidate(
+                category="job_connection",
+                title="연구자료",
+                summary=evidence.excerpt,
+                evidence=[evidence],
+            )
+        ],
+    )
+
+    report = generate_institution_interview_report(
+        analysis_input,
+        target_role="정보통신",
+        focus_areas=["상황면접"],
+    )
+
+    card = report.interview_cards[0]
+    assert card.question_type == "상황면접"
+    assert "어떤 업무에 관심" not in card.likely_question
+    assert card.evidence == []
+    assert card.sample_answer_sentence is None
+    assert "꾸며내지" in card.caution

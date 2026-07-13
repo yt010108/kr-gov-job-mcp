@@ -81,8 +81,8 @@ def create_normalize_job_role_tool() -> ToolDefinition:
             "`정보보안`, `정보보호`, `보안`, "
             "`침해대응`, `침해사고 대응`, `취약점 분석`, `개인정보보호`, `정보통신 보안` 같은 "
             "보안 직무 표현이 있으면 `prepare_institution_interview` 또는 `analyze_job_fit_report` "
-            "호출 전에 먼저 이 도구를 호출하고, 반환된 `normalized_target_role`, "
-            "`normalized_job_family`, `original_target_role`을 다음 도구 인자로 넘깁니다. "
+            "호출 전에 먼저 이 도구를 호출하고, `recommended_next_arguments`에서 호출할 후속 "
+            "도구 이름에 해당하는 인자만 넘깁니다. "
             "이 도구는 면접/적합도 준비 범위만 안내하며 공격 절차, 페이로드, 무단 접근 방법은 "
             "출력 범위에서 제외합니다."
         ),
