@@ -1,6 +1,10 @@
 import pytest
 
 from kr_gov_job_mcp.codes import list_job_alio_codes
+from kr_gov_job_mcp.codes.job_alio_codes import (
+    InstitutionCodeDataError,
+    _load_institution_codes_from_csv,
+)
 from kr_gov_job_mcp.tools.code_lookup import (
     create_lookup_job_alio_codes_tool,
     create_lookup_region_codes_tool,
@@ -23,7 +27,7 @@ def test_lookup_job_alio_codes_returns_institution_candidate_by_alias() -> None:
                 "name": "한국인터넷진흥원",
                 "aliases": ["KISA", "인터넷진흥원"],
                 "score": 0.92,
-                "source": "alio_institution_codes_csv_2026_07_08",
+                "source": "job_alio_recruit_filter_csv_2026_07_13",
             }
         ],
         "warnings": [],
@@ -61,12 +65,12 @@ def test_lookup_job_alio_codes_returns_institution_candidate_from_csv() -> None:
         "name": "한국농수산식품유통공사",
         "aliases": [],
         "score": 0.98,
-        "source": "alio_institution_codes_csv_2026_07_08",
+        "source": "job_alio_recruit_filter_csv_2026_07_13",
     }
     assert result["warnings"] == []
 
 
-def test_lookup_job_alio_codes_returns_filter_name_fallback_without_code() -> None:
+def test_lookup_job_alio_codes_returns_official_filter_code() -> None:
     tool = create_lookup_job_alio_codes_tool()
 
     result = tool.handler({"code_type": "institution", "query": "대구경북과학기술원"})
@@ -75,20 +79,13 @@ def test_lookup_job_alio_codes_returns_filter_name_fallback_without_code() -> No
     assert result["query"] == "대구경북과학기술원"
     assert result["result_count"] == 1
     assert result["codes"][0] == {
-        "code": None,
+        "code": "C0049",
         "name": "대구경북과학기술원",
         "aliases": [],
         "score": 0.98,
-        "source": "alio_open_data_recruit_filter_2026_07_08",
-        "fallback_search": {
-            "tool": "search_public_jobs",
-            "arguments": {"keyword": "대구경북과학기술원"},
-            "reason": "기관코드가 확인되지 않아 기관명을 공고 키워드로 검색합니다.",
-        },
+        "source": "job_alio_recruit_filter_csv_2026_07_13",
     }
-    assert result["warnings"] == [
-        "일부 기관명 후보는 기관코드가 확인되지 않아 search_public_jobs의 institution_code로 바로 사용할 수 없습니다. fallback_search.arguments.keyword로 기관명을 검색하세요."
-    ]
+    assert result["warnings"] == []
 
 
 def test_lookup_job_alio_codes_keeps_manual_institution_aliases() -> None:
@@ -103,13 +100,44 @@ def test_lookup_job_alio_codes_keeps_manual_institution_aliases() -> None:
     assert result["warnings"] == []
 
 
-def test_lookup_job_alio_codes_contains_institution_filter_names() -> None:
+def test_lookup_job_alio_codes_contains_all_official_institution_filter_codes() -> None:
     institutions = list_job_alio_codes("institution")
+    codes_by_name = {candidate.name: candidate.code for candidate in institutions}
 
     assert len(institutions) == 405
-    assert sum(1 for candidate in institutions if candidate.code is None) == 50
-    assert "한국농수산식품유통공사" in {candidate.name for candidate in institutions}
-    assert "대구경북과학기술원" in {candidate.name for candidate in institutions}
+    assert len({candidate.code for candidate in institutions}) == 405
+    assert len(codes_by_name) == 405
+    assert all(candidate.code for candidate in institutions)
+    assert {
+        "대구경북과학기술원": "C0049",
+        "한국전기연구원": "C0245",
+        "한국전자통신연구원": "C0251",
+        "아시아문화원(22.01.17 해산)": "C0869",
+        "한국광물자원공사(21.09.10 해산)": "C0053",
+        "한국광해관리공단(21.09.10 해산)": "C0086",
+    }.items() <= codes_by_name.items()
+
+
+@pytest.mark.parametrize(
+    ("csv_text", "message"),
+    [
+        ("institution_code,institution_name\nBAD,기관\n", "invalid Job-ALIO institution code"),
+        (
+            "institution_code,institution_name\nC0001,기관가\nC0001,기관나\n",
+            "duplicate Job-ALIO institution code",
+        ),
+        (
+            "institution_code,institution_name\nC0001,기관·가\nC0002,기관가\n",
+            "duplicate normalized Job-ALIO institution name",
+        ),
+    ],
+)
+def test_job_alio_institution_resource_rejects_invalid_rows(
+    csv_text: str,
+    message: str,
+) -> None:
+    with pytest.raises(InstitutionCodeDataError, match=message):
+        _load_institution_codes_from_csv(csv_text, aliases_by_code={})
 
 
 def test_lookup_job_alio_codes_contains_full_ncs_filter_names() -> None:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from importlib import resources
@@ -15,443 +16,30 @@ JobAlioCodeType = Literal["institution", "ncs"]
 
 @dataclass(frozen=True)
 class JobAlioCodeCandidate:
-    code: str | None
+    code: str
     name: str
     aliases: tuple[str, ...] = ()
     source: str = "job_alio_seed_table"
 
-    def public_dict(self, *, score: float, keyword_fallback: bool = False) -> dict[str, Any]:
-        payload: dict[str, Any] = {
+    def public_dict(self, *, score: float) -> dict[str, Any]:
+        return {
             "code": self.code,
             "name": self.name,
             "aliases": list(self.aliases),
             "score": score,
             "source": self.source,
         }
-        if keyword_fallback:
-            payload["fallback_search"] = {
-                "tool": "search_public_jobs",
-                "arguments": {"keyword": self.name},
-                "reason": "기관코드가 확인되지 않아 기관명을 공고 키워드로 검색합니다.",
-            }
-        return payload
 
 
-INSTITUTION_CODES_CSV = "resources/alio_institution_codes.csv"
-INSTITUTION_CODE_SOURCE = "alio_institution_codes_csv_2026_07_08"
-INSTITUTION_FILTER_SOURCE = "alio_open_data_recruit_filter_2026_07_08"
+JOB_ALIO_INSTITUTION_CODES_CSV = "resources/job_alio_institution_codes.csv"
+ALIO_INSTITUTION_ALIASES_CSV = "resources/alio_institution_codes.csv"
+INSTITUTION_CODE_SOURCE = "job_alio_recruit_filter_csv_2026_07_13"
+EXPECTED_INSTITUTION_CODE_COUNT = 405
+INSTITUTION_CODE_PATTERN = re.compile(r"C\d{4}")
 MANUAL_INSTITUTION_ALIASES: dict[str, tuple[str, ...]] = {
     "C0399": ("인터넷진흥원",),
     "C0451": ("KISED",),
 }
-
-INSTITUTION_FILTER_NAMES: tuple[str, ...] = (
-    "국제방송교류재단",
-    "국제식물검역인증원",
-    "국토교통과학기술진흥원",
-    "국토연구원",
-    "그랜드코리아레저(주)",
-    "근로복지공단",
-    "기술보증기금",
-    "기초과학연구원",
-    "노사발전재단",
-    "농림수산식품교육문화정보원",
-    "농림식품기술기획평가원",
-    "한국농업기술진흥원",
-    "농업정책보험금융원",
-    "대구경북과학기술원",
-    "대구경북첨단의료산업진흥재단",
-    "대외경제정책연구원",
-    "대한무역투자진흥공사",
-    "대한법률구조공단",
-    "대한석탄공사",
-    "대한장애인체육회",
-    "대한적십자사",
-    "대한체육회",
-    "한국도로교통공단",
-    "독립기념관",
-    "동북아역사재단",
-    "민주화운동기념사업회",
-    "별정우체국연금관리단",
-    "부산대학교병원",
-    "부산대학교치과병원",
-    "부산항만공사",
-    "북한이탈주민지원재단",
-    "사단법인 한국기술자격검정원",
-    "사단법인 한국산학연협회",
-    "사립학교교직원연금공단",
-    "한국사회보장정보원",
-    "산업연구원",
-    "서민금융진흥원",
-    "서울대학교병원",
-    "서울대학교치과병원",
-    "서울올림픽기념국민체육진흥공단",
-    "한국해양교통안전공단",
-    "세종학당재단",
-    "소상공인시장진흥공단",
-    "수도권매립지관리공사",
-    "시청자미디어재단",
-    "식품안전정보원",
-    "신용보증기금",
-    "신용보증재단중앙회",
-    "아시아문화원(22.01.17 해산)",
-    "한국수출입은행",
-    "한국승강기안전공단",
-    "국토안전관리원",
-    "한국식품안전관리인증원",
-    "한국식품연구원",
-    "한국양성평등교육진흥원",
-    "한국어촌어항공단",
-    "한국언론진흥재단",
-    "한국에너지공단",
-    "한국에너지기술연구원",
-    "한국에너지기술평가원",
-    "한국에너지정보문화재단",
-    "한국여성인권진흥원",
-    "한국여성정책연구원",
-    "한국연구재단",
-    "한국영상자료원",
-    "한국예술인복지재단",
-    "한국예탁결제원",
-    "한국원자력안전기술원",
-    "한국원자력안전재단",
-    "한국원자력연구원",
-    "한국원자력의학원",
-    "한국원자력통제기술원",
-    "한국원자력환경공단",
-    "한국의료기기안전정보원",
-    "한국의료분쟁조정중재원",
-    "한국의약품안전관리원",
-    "한국인터넷진흥원",
-    "한국임업진흥원",
-    "한국자산관리공사",
-    "한국잡월드",
-    "한국장애인개발원",
-    "한국장애인고용공단",
-    "한국장학재단",
-    "한국재정정보원",
-    "한국저작권보호원",
-    "한국저작권위원회",
-    "한국전기안전공사",
-    "한국전기연구원",
-    "한국전력거래소",
-    "재단법인 건설기술교육원",
-    "국립항공박물관",
-    "공간정보품질관리원",
-    "국립울진해양과학관",
-    "국립호남권생물자원관",
-    "차세대수치예보모델개발사업단",
-    "한국고용노동교육원",
-    "한국도로공사서비스(주)",
-    "한전MCS(주)",
-    "국립박물관문화재단",
-    "국립부산과학관",
-    "국립생태원",
-    "국립암센터",
-    "국립중앙의료원",
-    "국립해양박물관",
-    "국립해양생물자원관",
-    "국민건강보험공단",
-    "국민연금공단",
-    "국방과학연구소",
-    "국방기술품질원",
-    "(재)축산환경관리원",
-    "국가아동권리보장원",
-    "재단법인 한국자활복지개발원",
-    "한국등산·트레킹지원센터",
-    "한국해양진흥공사",
-    "한국해외인프라도시개발지원공사",
-    "한국전력공사",
-    "한국전력국제원자력대학원대학교",
-    "한국전력기술주식회사",
-    "한국전자통신연구원",
-    "한국지능정보사회진흥원",
-    "한국조세재정연구원",
-    "한국조폐공사",
-    "한국주택금융공사",
-    "한국중부발전(주)",
-    "한국지식재산보호원",
-    "한국지식재산연구원",
-    "한국지역난방공사",
-    "한국지질자원연구원",
-    "한국직업능력연구원",
-    "한국천문연구원",
-    "한국철도공사",
-    "국가생명윤리정책원",
-    "한국식품산업클러스터진흥원",
-    "새만금개발공사",
-    "재단법인 한국공공조직은행",
-    "한국수자원조사기술원",
-    "한국철도기술연구원",
-    "국가철도공단",
-    "한국청소년상담복지개발원",
-    "한국청소년정책연구원",
-    "한국청소년활동진흥원",
-    "한국체육산업개발(주)",
-    "한국출판문화산업진흥원",
-    "한국콘텐츠진흥원",
-    "한국토지주택공사",
-    "한국투자공사",
-    "한국특허전략개발원",
-    "한국특허정보원",
-    "한국표준과학연구원",
-    "한국학중앙연구원",
-    "한국한의학연구원",
-    "한국항공우주연구원",
-    "한국항로표지기술원",
-    "한국해양과학기술원",
-    "한국해양수산개발원",
-    "한국해양수산연수원",
-    "한국해양조사협회",
-    "한국행정연구원",
-    "한국형사·법무정책연구원",
-    "한국화학연구원",
-    "한국환경공단",
-    "한국환경산업기술원",
-    "한국환경연구원",
-    "한국한의약진흥원",
-    "한전KDN",
-    "한전KPS(주)",
-    "한전원자력연료주식회사",
-    "항공안전기술원",
-    "해양수산과학기술진흥원",
-    "해양환경공단",
-    "한국환경보전원",
-    "국가수리과학연구소",
-    "소프트웨어정책연구소",
-    "정보통신기획평가원",
-    "한국특허기술진흥원",
-    "안전성평가연구소",
-    "극지연구소",
-    "선박해양플랜트연구소",
-    "세계김치연구소",
-    "한국핵융합에너지연구원",
-    "한국재료연구원",
-    "고등과학원",
-    "나노종합기술원",
-    "한국과학영재학교",
-    "국가녹색기술연구소",
-    "국가과학기술인력개발원",
-    "KDI국제정책대학원",
-    "동남권원자력의학원",
-    "분당서울대학교병원",
-    "한국뇌연구원",
-    "건축공간연구원",
-    "국민건강보험공단 일산병원",
-    "서울요양원",
-    "육아정책연구소",
-    "에너지경제연구원",
-    "여수광양항만공사",
-    "연구개발특구진흥재단",
-    "영상물등급위원회",
-    "영화진흥위원회",
-    "예금보험공사",
-    "예술의전당",
-    "오송첨단의료산업진흥재단",
-    "울산과학기술원",
-    "울산항만공사",
-    "의료법인 한전의료재단 한일병원",
-    "인천국제공항공사",
-    "인천항만공사",
-    "국악방송",
-    "재단법인 대한건설기계안전관리원",
-    "의료기관평가인증원",
-    "재단법인 장애인기업종합지원센터",
-    "재단법인 한국에너지재단",
-    "한국여성과학기술인육성재단",
-    "재단법인 한국장기조직기증원",
-    "재외동포재단",
-    "전남대학교병원",
-    "무역안보관리원",
-    "전북대학교병원",
-    "전쟁기념사업회",
-    "정보통신산업진흥원",
-    "정보통신정책연구원",
-    "정부법무공단",
-    "제주국제자유도시개발센터",
-    "제주대학교병원",
-    "(주)공영홈쇼핑",
-    "주식회사 부산항보안공사",
-    "주식회사 에스알",
-    "주식회사 인천항보안공사",
-    "주택관리공단(주)",
-    "주택도시보증공사",
-    "중소기업기술정보진흥원",
-    "한국중소벤처기업유통원",
-    "중소기업은행",
-    "중소벤처기업진흥공단",
-    "창업진흥원",
-    "축산물품질평가원",
-    "충남대학교병원",
-    "충북대학교병원",
-    "코레일관광개발(주)",
-    "코레일네트웍스(주)",
-    "코레일로지스(주)",
-    "코레일유통(주)",
-    "코레일테크(주)",
-    "태권도진흥재단",
-    "통일연구원",
-    "학교법인한국폴리텍",
-    "한국가스공사",
-    "한국가스안전공사",
-    "한국부동산원",
-    "한국개발연구원",
-    "한국건강가정진흥원",
-    "한국건강증진개발원",
-    "한국건설기술연구원",
-    "한국고용정보원",
-    "한국고전번역원",
-    "한국공예디자인문화진흥원",
-    "한국공정거래조정원",
-    "한국공항공사",
-    "한국과학기술기획평가원",
-    "한국과학기술연구원",
-    "한국과학기술원",
-    "한국과학기술정보연구원",
-    "한국과학창의재단",
-    "한국관광공사",
-    "한국광물자원공사(21.09.10 해산)",
-    "한국광해관리공단(21.09.10 해산)",
-    "한국교육개발원",
-    "한국교육과정평가원",
-    "한국교육학술정보원",
-    "한국교통안전공단",
-    "한국교통연구원",
-    "한국국방연구원",
-    "한국국제교류재단",
-    "한국국제보건의료재단",
-    "한국국제협력단",
-    "한국국토정보공사",
-    "한국기계연구원",
-    "한국기상산업기술원",
-    "한국기술교육대학교",
-    "한국기초과학지원연구원",
-    "한국나노기술원",
-    "한국남동발전(주)",
-    "한국남부발전(주)",
-    "한국노동연구원",
-    "한국노인인력개발원",
-    "한국농수산식품유통공사",
-    "한국농어촌공사",
-    "한국농촌경제연구원",
-    "한국데이터산업진흥원",
-    "한국도로공사",
-    "한국도박문제예방치유원",
-    "한국동서발전(주)",
-    "한국디자인진흥원",
-    "한국로봇산업진흥원",
-    "한국마사회",
-    "한국무역보험공사",
-    "한국문학번역원",
-    "한국문화관광연구원",
-    "한국문화예술교육진흥원",
-    "한국문화예술위원회",
-    "국가유산진흥원",
-    "한국문화정보원",
-    "한국문화진흥주식회사",
-    "한국발명진흥회",
-    "한국방송광고진흥공사",
-    "한국방송통신전파진흥원",
-    "한국법무보호복지공단",
-    "한국법제연구원",
-    "한국벤처투자",
-    "한국보건복지인재원",
-    "한국보건사회연구원",
-    "국방전직교육원",
-    "한국마약퇴치운동본부",
-    "(재)한국통계정보원",
-    "재외동포협력센터",
-    "한국치산기술협회",
-    "(재)한국보건의료정보원",
-    "한국광해광업공단",
-    "한국제품안전관리원",
-    "한국탄소산업진흥원",
-    "한국보건산업진흥원",
-    "한국보건의료연구원",
-    "한국보건의료인국가시험원",
-    "한국영유아보육·교육진흥원",
-    "한국보훈복지의료공단",
-    "한국사학진흥재단",
-    "한국사회복지협의회",
-    "한국사회적기업진흥원",
-    "한국산림복지진흥원",
-    "한국산업기술시험원",
-    "한국산업기술진흥원",
-    "한국산업기술기획평가원",
-    "한국산업단지공단",
-    "한국산업안전보건공단",
-    "한국산업은행",
-    "한국산업인력공단",
-    "한국상하수도협회",
-    "한국생명공학연구원",
-    "한국생산기술연구원",
-    "한국서부발전(주)",
-    "한국석유공사",
-    "한국석유관리원",
-    "한국세라믹기술원",
-    "한국소방산업기술원",
-    "한국소비자원",
-    "한국수력원자력(주)",
-    "한국수목원정원관리원",
-    "한국수산자원공단",
-    "한국수자원공사",
-    "(사)남북교류협력지원협회",
-    "아시아·태평양경제협력체 기후센터",
-    "한국원산지정보원",
-    "(재)예술경영지원센터",
-    "(재)우체국금융개발원",
-    "(재)우체국물류지원단",
-    "(재)우체국시설관리단",
-    "(재)일제강제동원피해자지원재단",
-    "(재)정동극장",
-    "중소벤처기업연구원",
-    "(재)한국스마트그리드사업단",
-    "(재)한국우편사업진흥원",
-    "(재)한국형수치예보모델개발사업단",
-    "한식진흥원",
-    "(주)강원랜드",
-    "수자원환경산업진흥(주)",
-    "(주)한국가스기술공사",
-    "(주)한국건설관리공사",
-    "88관광개발(주)",
-    "이민정책연구원",
-    "가축위생방역지원본부",
-    "강원대학교치과병원",
-    "강원대학교병원",
-    "건강보험심사평가원",
-    "건설근로자공제회",
-    "게임물관리위원회",
-    "경북대학교병원",
-    "경북대학교치과병원",
-    "경상국립대학교병원",
-    "경제인문사회연구회",
-    "공무원연금공단",
-    "과학기술사업화진흥원",
-    "과학기술정책연구원",
-    "광주과학기술원",
-    "국가과학기술연구회",
-    "국가평생교육진흥원",
-    "국립공원공단",
-    "국립광주과학관",
-    "국립낙동강생물자원관",
-    "국립대구과학관",
-    "스포츠윤리센터",
-    "국립아시아문화전당재단",
-    "한국생명존중희망재단",
-    "자동차손해배상진흥원",
-    "국방기술진흥연구소",
-    "전국재해구호협회",
-    "(재)한국통계진흥원",
-    "공간정보산업진흥원",
-    "한국물기술인증원",
-    "국립농업박물관",
-    "중앙사회서비스원",
-    "국립인천해양박물관",
-    "양육비이행관리원",
-    "가덕도신공항건설공단",
-    "한국관세정보원",
-    "한국스포츠레저(주)",
-)
 
 NCS_CODES: tuple[JobAlioCodeCandidate, ...] = (
     JobAlioCodeCandidate(
@@ -541,7 +129,7 @@ def find_job_alio_codes(
         score = _match_score(candidate, normalized_query)
         if score > 0:
             scored.append((candidate, score))
-    return sorted(scored, key=lambda item: (-item[1], item[0].name, item[0].code or ""))[:limit]
+    return sorted(scored, key=lambda item: (-item[1], item[0].name, item[0].code))[:limit]
 
 
 def _match_score(candidate: JobAlioCodeCandidate, normalized_query: str) -> float:
@@ -564,41 +152,34 @@ def _match_score(candidate: JobAlioCodeCandidate, normalized_query: str) -> floa
 
 @lru_cache(maxsize=1)
 def _institution_codes() -> tuple[JobAlioCodeCandidate, ...]:
-    coded_candidates = _load_institution_codes_from_csv()
-    known_names = {
-        normalized
-        for candidate in coded_candidates
-        for normalized in (_normalize(candidate.name), *(_normalize(alias) for alias in candidate.aliases))
-        if normalized
-    }
-    filter_candidates = tuple(
-        JobAlioCodeCandidate(
-            None,
-            name,
-            source=INSTITUTION_FILTER_SOURCE,
-        )
-        for name in INSTITUTION_FILTER_NAMES
-        if _normalize(name) not in known_names
+    aliases_by_code = _load_alio_aliases_from_csv(
+        _resource_csv_text(ALIO_INSTITUTION_ALIASES_CSV)
     )
-    return coded_candidates + filter_candidates
+    return _load_institution_codes_from_csv(
+        _resource_csv_text(JOB_ALIO_INSTITUTION_CODES_CSV),
+        aliases_by_code=aliases_by_code,
+    )
 
 
-def _load_institution_codes_from_csv() -> tuple[JobAlioCodeCandidate, ...]:
-    csv_text = (
-        resources.files("kr_gov_job_mcp")
-        .joinpath(INSTITUTION_CODES_CSV)
-        .read_text(encoding="utf-8-sig")
-    )
+def _load_institution_codes_from_csv(
+    csv_text: str,
+    *,
+    aliases_by_code: dict[str, dict[str, str | None]],
+) -> tuple[JobAlioCodeCandidate, ...]:
     candidates: list[JobAlioCodeCandidate] = []
+    seen_codes: set[str] = set()
+    seen_names: set[str] = set()
     for row in csv.DictReader(StringIO(csv_text)):
         code = _clean_text(row.get("institution_code"))
         name = _clean_text(row.get("institution_name"))
         if not code or not name:
-            continue
+            raise InstitutionCodeDataError("institution code and name are required")
+        _validate_institution_row(code=code, name=name, seen_codes=seen_codes, seen_names=seen_names)
+        alias_row = aliases_by_code.get(code, {})
         aliases = _institution_aliases(
             name=name,
-            normalized_name=row.get("normalized_name"),
-            aliases=row.get("aliases"),
+            normalized_name=alias_row.get("normalized_name"),
+            aliases=alias_row.get("aliases"),
             manual_aliases=MANUAL_INSTITUTION_ALIASES.get(code, ()),
         )
         candidates.append(
@@ -609,7 +190,56 @@ def _load_institution_codes_from_csv() -> tuple[JobAlioCodeCandidate, ...]:
                 source=INSTITUTION_CODE_SOURCE,
             )
         )
+    if len(candidates) != EXPECTED_INSTITUTION_CODE_COUNT:
+        raise InstitutionCodeDataError(
+            f"expected {EXPECTED_INSTITUTION_CODE_COUNT} Job-ALIO institution codes, got {len(candidates)}"
+        )
     return tuple(candidates)
+
+
+def _load_alio_aliases_from_csv(csv_text: str) -> dict[str, dict[str, str | None]]:
+    aliases_by_code: dict[str, dict[str, str | None]] = {}
+    seen_codes: set[str] = set()
+    seen_names: set[str] = set()
+    for row in csv.DictReader(StringIO(csv_text)):
+        code = _clean_text(row.get("institution_code"))
+        name = _clean_text(row.get("institution_name"))
+        if not code or not name:
+            raise InstitutionCodeDataError("ALIO alias code and name are required")
+        _validate_institution_row(code=code, name=name, seen_codes=seen_codes, seen_names=seen_names)
+        aliases_by_code[code] = {
+            "normalized_name": row.get("normalized_name"),
+            "aliases": row.get("aliases"),
+        }
+    return aliases_by_code
+
+
+def _resource_csv_text(resource_name: str) -> str:
+    return resources.files("kr_gov_job_mcp").joinpath(resource_name).read_text(encoding="utf-8-sig")
+
+
+def _validate_institution_row(
+    *,
+    code: str,
+    name: str,
+    seen_codes: set[str],
+    seen_names: set[str],
+) -> None:
+    if not INSTITUTION_CODE_PATTERN.fullmatch(code):
+        raise InstitutionCodeDataError(f"invalid Job-ALIO institution code: {code}")
+    if code in seen_codes:
+        raise InstitutionCodeDataError(f"duplicate Job-ALIO institution code: {code}")
+
+    normalized_name = _normalize(name)
+    if normalized_name in seen_names:
+        raise InstitutionCodeDataError(f"duplicate normalized Job-ALIO institution name: {name}")
+
+    seen_codes.add(code)
+    seen_names.add(normalized_name)
+
+
+class InstitutionCodeDataError(ValueError):
+    """Raised when a packaged Job-ALIO institution resource is invalid."""
 
 
 def _institution_aliases(

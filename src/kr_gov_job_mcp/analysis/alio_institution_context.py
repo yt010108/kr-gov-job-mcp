@@ -186,11 +186,6 @@ def _resolve_institution_code_from_lookup(
         return None
 
     candidate, score = matches[0]
-    if candidate.code is None:
-        context.warnings.append(
-            "Job-ALIO 기관명 resolver returned a candidate without code; falling back to ALIO search."
-        )
-        return None
     if score < 0.9:
         context.warnings.append(
             f"Job-ALIO 기관명 resolver score was low ({score:.2f}); falling back to ALIO search."

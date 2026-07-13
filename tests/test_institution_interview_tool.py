@@ -1,3 +1,5 @@
+import pytest
+
 from kr_gov_job_mcp.analysis.alio_institution_context import AlioInstitutionContext
 from kr_gov_job_mcp.schemas.institution import InstitutionEvidence, InstitutionSignalCandidate
 from kr_gov_job_mcp.tools.institution_analysis import create_prepare_institution_interview_tool
@@ -157,3 +159,68 @@ def test_prepare_institution_interview_rejects_unsupported_security_role_alias()
         assert "Use the Job-ALIO NCS category '정보통신' instead." in str(exc)
     else:
         raise AssertionError("expected unsupported target_role to be rejected")
+
+
+@pytest.mark.parametrize(
+    "role_arguments",
+    [
+        {"target_role": "정보통신"},
+        {"job_family": "정보통신"},
+    ],
+)
+def test_prepare_institution_interview_accepts_each_role_alias(
+    role_arguments: dict[str, str],
+) -> None:
+    tool = create_prepare_institution_interview_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "fetch_live_alio": False,
+            **role_arguments,
+        }
+    )
+
+    assert result["query"]["target_role"] == "정보통신"
+
+
+def test_prepare_institution_interview_role_alias_contract() -> None:
+    tool = create_prepare_institution_interview_tool()
+
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "target_role": "정보통신",
+            "job_family": "정보통신",
+            "fetch_live_alio": False,
+        }
+    )
+
+    assert result["query"]["target_role"] == "정보통신"
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler({"target_role": "정보통신", "fetch_live_alio": False})
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler(
+            {"institution_name": "   ", "target_role": "정보통신", "fetch_live_alio": False}
+        )
+    with pytest.raises(ValueError, match="target_role is required"):
+        tool.handler({"institution_name": "한국인터넷진흥원", "fetch_live_alio": False})
+    with pytest.raises(ValueError, match="target_role is required"):
+        tool.handler(
+            {
+                "institution_name": "한국인터넷진흥원",
+                "job_family": "   ",
+                "fetch_live_alio": False,
+            }
+        )
+
+    preferred_result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "target_role": "정보통신",
+            "job_family": "보건의료정보",
+            "fetch_live_alio": False,
+        }
+    )
+
+    assert preferred_result["query"]["target_role"] == "정보통신"

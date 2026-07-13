@@ -19,16 +19,17 @@ from kr_gov_job_mcp.schemas.institution import (
     InstitutionEvidence,
     InstitutionSignalCandidate,
 )
-from kr_gov_job_mcp.tools.registry import ToolDefinition, read_only_tool_annotations
+from kr_gov_job_mcp.tools.registry import (
+    ToolDefinition,
+    non_blank_string_schema,
+    read_only_tool_annotations,
+)
 
 
 ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "institution_name": {
-            "type": "string",
-            "description": "분석할 기관명입니다.",
-        },
+        "institution_name": non_blank_string_schema("분석할 기관명입니다."),
         "year": {
             "type": "integer",
             "description": "분석 기준 연도입니다.",
@@ -63,6 +64,7 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
             "description": "근거가 연결된 사전 추출 기관 signal 후보입니다.",
         },
     },
+    "required": ["institution_name"],
     "additionalProperties": False,
 }
 
@@ -72,10 +74,7 @@ _STRATEGY_ARGUMENTS = set(ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA["properties"
 ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "institution_name": {
-            "type": "string",
-            "description": "분석할 기관명입니다.",
-        },
+        "institution_name": non_blank_string_schema("분석할 기관명입니다."),
         "year": {
             "type": "integer",
             "description": "분석 기준 연도입니다.",
@@ -106,6 +105,7 @@ ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA: dict[str, Any] = {
             "description": "근거가 연결된 사전 추출 개선 과제 signal 후보입니다.",
         },
     },
+    "required": ["institution_name"],
     "additionalProperties": False,
 }
 
@@ -115,18 +115,12 @@ _WEAKNESS_ARGUMENTS = set(ANALYZE_INSTITUTION_WEAKNESS_INPUT_SCHEMA["properties"
 PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
-        "institution_name": {
-            "type": "string",
-            "description": "면접 준비 대상 기관명입니다.",
-        },
-        "target_role": {
-            "type": "string",
-            "description": "지원자가 목표로 하는 직무 또는 직무군입니다. 보안 직무는 정보보안/정보보호가 아니라 Job-ALIO NCS 대분류명 정보통신으로 입력합니다.",
-        },
-        "job_family": {
-            "type": "string",
-            "description": "target_role의 별칭입니다.",
-        },
+        "institution_name": non_blank_string_schema("면접 준비 대상 기관명입니다."),
+        "target_role": non_blank_string_schema(
+            "지원자가 목표로 하는 직무 또는 직무군입니다. 보안 직무는 정보보안/정보보호가 아니라 "
+            "Job-ALIO NCS 대분류명 정보통신으로 입력합니다."
+        ),
+        "job_family": non_blank_string_schema("target_role의 별칭입니다."),
         "year": {
             "type": "integer",
             "description": "분석 기준 연도입니다.",
@@ -163,6 +157,11 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
             "description": "근거가 연결된 사전 추출 기관 signal 후보입니다.",
         },
     },
+    "required": ["institution_name"],
+    "anyOf": [
+        {"required": ["target_role"]},
+        {"required": ["job_family"]},
+    ],
     "additionalProperties": False,
 }
 

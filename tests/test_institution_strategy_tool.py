@@ -81,6 +81,8 @@ def test_analyze_institution_strategy_rejects_invalid_arguments() -> None:
 
     with pytest.raises(ValueError, match="institution_name is required"):
         tool.handler({})
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler({"institution_name": "   "})
 
     with pytest.raises(ValueError, match="unsupported analyze_institution_strategy arguments"):
         tool.handler({"institution_name": "한국인터넷진흥원", "extra": True})
@@ -285,6 +287,8 @@ def test_analyze_institution_weakness_rejects_invalid_arguments() -> None:
 
     with pytest.raises(ValueError, match="institution_name is required"):
         tool.handler({})
+    with pytest.raises(ValueError, match="institution_name is required"):
+        tool.handler({"institution_name": "   "})
 
     with pytest.raises(ValueError, match="unsupported analyze_institution_weakness arguments"):
         tool.handler({"institution_name": "한국인터넷진흥원", "job_family": "정보보호"})
