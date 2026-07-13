@@ -82,9 +82,8 @@ python -m ruff check .
 ## CI 검증
 
 GitHub Actions는 pull request와 `main` 브랜치 push에서 Python 3.11/3.12로 Ruff와 pytest를
-실행하고, Python 3.12에서 sdist/wheel을 빌드합니다. 외부 Job-ALIO, ALIO 등 live API 호출은
-필수 CI에 포함하지 않아 네트워크와 원본 데이터 변동이 PR 결과에 영향을 주지 않도록 합니다.
-실시간 외부 소스 검증은 필수 체크와 분리한 수동 또는 정기 canary로 운영합니다.
+실행하고, Python 3.12에서 sdist/wheel을 빌드합니다. Docker 컨테이너 실행, `/health`, `/mcp`,
+`tools/list` 확인은 필수 CI에 포함하지 않습니다.
 
 로컬에서 같은 범위를 확인하려면 다음을 실행합니다.
 
