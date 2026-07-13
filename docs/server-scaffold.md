@@ -39,7 +39,7 @@ kr-gov-job-mcp --health
 | `python -m kr_gov_job_mcp.server --list-tools` | 등록된 도구 정의 목록 출력 |
 | `python -m kr_gov_job_mcp.server --stdio` | MCP stdio 서버 실행 |
 | `python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000` | MCP HTTP POST 엔드포인트 실행 |
-| `python -m kr_gov_job_mcp.server --call-tool NAME --input '{}'` | 도구 호출 구조 smoke test |
+| `python -m kr_gov_job_mcp.server --call-tool NAME --input '{}'` | 도구 호출 구조 확인 |
 
 ## MCP stdio 연결 예시
 
@@ -82,7 +82,7 @@ python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 | Dockerfile 경로 | `Dockerfile` |
 | PAT | 공개 저장소라면 비워둠 |
 
-로컬 Docker smoke test:
+로컬 Docker 실행 확인:
 
 ```bash
 docker build -t kr-gov-job-mcp .
@@ -114,7 +114,7 @@ registry.register(
 `analyze_institution_weakness`, `prepare_institution_interview`다. 이후 `collect_institution_context` 같은 실제 도구를
 이 레지스트리에 붙인다.
 
-## smoke test
+## 최소 확인
 
 현재 서버 스캐폴드의 최소 확인 기준:
 
