@@ -1,8 +1,35 @@
 # kr-gov-job-mcp
 
-한국 공공기관 NCS 취업 준비 MCP입니다.
+한국 공공기관 NCS 및 채용 정보 분석을 위한 MCP(Model Context Protocol) 서버입니다.
+단순 공고 검색을 넘어 **채용공고 · 직무기술서 · NCS 역량 · 기관 분석**의 파편화된 정보를 근거 기반으로 연결해 취업 준비 전략을 정리합니다.
 
-채용공고, 직무기술서, NCS 역량, ALIO/클린아이 기관 분석을 근거 기반으로 연결하는 것을 목표로 합니다.
+## 취업 정보 분석 워크플로우
+
+이 MCP는 다음 3단계로 활용할 수 있습니다.
+
+1. **발굴 (Search)** — `search_public_jobs`로 조건에 맞는 채용공고를 찾습니다.
+2. **분석 (Deep Dive)** — `fetch_job_detail`로 직무를 확인하고 `analyze_institution_strategy`로 기관의 사업 방향을 살펴봅니다.
+3. **전략 (Fit Analysis)** — `analyze_job_fit_report`로 지원 직무와 보유 역량의 준비 항목·지식 갭을 정리합니다.
+
+에이전트에는 예를 들어 다음과 같이 요청할 수 있습니다.
+
+> "KISA 공고를 검색하고, 직무기술서와 기관 사업 전략을 바탕으로 준비 전략을 정리해줘."
+
+### 자연어 요청 예시
+
+- "지금 지원할 수 있는 한국인터넷진흥원 관련 공고를 찾아줘."
+- "전산직으로 지원할 만한 공공기관 채용공고를 찾아줘."
+- "KISED 전산직 면접 준비 도와줘."
+
+기관명·약칭이나 직무명이 Job-ALIO 코드와 다를 수 있으므로, 에이전트는 필요할 때
+`lookup_job_alio_codes`로 후보를 확인한 뒤 공고 검색·기관 분석 도구를 이어서 호출합니다.
+
+| 도구 | 역할 |
+| --- | --- |
+| `search_public_jobs` | Job-ALIO 채용공고를 조건별로 검색 |
+| `fetch_job_detail` | 공고 상세·첨부파일·전형 단계·NCS 매핑을 구조화 |
+| `analyze_job_fit_report` | 지원 직무 적합도와 준비 전략을 정리 |
+| `analyze_institution_strategy` | ALIO 및 연구·정책 자료 기반 기관 전략 신호를 분석 |
 
 ## 문제 정의
 
@@ -51,6 +78,23 @@
 python -m pytest -q
 python -m ruff check .
 ```
+
+## CI 검증
+
+GitHub Actions는 pull request와 `main` 브랜치 push에서 Python 3.11/3.12로 Ruff와 pytest를
+실행하고, Python 3.12에서 sdist/wheel을 빌드합니다. Docker 컨테이너 실행은 필수 CI에 포함하지 않습니다.
+
+로컬에서 같은 범위를 확인하려면 다음을 실행합니다.
+
+```bash
+python -m ruff check .
+python -m pytest -q
+python -m pip install build
+python -m build
+```
+
+workflow가 `main`에 반영된 뒤 저장소 보호 규칙에서 `Test (Python 3.11)`, `Test (Python 3.12)`,
+`Build package`를 필수 체크로 지정합니다. 보호 규칙은 GitHub 저장소 설정에서 별도로 적용해야 합니다.
 
 ## Docker / Git 소스 빌드 배포
 
@@ -163,95 +207,4 @@ kr-gov-job-mcp/
 - Job-ALIO 공고 상세 조회
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
 - evidence 입력 기반 기관 사업 방향 signal 요약
-- evidence 입력 기반 기관 개선 과제 signal 요약
-- ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 면접 카드 생성
-- 첨부파일, 전형 단계, NCS 매핑 후보 구조화
-
-### 아직 미구현
-
-- MCP SSE GET stream, resumable session 같은 고급 HTTP transport 기능
-- NCS/KSA 상세 역량 분석
-- 클린아이 자료 자동 수집 기반 기관 분석
-- 채용공고와 기관 면접 카드까지 연결하는 흐름
-
-### 다음 MVP 목표
-
-공고 검색, 상세 조회, 준비 항목 리포트 생성까지 한 번에 확인 가능한 세로 흐름을 데모 문서와 실제 출력 예시로 고정합니다.
-
-현재 실행 가능한 명령:
-
-```powershell
-python -m kr_gov_job_mcp.server --list-tools
-python -m kr_gov_job_mcp.server --stdio
-python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
-python -m kr_gov_job_mcp.server --call-tool lookup_region_codes --input "{\"query\":\"서울특별시\"}"
-python -m kr_gov_job_mcp.server --call-tool normalize_job_role --input "{\"query\":\"KISA 정보보안 면접준비\",\"target_role\":\"정보보안\",\"known_skills\":[\"웹 보안\"]}"
-python -m kr_gov_job_mcp.server --call-tool search_public_jobs --input "{\"keyword\":\"정보보호\",\"limit\":3,\"ongoing_only\":false}"
-python -m kr_gov_job_mcp.server --call-tool fetch_job_detail --input "{\"job_id\":\"<검색 결과의 source_job_id>\"}"
-python -m kr_gov_job_mcp.server --call-tool analyze_job_fit_report --input "{\"job_id\":\"<검색 결과의 source_job_id>\",\"target_role\":\"정보보호\",\"known_skills\":[\"웹 보안\",\"네트워크\",\"정보보안기사\"]}"
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026,\"job_family\":\"정보보호\"}"
-python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input "{\"institution_name\":\"한국인터넷진흥원\",\"year\":2026}"
-python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input "{\"institution_name\":\"(재)한국보건의료정보원\",\"target_role\":\"보건의료정보\",\"year\":2026}"
-```
-
-현재 MVP 데모 흐름은 `docs/demo-scenario.md`, 실제 KISA 기준 출력은 `examples/kisa-real-demo-output.md`에서 볼 수 있습니다.
-
-| 도구 | 상태 | 간략 설명 |
-| --- | --- | --- |
-| `health_check` | 구현됨 | 서버 scaffold 상태, 서비스명, 버전, 등록 도구 수를 반환한다. |
-| `lookup_region_codes` | 구현됨 | `query`로 받은 지역명 또는 Job-ALIO 지역 코드를 조회해 `matches[].code`, `matches[].name`, `matches[].aliases`를 반환한다. 예: `서울특별시` → `R3010`. |
-| `lookup_job_alio_codes` | 구현됨 | 기관명, 기관 약칭, NCS명, 직무 키워드로 Job-ALIO 검색 후보를 조회한다. 기관명은 ALIO 기관 코드 확인에도 재사용한다. |
-| `normalize_job_role` | 구현됨 MVP | 정보보안/정보보호 계열 직무 표현을 취업 준비 맥락의 `정보통신` 직무군으로 정규화하고 원문 직무명을 보존한다. |
-| `search_public_jobs` | 구현됨 | Job-ALIO 채용공고 목록을 검색한다. 입력/출력 JSON field는 영어 `snake_case`이며, `keyword`, `region`, `institution_code`, `ncs_code`, `employment_type_code`, `announcement_start_date` 같은 필터를 받아 `jobs[].source_job_id`, `jobs[].title`, `jobs[].institution_name`, `jobs[].ncs_mappings` 등을 반환한다. |
-| `fetch_job_detail` | 구현됨 | `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나로 상세 공고를 조회해 `job.qualification`, `job.attachments`, `job.steps`, `job.ncs_mappings` 등을 반환한다. |
-| `analyze_job_fit_report` | 구현됨 MVP | `job_id`, `target_role`, `known_skills`를 받아 `preparation_items`, `knowledge_gaps`, `evidence_links`, `verification_notes`를 생성한다. 기관 분석은 아직 자동 연결하지 않는다. |
-| `analyze_institution_strategy` | 구현됨 MVP | `institution_name`, `year`, `job_family`를 받아 ALIO 주요사업과 연구/정책 자료 기반 `strategy_signals`를 반환한다. `evidence`, `signals` 수동 입력도 지원한다. |
-| `analyze_institution_weakness` | 구현됨 MVP | `institution_name`, `year`를 받아 ALIO 국회 지적사항 기반 `weakness_signals`, `careful_wording`, `verification_notes`를 반환한다. `evidence`, `signals` 수동 입력도 지원한다. |
-| `prepare_institution_interview` | 구현됨 MVP | `institution_name`, `target_role`, `focus_areas`를 받아 ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 `interview_cards`를 반환한다. |
-| `map_ncs_competencies` | 예정 | planned schema 기준 `job_detail`, `duty_description_text`를 바탕으로 `knowledge`, `skills`, `attitudes`, `evidence`, `verification_notes`를 추출한다. |
-
-## 개발 시작
-
-Python 3.11 이상을 권장합니다.
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e ".[dev]"
-```
-
-서버 스캐폴드는 다음 명령으로 확인할 수 있습니다.
-
-```powershell
-python -m kr_gov_job_mcp.server
-python -m kr_gov_job_mcp.server --health
-python -m kr_gov_job_mcp.server --list-tools
-python -m kr_gov_job_mcp.server --stdio
-python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
-```
-
-패키지를 editable로 설치한 뒤에는 `kr-gov-job-mcp --health`도 사용할 수 있습니다.
-자세한 실행과 도구 등록 구조는 `docs/server-scaffold.md`에 정리되어 있습니다.
-
-로컬 MCP 클라이언트에는 다음처럼 stdio 서버로 연결할 수 있습니다.
-
-```json
-{
-  "mcpServers": {
-    "kr-gov-job-mcp": {
-      "command": "python",
-      "args": ["-m", "kr_gov_job_mcp.server", "--stdio"]
-    }
-  }
-}
-```
-
-## 개인정보 원칙
-
-이 저장소에는 실제 개인정보, API 키, 로컬 분석 자료를 커밋하지 않습니다.
-
-`.env.example`만 공유하고 실제 값은 `.env`로 관리합니다.
-
-## 라이선스
-
-추후 결정합니다.
+- 정보보안/정보보호 직무명을 Job-ALIO NCS 직무군으로 정규화

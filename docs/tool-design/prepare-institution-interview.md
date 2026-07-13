@@ -26,7 +26,8 @@
 
 `target_role`은 필수다. `job_family`는 `target_role` 별칭으로 받을 수 있다.
 `정보보안`, `정보보호`, `침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현은 먼저
-`normalize_job_role`로 `정보통신` 계열로 정규화한 뒤 호출한다. 원문 직무명은 `original_target_role`에 보존한다.
+`normalize_job_role`로 Job-ALIO NCS 대분류명 `정보통신`으로 정규화한 뒤 호출한다. 원문 직무명은
+`original_target_role`에 보존한다.
 
 `evidence`와 `signals`가 비어 있고 `fetch_live_alio`가 `true`면, 도구는 먼저
 `lookup_job_alio_codes` 기반 기관명 resolver로 ALIO 기관 코드를 찾고 40/47/50 항목을 조회한다.
@@ -75,7 +76,7 @@ python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --inpu
 수동 evidence 기반 호출:
 
 ```bash
-python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input '{"institution_name":"한국인터넷진흥원","target_role":"정보보호","year":2026,"fetch_live_alio":false,"focus_areas":["지원동기"],"evidence":[{"title":"ALIO 주요사업","source_type":"alio_disclosure","excerpt":"디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.","fields":{"source_type":"major_business","alio_item_no":"40"}}],"signals":[{"category":"business_direction","title":"주요사업","summary":"디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.","evidence":[{"title":"ALIO 주요사업","source_type":"alio_disclosure","excerpt":"디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.","fields":{"source_type":"major_business","alio_item_no":"40"}}]}]}'
+python -m kr_gov_job_mcp.server --call-tool prepare_institution_interview --input '{"institution_name":"한국인터넷진흥원","target_role":"정보통신","year":2026,"fetch_live_alio":false,"focus_areas":["지원동기"],"evidence":[{"title":"ALIO 주요사업","source_type":"alio_disclosure","excerpt":"디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.","fields":{"source_type":"major_business","alio_item_no":"40"}}],"signals":[{"category":"business_direction","title":"주요사업","summary":"디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.","evidence":[{"title":"ALIO 주요사업","source_type":"alio_disclosure","excerpt":"디지털 신뢰 기반 조성 사업을 주요사업으로 제시했습니다.","fields":{"source_type":"major_business","alio_item_no":"40"}}]}]}'
 ```
 
 ## 면접 카드 연결 기준

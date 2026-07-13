@@ -54,7 +54,7 @@ def generate_institution_strategy_report(
             InstitutionVerificationNote(
                 field="job_family",
                 reason="직무군이 없어 사업 방향과 직무 연결 포인트를 좁히기 어렵습니다.",
-                suggested_check="지원하려는 직무군을 입력합니다. 예: 정보보호, 전산, 사업관리",
+                suggested_check="지원하려는 직무군을 입력합니다. 보안 직무는 정보통신으로 입력합니다.",
             )
         )
 

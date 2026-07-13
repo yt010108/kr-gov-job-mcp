@@ -19,7 +19,7 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
         {
             "institution_name": "한국인터넷진흥원",
             "year": 2026,
-            "job_family": "정보보호",
+            "job_family": "정보통신",
             "evidence": [
                 {
                     "title": "ALIO 주요사업",
@@ -36,13 +36,13 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
     assert result["institution_name"] == "한국인터넷진흥원"
     assert result["normalized_name"] == "한국인터넷진흥원"
     assert result["year"] == 2026
-    assert result["job_family"] == "정보보호"
+    assert result["job_family"] == "정보통신"
     assert result["strategy_signals"] == [
         {
             "category": "business_direction",
             "summary": "디지털 신뢰 기반 조성과 정보보호 산업 지원",
             "job_connection": (
-                "정보보호 관점에서는 이 signal을 주요사업 근거로 삼아 기관이 중점 추진하는 "
+                "정보통신 관점에서는 이 signal을 주요사업 근거로 삼아 기관이 중점 추진하는 "
                 "문제, 필요한 역량, 지원 직무의 기여 가능성을 분리해 검토합니다."
             ),
             "evidence": [
@@ -84,6 +84,9 @@ def test_analyze_institution_strategy_rejects_invalid_arguments() -> None:
 
     with pytest.raises(ValueError, match="expected integer value for year"):
         tool.handler({"institution_name": "한국인터넷진흥원", "year": "올해"})
+
+    with pytest.raises(ValueError, match="Use the Job-ALIO NCS category '정보통신'"):
+        tool.handler({"institution_name": "한국인터넷진흥원", "job_family": "정보보안"})
 
 
 def test_analyze_institution_strategy_uses_live_alio_context(monkeypatch: pytest.MonkeyPatch) -> None:

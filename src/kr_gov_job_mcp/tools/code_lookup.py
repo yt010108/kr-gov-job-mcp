@@ -6,7 +6,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from kr_gov_job_mcp.codes import JobAlioCodeType, find_job_alio_codes, find_region_codes
-from kr_gov_job_mcp.tools.registry import ToolDefinition
+from kr_gov_job_mcp.tools.registry import ToolDefinition, read_only_tool_annotations
 
 
 LOOKUP_JOB_ALIO_CODES_INPUT_SCHEMA: dict[str, Any] = {
@@ -82,12 +82,13 @@ def create_lookup_job_alio_codes_tool() -> ToolDefinition:
     return ToolDefinition(
         name="lookup_job_alio_codes",
         description=(
-            "자연어 기관명, 기관 약칭, NCS명, 직무 키워드를 Job-ALIO 검색 후보로 "
+            "kr-gov-job-mcp 서비스에서 자연어 기관명, 기관 약칭, NCS명, 직무 키워드를 Job-ALIO 검색 후보로 "
             "조회합니다. NCS는 검색 필터 코드를 반환하고, 기관명은 코드가 확인된 후보와 "
             "코드가 없는 표시명 후보를 함께 반환할 수 있습니다. 코드가 없는 기관명 후보는 "
             "`fallback_search`의 `keyword`로 검색을 이어갑니다."
         ),
         input_schema=LOOKUP_JOB_ALIO_CODES_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Lookup Job-ALIO Codes", open_world=False),
         handler=handler,
     )
 
@@ -110,8 +111,9 @@ def create_lookup_region_codes_tool() -> ToolDefinition:
 
     return ToolDefinition(
         name="lookup_region_codes",
-        description="자연어 지역명으로 잡알리오 근무지역 코드를 조회합니다.",
+        description="kr-gov-job-mcp 서비스에서 자연어 지역명으로 잡알리오 근무지역 코드를 조회합니다.",
         input_schema=LOOKUP_REGION_CODES_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Lookup Region Codes", open_world=False),
         handler=handler,
     )
 

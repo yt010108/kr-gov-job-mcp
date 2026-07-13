@@ -22,11 +22,18 @@ def test_default_registry_exposes_health_check() -> None:
     ]
     assert tools[4] == {
         "name": "health_check",
-        "description": "서버 준비 상태와 등록된 도구 개수 같은 기본 메타데이터를 반환합니다.",
+        "description": "kr-gov-job-mcp 서비스에서 서버 준비 상태와 등록된 도구 개수 같은 기본 메타데이터를 반환합니다.",
         "input_schema": {
             "type": "object",
             "properties": {},
             "additionalProperties": False,
+        },
+        "annotations": {
+            "title": "Health Check",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
         },
     }
     assert tools[0]["input_schema"]["additionalProperties"] is False
@@ -39,6 +46,20 @@ def test_default_registry_exposes_health_check() -> None:
     assert tools[7]["input_schema"]["additionalProperties"] is False
     assert tools[8]["input_schema"]["additionalProperties"] is False
     assert tools[9]["input_schema"]["additionalProperties"] is False
+
+
+def test_default_registry_tool_metadata_satisfies_review_requirements() -> None:
+    registry = create_default_registry()
+
+    tools = registry.list_tools()
+
+    for tool in tools:
+        assert "kr-gov-job-mcp" in tool["description"]
+        assert tool["annotations"]["title"]
+        assert tool["annotations"]["readOnlyHint"] is True
+        assert tool["annotations"]["destructiveHint"] is False
+        assert tool["annotations"]["idempotentHint"] is True
+        assert isinstance(tool["annotations"]["openWorldHint"], bool)
 
 
 def test_health_check_returns_server_metadata() -> None:

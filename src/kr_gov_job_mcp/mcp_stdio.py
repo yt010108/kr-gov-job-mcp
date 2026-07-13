@@ -171,6 +171,7 @@ def _mcp_tool_dict(tool: Mapping[str, Any]) -> dict[str, Any]:
         "name": tool["name"],
         "description": tool.get("description", ""),
         "inputSchema": tool.get("input_schema") or {"type": "object", "properties": {}},
+        "annotations": tool.get("annotations") or {},
     }
 
 

@@ -18,7 +18,7 @@ from kr_gov_job_mcp.schemas.job import (
     JobAlioSummary,
 )
 from kr_gov_job_mcp.schemas.job_fit import ApplicantReadinessInput, JobFitPreparationReport
-from kr_gov_job_mcp.tools.registry import ToolDefinition
+from kr_gov_job_mcp.tools.registry import ToolDefinition, read_only_tool_annotations
 
 
 SearchJobsRunner = Callable[..., JobAlioSearchResult]
@@ -202,13 +202,14 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
     return ToolDefinition(
         name="search_public_jobs",
         description=(
-            "잡알리오 공공기관 채용공고를 검색하고 정규화된 공고 요약과 NCS 매핑 후보를 "
-            "반환합니다. 기관명, 기관 약칭, NCS명, 직무 키워드처럼 자연어 코드 후보가 "
-            "필요한 경우 먼저 `lookup_job_alio_codes`를 호출합니다. 기관명 후보는 "
+            "kr-gov-job-mcp 서비스에서 잡알리오 공공기관 채용공고를 검색하고 정규화된 "
+            "공고 요약과 NCS 매핑 후보를 반환합니다. 기관명, 기관 약칭, NCS명, "
+            "직무 키워드처럼 자연어 코드 후보가 필요한 경우 먼저 `lookup_job_alio_codes`를 호출합니다. 기관명 후보는 "
             "`code`가 있는 경우에만 `institution_code`로 전달하고, `code`가 없으면 "
             "`fallback_search.arguments.keyword`의 기관명으로 검색합니다."
         ),
         input_schema=SEARCH_PUBLIC_JOBS_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Search Public Jobs", open_world=True),
         handler=handler,
     )
 
@@ -230,10 +231,11 @@ def create_fetch_job_detail_tool(
     return ToolDefinition(
         name="fetch_job_detail",
         description=(
-            "잡알리오 공고 ID로 상세 공고를 조회하고 지원자격, 첨부파일, 전형 단계, "
-            "NCS 매핑 후보를 반환합니다."
+            "kr-gov-job-mcp 서비스에서 잡알리오 공고 ID로 상세 공고를 조회하고 지원자격, "
+            "첨부파일, 전형 단계, NCS 매핑 후보를 반환합니다."
         ),
         input_schema=FETCH_JOB_DETAIL_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Fetch Job Detail", open_world=True),
         handler=handler,
     )
 
@@ -272,12 +274,13 @@ def create_analyze_job_fit_report_tool(
     return ToolDefinition(
         name="analyze_job_fit_report",
         description=(
-            "잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, 근거 링크, "
-            "검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다. `정보보안`, `정보보호`, "
-            "`침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현이 target_role, "
-            "known_skills, preparation_notes에 있으면 먼저 `normalize_job_role`을 호출합니다."
+            "kr-gov-job-mcp 서비스에서 잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, "
+            "근거 링크, 검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다. `정보보안`, "
+            "`정보보호`, `침해대응`, `취약점 분석`, `개인정보보호` 같은 보안 직무 표현이 "
+            "target_role, known_skills, preparation_notes에 있으면 먼저 `normalize_job_role`을 호출합니다."
         ),
         input_schema=ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA,
+        annotations=read_only_tool_annotations("Analyze Job Fit Report", open_world=True),
         handler=handler,
     )
 
@@ -387,7 +390,92 @@ def _serialize_search_result(
         "result_count": len(result.jobs),
         "jobs": [_serialize_job(job) for job in result.jobs],
         "warnings": warnings,
+        "diagnostics": _no_result_diagnostics(query) if not result.jobs else None,
     }
+
+
+def _no_result_diagnostics(query: Mapping[str, Any]) -> dict[str, Any]:
+    """Explain a zero-result search and return safe, directly callable retries."""
+    suggestions: list[dict[str, Any]] = []
+    keyword = _to_text(query.get("keyword"))
+
+    if query.get("ongoing_only", True):
+        retry_arguments = dict(query)
+        retry_arguments["ongoing_only"] = False
+        suggestions.append(
+            {
+                "tool": "search_public_jobs",
+                "arguments": retry_arguments,
+                "reason": "현재 접수 중 필터를 해제해 마감 공고를 포함해 다시 검색합니다.",
+            }
+        )
+
+    if keyword:
+        code_type = "institution" if _looks_like_institution_name(keyword) else "ncs"
+        suggestions.append(
+            {
+                "tool": "lookup_job_alio_codes",
+                "arguments": {"code_type": code_type, "query": keyword},
+                "reason": (
+                    "기관명 후보와 Job-ALIO 기관 코드를 확인합니다."
+                    if code_type == "institution"
+                    else "직무 키워드에 맞는 Job-ALIO NCS 코드 후보를 확인합니다."
+                ),
+            }
+        )
+
+    restricted_filters = {
+        "institution_code",
+        "ncs_code",
+        "region_code",
+        "academic_condition_code",
+        "employment_type_code",
+        "recruitment_type",
+        "replacement_only",
+        "announcement_start_date",
+        "announcement_end_date",
+        "institution_type",
+        "institution_classification",
+    }
+    relaxed_arguments = {key: value for key, value in query.items() if key not in restricted_filters}
+    removed_filters = sorted(set(query) & restricted_filters)
+    if removed_filters:
+        suggestions.append(
+            {
+                "tool": "search_public_jobs",
+                "arguments": relaxed_arguments,
+                "reason": "세부 필터를 해제해 필터 조합 때문에 결과가 제외됐는지 확인합니다.",
+                "removed_filters": removed_filters,
+            }
+        )
+
+    return {
+        "reason": "no_results",
+        "message": "조건에 맞는 Job-ALIO 공고를 찾지 못했습니다. 공고 부재, 제목 검색 범위, 또는 필터 조합을 확인하세요.",
+        "keyword_search_scope": "keyword는 현재 Job-ALIO 공고 제목 검색에 사용됩니다.",
+        "recommended_next_calls": suggestions,
+    }
+
+
+def _looks_like_institution_name(value: str) -> bool:
+    normalized = "".join(value.split()).lower()
+    institution_hints = (
+        "공사",
+        "공단",
+        "병원",
+        "대학교",
+        "대학",
+        "연구원",
+        "진흥원",
+        "재단",
+        "협회",
+        "센터",
+        "원",
+        "청",
+        "kisa",
+        "kised",
+    )
+    return normalized.endswith(institution_hints)
 
 
 def _serialize_detail_result(

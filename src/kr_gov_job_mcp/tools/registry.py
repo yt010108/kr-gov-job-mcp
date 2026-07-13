@@ -17,6 +17,7 @@ class ToolDefinition:
     name: str
     description: str
     input_schema: dict[str, Any] = field(default_factory=dict)
+    annotations: dict[str, Any] = field(default_factory=dict)
     handler: ToolHandler | None = field(default=None, repr=False, compare=False)
 
     def public_dict(self) -> dict[str, Any]:
@@ -24,7 +25,18 @@ class ToolDefinition:
             "name": self.name,
             "description": self.description,
             "input_schema": self.input_schema,
+            "annotations": self.annotations,
         }
+
+
+def read_only_tool_annotations(title: str, *, open_world: bool) -> dict[str, Any]:
+    return {
+        "title": title,
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": open_world,
+    }
 
 
 class ToolRegistry:

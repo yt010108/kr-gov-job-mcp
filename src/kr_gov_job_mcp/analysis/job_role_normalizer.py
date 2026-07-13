@@ -57,7 +57,12 @@ def normalize_job_role(
         "preparation_notes": [preparation_notes],
     }
     matched_aliases, matched_fields = _find_security_aliases(field_values)
-    is_security_role = bool(matched_aliases)
+    is_security_role = _is_security_role(
+        target_role=target_role,
+        job_family=job_family,
+        query=query,
+        matched_fields=matched_fields,
+    )
 
     normalized_job_family = _normalized_job_family(
         is_security_role=is_security_role,
@@ -89,10 +94,11 @@ def normalize_job_role(
         "recommended_next_arguments": _recommended_next_arguments(
             target_role=target_role,
             job_family=job_family,
+            query=query,
             normalized_target_role=normalized_target_role,
             normalized_job_family=normalized_job_family,
             is_security_role=is_security_role,
-            matched_aliases=matched_aliases,
+            matched_fields=matched_fields,
         ),
         "safe_context": SAFE_JOB_PREPARATION_CONTEXT,
         "warnings": [],
@@ -133,6 +139,22 @@ def _find_security_aliases(
     return matched_aliases, matched_fields
 
 
+def _is_security_role(
+    *,
+    target_role: str | None,
+    job_family: str | None,
+    query: str | None,
+    matched_fields: Mapping[str, list[str]],
+) -> bool:
+    if target_role is not None:
+        return bool(matched_fields.get("target_role"))
+    if job_family is not None:
+        return bool(matched_fields.get("job_family"))
+    if query is not None:
+        return bool(matched_fields.get("query"))
+    return bool(matched_fields.get("known_skills") or matched_fields.get("preparation_notes"))
+
+
 def _normalized_job_family(
     *,
     is_security_role: bool,
@@ -164,6 +186,8 @@ def _normalization_reason(
     if is_security_role:
         aliases = ", ".join(matched_aliases)
         return f"보안 직무 표현({aliases})을 채용/NCS 맥락의 {normalized_job_family} 직무군으로 정규화했습니다."
+    if matched_aliases:
+        return "보안 표현은 보조 입력에서 감지됐지만, 명시한 목표 직무는 그대로 유지했습니다."
     return "보안 직무 별칭이 감지되지 않아 입력 직무명을 그대로 유지했습니다."
 
 
@@ -171,12 +195,15 @@ def _recommended_next_arguments(
     *,
     target_role: str | None,
     job_family: str | None,
+    query: str | None,
     normalized_target_role: str | None,
     normalized_job_family: str | None,
     is_security_role: bool,
-    matched_aliases: list[str],
+    matched_fields: Mapping[str, list[str]],
 ) -> dict[str, Any]:
-    original_target_role = target_role or job_family or (matched_aliases[0] if matched_aliases else None)
+    original_target_role = target_role or job_family
+    if original_target_role is None and is_security_role and query:
+        original_target_role = matched_fields.get("query", [None])[0]
     arguments = {}
     if normalized_target_role is not None:
         arguments["target_role"] = normalized_target_role

@@ -21,7 +21,7 @@ def test_prepare_institution_interview_returns_cards_from_manual_signals() -> No
     result = tool.handler(
         {
             "institution_name": "한국인터넷진흥원",
-            "target_role": "정보보호",
+            "target_role": "정보통신",
             "year": 2026,
             "fetch_live_alio": False,
             "focus_areas": ["지원동기", "개선과제"],
@@ -44,7 +44,7 @@ def test_prepare_institution_interview_returns_cards_from_manual_signals() -> No
     )
 
     assert result["source"] == "institution_interview"
-    assert result["query"]["target_role"] == "정보보호"
+    assert result["query"]["target_role"] == "정보통신"
     assert [card["question_type"] for card in result["interview_cards"]] == ["지원동기", "개선과제"]
     assert result["interview_cards"][0]["evidence"][0]["fields"]["alio_item_no"] == "40"
     assert result["interview_cards"][1]["safe_framing"] is not None
@@ -166,8 +166,20 @@ def test_prepare_institution_interview_rejects_invalid_arguments() -> None:
     tool = create_prepare_institution_interview_tool()
 
     try:
-        tool.handler({"institution_name": "한국인터넷진흥원", "target_role": "정보보호", "unknown": True})
+        tool.handler({"institution_name": "한국인터넷진흥원", "target_role": "정보통신", "unknown": True})
     except ValueError as exc:
         assert "unsupported prepare_institution_interview arguments" in str(exc)
     else:
         raise AssertionError("expected invalid argument to be rejected")
+
+
+def test_prepare_institution_interview_rejects_unsupported_security_role_alias() -> None:
+    tool = create_prepare_institution_interview_tool()
+
+    try:
+        tool.handler({"institution_name": "한국인터넷진흥원", "target_role": "정보보안"})
+    except ValueError as exc:
+        assert "prepare_institution_interview does not support target_role='정보보안'" in str(exc)
+        assert "Use the Job-ALIO NCS category '정보통신' instead." in str(exc)
+    else:
+        raise AssertionError("expected unsupported target_role to be rejected")

@@ -63,6 +63,14 @@ def test_mcp_stdio_initialize_and_list_tools() -> None:
     lookup = next(tool for tool in tools if tool["name"] == "lookup_region_codes")
     assert "inputSchema" in lookup
     assert "input_schema" not in lookup
+    assert lookup["annotations"] == {
+        "title": "Lookup Region Codes",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+    assert "kr-gov-job-mcp" in lookup["description"]
 
 
 def test_mcp_stdio_call_tool_returns_text_and_structured_content() -> None:
@@ -107,6 +115,29 @@ def test_mcp_stdio_tool_validation_error_is_tool_result() -> None:
     result = responses[0]["result"]
     assert result["isError"] is True
     assert "unsupported lookup_region_codes arguments" in result["structuredContent"]["error"]
+
+
+def test_mcp_stdio_tool_domain_error_is_tool_result() -> None:
+    responses = _run_stdio(
+        [
+            {
+                "jsonrpc": "2.0",
+                "id": "bad-role",
+                "method": "tools/call",
+                "params": {
+                    "name": "prepare_institution_interview",
+                    "arguments": {"institution_name": "한국인터넷진흥원", "target_role": "정보보안"},
+                },
+            }
+        ]
+    )
+
+    result = responses[0]["result"]
+    assert result["isError"] is True
+    assert "prepare_institution_interview does not support target_role='정보보안'" in result[
+        "structuredContent"
+    ]["error"]
+    assert "정보통신" in result["structuredContent"]["error"]
 
 
 def test_mcp_stdio_unknown_tool_returns_json_rpc_error() -> None:

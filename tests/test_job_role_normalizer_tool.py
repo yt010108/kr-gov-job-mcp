@@ -65,6 +65,27 @@ def test_non_security_job_role_is_kept_as_is() -> None:
     }
 
 
+def test_explicit_non_security_role_is_not_overridden_by_security_skills() -> None:
+    normalized = normalize_job_role(
+        target_role="회계",
+        known_skills=["정보보안기사"],
+        preparation_notes="개인정보보호 교육 이수 경험이 있다.",
+    )
+
+    assert normalized["normalized_job_family"] == "회계"
+    assert normalized["normalized_target_role"] == "회계"
+    assert normalized["is_security_role"] is False
+    assert normalized["matched_fields"] == {
+        "known_skills": ["정보보안"],
+        "preparation_notes": ["개인정보보호"],
+    }
+    assert normalized["recommended_next_arguments"] == {
+        "target_role": "회계",
+        "job_family": "회계",
+    }
+    assert "보조 입력" in normalized["normalization_reason"]
+
+
 def test_normalize_job_role_tool_validates_arguments() -> None:
     tool = create_normalize_job_role_tool()
 
@@ -88,3 +109,9 @@ def test_normalize_job_role_tool_validates_arguments() -> None:
 
     with pytest.raises(ValueError, match="expected list value for known_skills"):
         tool.handler({"target_role": "정보보안", "known_skills": "웹 보안"})
+
+    with pytest.raises(ValueError, match="expected string value for target_role"):
+        tool.handler({"target_role": 7})
+
+    assert len(tool.input_schema["anyOf"]) == 5
+    assert tool.annotations["readOnlyHint"] is True

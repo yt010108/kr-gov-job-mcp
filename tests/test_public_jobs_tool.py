@@ -127,6 +127,75 @@ def test_search_public_jobs_caps_limit() -> None:
     assert result["warnings"] == ["limit is capped at 100 for one Job-ALIO request."]
 
 
+def test_search_public_jobs_returns_no_result_diagnostics_and_retry_calls() -> None:
+    tool = create_search_public_jobs_tool(
+        search_jobs=lambda **kwargs: JobAlioSearchResult(
+            page=kwargs["page"], limit=kwargs["limit"], total_count=0
+        )
+    )
+
+    result = tool.handler(
+        {
+            "keyword": "전남대병원",
+            "region": "서울",
+            "ncs_code": "R600020",
+            "ongoing_only": True,
+        }
+    )
+
+    diagnostics = result["diagnostics"]
+    assert diagnostics["reason"] == "no_results"
+    assert diagnostics["keyword_search_scope"] == "keyword는 현재 Job-ALIO 공고 제목 검색에 사용됩니다."
+    assert diagnostics["recommended_next_calls"] == [
+        {
+            "tool": "search_public_jobs",
+            "arguments": {
+                "keyword": "전남대병원",
+                "page": 1,
+                "limit": 20,
+                "ongoing_only": False,
+                "ncs_code": "R600020",
+                "region_code": "R3010",
+            },
+            "reason": "현재 접수 중 필터를 해제해 마감 공고를 포함해 다시 검색합니다.",
+        },
+        {
+            "tool": "lookup_job_alio_codes",
+            "arguments": {"code_type": "institution", "query": "전남대병원"},
+            "reason": "기관명 후보와 Job-ALIO 기관 코드를 확인합니다.",
+        },
+        {
+            "tool": "search_public_jobs",
+            "arguments": {
+                "keyword": "전남대병원",
+                "page": 1,
+                "limit": 20,
+                "ongoing_only": True,
+            },
+            "reason": "세부 필터를 해제해 필터 조합 때문에 결과가 제외됐는지 확인합니다.",
+            "removed_filters": ["ncs_code", "region_code"],
+        },
+    ]
+
+
+def test_search_public_jobs_suggests_ncs_lookup_for_generic_keyword_with_no_results() -> None:
+    tool = create_search_public_jobs_tool(
+        search_jobs=lambda **kwargs: JobAlioSearchResult(
+            page=kwargs["page"], limit=kwargs["limit"], total_count=0
+        )
+    )
+
+    result = tool.handler({"keyword": "데이터 분석", "ongoing_only": False})
+
+    assert result["diagnostics"]["recommended_next_calls"] == [
+        {
+            "tool": "lookup_job_alio_codes",
+            "arguments": {"code_type": "ncs", "query": "데이터 분석"},
+            "reason": "직무 키워드에 맞는 Job-ALIO NCS 코드 후보를 확인합니다.",
+        }
+    ]
+
+
 def test_search_public_jobs_ongoing_false_warns_about_mixed_statuses() -> None:
     def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
         return JobAlioSearchResult(
