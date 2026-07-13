@@ -96,6 +96,22 @@ def test_raw_sample_store_uses_safe_windows_directory_segments(tmp_path) -> None
     assert all(not part.endswith((".", " ")) for part in path.parts)
 
 
+def test_raw_sample_store_uses_safe_windows_reserved_names_with_extensions(tmp_path) -> None:
+    store = RawSampleStore(tmp_path)
+    sample = RawSample(
+        source="CON.txt",
+        raw_type="detail",
+        sample_id="LPT1.log",
+        collected_at="2026-07-07T00:01:02Z",
+        payload={},
+    )
+
+    path = store.write_sample(sample)
+
+    assert path.parts[-4] == "_CON.txt"
+    assert path.name.startswith("_LPT1.log-")
+
+
 def test_raw_sample_store_limits_long_sample_id_filename(tmp_path) -> None:
     store = RawSampleStore(tmp_path)
     path = store.write_sample(make_raw_sample(sample_id="long-id-" * 300))

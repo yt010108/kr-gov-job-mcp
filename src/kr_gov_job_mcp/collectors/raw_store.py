@@ -92,6 +92,7 @@ class RawSampleStore:
         cleaned = re.sub(r"[^A-Za-z0-9._-]+", "-", value.strip())
         cleaned = cleaned.strip(" .-_")[:max_length].rstrip(". ")
         cleaned = cleaned or "unknown"
-        if cleaned.upper() in RawSampleStore._WINDOWS_RESERVED_SEGMENTS:
+        device_name = cleaned.split(".", maxsplit=1)[0].upper()
+        if device_name in RawSampleStore._WINDOWS_RESERVED_SEGMENTS:
             cleaned = f"_{cleaned}"
         return cleaned

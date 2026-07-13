@@ -133,7 +133,7 @@ data/raw_samples/cleaneye/html/2026-07-07/seoul-facility-list-<sample_id_sha256>
 될 수 있다. 이 경우에도 원문 `sample_id` 전체의 SHA-256 digest를 파일명에 넣으므로 서로
 다른 ID를 충돌 가능성이 매우 낮은 별도 경로로 구분한다. `collected_at_token`에도 원문 수집
 시각의 SHA-256 digest를 넣어 정규화 결과가 같아져도 구분한다. Windows 예약명과 끝 공백·
-마침표도 저장 경로에서 정리한다.
+마침표, 예약명에 붙은 확장자도 저장 경로에서 정리한다.
 
 같은 `sample_id`를 다른 `collected_at`으로 재수집하면 별도 파일로 저장한다. 정확히 같은
 최종 경로에 다시 쓰려 하면 기존 raw JSON을 덮어쓰지 않고 `FileExistsError`로 실패한다.
