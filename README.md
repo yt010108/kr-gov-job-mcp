@@ -100,6 +100,8 @@ workflow가 `main`에 반영된 뒤 저장소 보호 규칙에서 `Test (Python 
 
 루트 `Dockerfile`은 Git 소스 빌드 화면에서 바로 사용할 수 있다. 컨테이너는 기본적으로
 `PORT` 환경변수 또는 `8000` 포트에서 HTTP MCP endpoint를 실행한다.
+배포한 소스를 확인하려면 빌드 시 `APP_SOURCE_REF`와 `APP_REVISION`을 전달한다. 두 값은
+`/health`와 `health_check`에 표시되며, 전달하지 않으면 `unknown`이다.
 
 등록 화면 입력값:
 
@@ -122,8 +124,11 @@ workflow가 `main`에 반영된 뒤 저장소 보호 규칙에서 `Test (Python 
 로컬 Docker 확인:
 
 ```bash
-docker build -t kr-gov-job-mcp .
+docker build -t kr-gov-job-mcp \
+  --build-arg APP_SOURCE_REF=refs/heads/main \
+  --build-arg APP_REVISION="$(git rev-parse HEAD)" .
 docker run --rm -p 8000:8000 kr-gov-job-mcp
+curl http://localhost:8000/health
 ```
 
 MCP HTTP 호출 예시:

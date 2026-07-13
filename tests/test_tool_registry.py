@@ -60,7 +60,9 @@ def test_default_registry_tool_metadata_satisfies_review_requirements() -> None:
         assert isinstance(tool["annotations"]["openWorldHint"], bool)
 
 
-def test_health_check_returns_server_metadata() -> None:
+def test_health_check_returns_server_metadata(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_SOURCE_REF", "refs/heads/main")
+    monkeypatch.setenv("APP_REVISION", "257e45c")
     registry = create_default_registry()
 
     result = registry.call("health_check")
@@ -69,6 +71,8 @@ def test_health_check_returns_server_metadata() -> None:
         "status": "ok",
         "service": "kr-gov-job-mcp",
         "version": "0.1.0",
+        "source_ref": "refs/heads/main",
+        "revision": "257e45c",
         "registered_tools": 9,
     }
 

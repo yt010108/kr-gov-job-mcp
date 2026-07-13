@@ -6,6 +6,8 @@ from http.server import ThreadingHTTPServer
 from threading import Thread
 from typing import Any
 
+import pytest
+
 from kr_gov_job_mcp.mcp_http import make_mcp_http_handler
 from kr_gov_job_mcp.tools import create_default_registry
 
@@ -51,13 +53,18 @@ def _request(
         connection.close()
 
 
-def test_mcp_http_health_endpoint() -> None:
+def test_mcp_http_health_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_SOURCE_REF", "refs/heads/main")
+    monkeypatch.setenv("APP_REVISION", "257e45c")
+
     with _mcp_http_server() as (host, port):
         status, payload = _request(host, port, "GET", "/health")
 
     assert status == 200
     assert payload["status"] == "ok"
     assert payload["registered_tools"] == 9
+    assert payload["source_ref"] == "refs/heads/main"
+    assert payload["revision"] == "257e45c"
 
 
 def test_mcp_http_initialize_and_list_tools() -> None:
