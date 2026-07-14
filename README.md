@@ -5,11 +5,12 @@
 
 ## 취업 정보 분석 워크플로우
 
-이 MCP는 다음 3단계로 활용할 수 있습니다.
+이 MCP는 다음 4단계로 활용할 수 있습니다.
 
 1. **발굴 (Search)** — `search_public_jobs`로 조건에 맞는 채용공고를 찾습니다.
 2. **분석 (Deep Dive)** — `fetch_job_detail`로 직무를 확인하고 `analyze_institution_strategy`로 기관의 사업 방향을 살펴봅니다.
 3. **전략 (Fit Analysis)** — `analyze_job_fit_report`로 지원 직무와 보유 역량의 준비 항목·지식 갭을 정리합니다.
+4. **표현 (Answer Framework)** — `generate_star_answer_framework`로 사용자 경험을 근거 기반 STAR 답변 뼈대로 정리합니다.
 
 에이전트에는 예를 들어 다음과 같이 요청할 수 있습니다.
 
@@ -20,6 +21,7 @@
 - "지금 지원할 수 있는 한국인터넷진흥원 관련 공고를 찾아줘."
 - "전산직으로 지원할 만한 공공기관 채용공고를 찾아줘."
 - "KISED 전산직 면접 준비 도와줘."
+- "전산직 지원 경험을 STAR 구조로 정리하고 부족한 근거를 질문해줘."
 
 기관명·약칭이나 직무명이 Job-ALIO 코드와 다를 수 있으므로, 에이전트는 필요할 때
 `lookup_job_alio_codes`로 후보를 확인한 뒤 공고 검색·기관 분석 도구를 이어서 호출합니다.
@@ -30,6 +32,7 @@
 | `fetch_job_detail` | 공고 상세·첨부파일·전형 단계·NCS 매핑을 구조화 |
 | `analyze_job_fit_report` | 지원 직무 적합도와 준비 전략을 정리 |
 | `analyze_institution_strategy` | ALIO 및 연구·정책 자료 기반 기관 전략 신호를 분석 |
+| `generate_star_answer_framework` | 사용자 경험을 STAR 구조와 보완 질문으로 정리 |
 
 ## 문제 정의
 
@@ -53,6 +56,7 @@
 - 국회 지적사항 기반 개선 과제 분석
 - ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 면접 카드 생성
 - 공고, NCS, 기관 정보 기반 준비 항목 리포트 생성
+- 사용자 경험 기반 STAR 자기소개서·면접 답변 프레임 생성
 
 ## 도구 설계 문서
 
@@ -159,6 +163,7 @@ kr-gov-job-mcp/
       analyze-institution-weakness.md
       prepare-institution-interview.md
       analyze-job-fit-report.md
+      generate-star-answer-framework.md
     inventory/
       job-alio-field-inventory.md
       alio-disclosure-field-inventory.md
@@ -212,3 +217,4 @@ kr-gov-job-mcp/
 - Job-ALIO 공고 상세 조회
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
 - evidence 입력 기반 기관 사업 방향 signal 요약
+- 사용자 경험 근거 기반 STAR 답변 프레임 생성

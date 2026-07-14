@@ -20,6 +20,7 @@ from kr_gov_job_mcp.tools.public_jobs import (
     create_fetch_job_detail_tool,
     create_search_public_jobs_tool,
 )
+from kr_gov_job_mcp.tools.star_answer import create_generate_star_answer_framework_tool
 from kr_gov_job_mcp.tools.registry import ToolDefinition, ToolRegistry, read_only_tool_annotations
 
 
@@ -49,6 +50,7 @@ def create_default_registry() -> ToolRegistry:
     registry.register(create_analyze_institution_weakness_tool())
     registry.register(create_prepare_institution_interview_tool())
     registry.register(create_analyze_job_fit_report_tool())
+    registry.register(create_generate_star_answer_framework_tool())
     registry.register(create_fetch_job_detail_tool())
     registry.register(create_search_public_jobs_tool())
     return registry

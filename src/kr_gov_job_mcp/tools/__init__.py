@@ -15,6 +15,7 @@ from kr_gov_job_mcp.tools.public_jobs import (
     create_fetch_job_detail_tool,
     create_search_public_jobs_tool,
 )
+from kr_gov_job_mcp.tools.star_answer import create_generate_star_answer_framework_tool
 from kr_gov_job_mcp.tools.registry import ToolDefinition, ToolRegistry
 
 __all__ = [
@@ -25,6 +26,7 @@ __all__ = [
     "create_analyze_institution_weakness_tool",
     "create_analyze_job_fit_report_tool",
     "create_fetch_job_detail_tool",
+    "create_generate_star_answer_framework_tool",
     "create_lookup_job_alio_codes_tool",
     "create_lookup_region_codes_tool",
     "create_prepare_institution_interview_tool",
