@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
+import socket
+from collections.abc import Awaitable, Callable, Sequence
 from dataclasses import dataclass
 from io import BytesIO
 from ipaddress import ip_address
@@ -17,6 +20,7 @@ from kr_gov_job_mcp.schemas.ncs import AttachmentExtractionStatus
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 MAX_PDF_PAGES = 100
 MAX_EXTRACTED_CHARACTERS = 200_000
+HostResolver = Callable[[str, int], Awaitable[Sequence[str]]]
 
 
 @dataclass(frozen=True)
@@ -33,10 +37,12 @@ class AttachmentTextClient:
         *,
         client: httpx.AsyncClient | None = None,
         max_bytes: int = MAX_ATTACHMENT_BYTES,
+        resolver: HostResolver | None = None,
     ) -> None:
         self._client = client
         self._owns_client = client is None
         self._max_bytes = max_bytes
+        self._resolver = resolver or _resolve_host_addresses
 
     async def __aenter__(self) -> AttachmentTextClient:
         if self._client is None:
@@ -48,10 +54,6 @@ class AttachmentTextClient:
             await self._client.aclose()
 
     async def extract(self, url: str, *, file_name: str | None = None) -> AttachmentTextResult:
-        validation_error = _validate_public_url(url)
-        if validation_error:
-            return AttachmentTextResult(status="download_failed", reason=validation_error)
-
         suffix = PurePosixPath(urlparse(url).path).suffix.lower()
         name_suffix = PurePosixPath(file_name or "").suffix.lower()
         format_suffix = name_suffix or suffix
@@ -60,6 +62,10 @@ class AttachmentTextClient:
                 status="unsupported_format",
                 reason=f"{format_suffix.lstrip('.').upper()} 형식은 자동 본문 추출을 지원하지 않습니다.",
             )
+
+        validation_error = await _validate_public_url(url, resolver=self._resolver)
+        if validation_error:
+            return AttachmentTextResult(status="download_failed", reason=validation_error)
 
         try:
             if self._client is None:
@@ -136,7 +142,7 @@ class AttachmentTextClient:
         )
 
 
-def _validate_public_url(url: str) -> str | None:
+async def _validate_public_url(url: str, *, resolver: HostResolver) -> str | None:
     parsed = urlparse(url)
     if parsed.scheme != "https" or not parsed.hostname:
         return "첨부 URL은 호스트가 있는 HTTPS 주소여야 합니다."
@@ -146,7 +152,21 @@ def _validate_public_url(url: str) -> str | None:
     try:
         address = ip_address(hostname)
     except ValueError:
+        try:
+            addresses = await resolver(hostname, parsed.port or 443)
+        except OSError as exc:
+            return f"첨부 URL 호스트를 확인하지 못했습니다: {exc}"
+        if not addresses:
+            return "첨부 URL 호스트의 IP 주소를 확인하지 못했습니다."
+        if any(not ip_address(value).is_global for value in addresses):
+            return "공개 인터넷 주소가 아닌 첨부 URL은 요청할 수 없습니다."
         return None
     if not address.is_global:
         return "공개 인터넷 주소가 아닌 첨부 URL은 요청할 수 없습니다."
     return None
+
+
+async def _resolve_host_addresses(hostname: str, port: int) -> list[str]:
+    loop = asyncio.get_running_loop()
+    records = await loop.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    return sorted({str(record[4][0]) for record in records})

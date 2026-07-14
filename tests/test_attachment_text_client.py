@@ -8,6 +8,10 @@ from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 from kr_gov_job_mcp.clients.attachment_text_client import AttachmentTextClient
 
 
+async def _public_resolver(_hostname: str, _port: int) -> list[str]:
+    return ["8.8.8.8"]
+
+
 def _text_pdf(text: str) -> bytes:
     writer = PdfWriter()
     page = writer.add_blank_page(width=300, height=300)
@@ -41,7 +45,7 @@ def test_attachment_text_client_extracts_pdf_text() -> None:
             )
         )
         async with httpx.AsyncClient(transport=transport) as http_client:
-            async with AttachmentTextClient(client=http_client) as client:
+            async with AttachmentTextClient(client=http_client, resolver=_public_resolver) as client:
                 return await client.extract(
                     "https://example.test/duty.pdf",
                     file_name="duty.pdf",
@@ -63,7 +67,7 @@ def test_attachment_text_client_marks_empty_pdf_for_ocr() -> None:
             lambda _request: httpx.Response(200, content=output.getvalue())
         )
         async with httpx.AsyncClient(transport=transport) as http_client:
-            async with AttachmentTextClient(client=http_client) as client:
+            async with AttachmentTextClient(client=http_client, resolver=_public_resolver) as client:
                 return await client.extract("https://example.test/scan.pdf")
 
     result = asyncio.run(run())
@@ -94,7 +98,11 @@ def test_attachment_text_client_rejects_oversized_and_fake_pdf_responses() -> No
             return httpx.Response(200, headers={"content-type": "application/pdf"}, content=b"HTML")
 
         async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
-            async with AttachmentTextClient(client=http_client, max_bytes=10) as client:
+            async with AttachmentTextClient(
+                client=http_client,
+                max_bytes=10,
+                resolver=_public_resolver,
+            ) as client:
                 oversized = await client.extract("https://example.test/large.pdf")
                 fake = await client.extract("https://example.test/fake.pdf")
                 return oversized, fake
@@ -108,9 +116,27 @@ def test_attachment_text_client_preserves_http_failure_reason() -> None:
     async def run() -> object:
         transport = httpx.MockTransport(lambda _request: httpx.Response(503))
         async with httpx.AsyncClient(transport=transport) as http_client:
-            async with AttachmentTextClient(client=http_client) as client:
+            async with AttachmentTextClient(client=http_client, resolver=_public_resolver) as client:
                 return await client.extract("https://example.test/duty.pdf")
 
     result = asyncio.run(run())
     assert result.status == "download_failed"
     assert "503" in result.reason
+
+
+def test_attachment_text_client_rejects_hostname_resolving_to_private_address() -> None:
+    async def private_resolver(_hostname: str, _port: int) -> list[str]:
+        return ["10.0.0.8"]
+
+    async def run() -> object:
+        transport = httpx.MockTransport(lambda _request: httpx.Response(200, content=b"%PDF"))
+        async with httpx.AsyncClient(transport=transport) as http_client:
+            async with AttachmentTextClient(
+                client=http_client,
+                resolver=private_resolver,
+            ) as client:
+                return await client.extract("https://internal.example/duty.pdf")
+
+    result = asyncio.run(run())
+    assert result.status == "download_failed"
+    assert "공개 인터넷 주소" in result.reason
