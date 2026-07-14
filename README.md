@@ -210,5 +210,6 @@ kr-gov-job-mcp/
 - Job-ALIO 기관명/NCS 코드 조회
 - Job-ALIO 공공기관 채용공고 검색
 - Job-ALIO 공고 상세 조회
+- Job-ALIO 공고와 직무기술서 PDF 기반 NCS/KSA 역량 정리
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
 - evidence 입력 기반 기관 사업 방향 signal 요약

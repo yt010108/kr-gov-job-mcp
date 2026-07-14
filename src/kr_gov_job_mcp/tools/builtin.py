@@ -15,6 +15,7 @@ from kr_gov_job_mcp.tools.institution_analysis import (
     create_analyze_institution_weakness_tool,
     create_prepare_institution_interview_tool,
 )
+from kr_gov_job_mcp.tools.ncs_mapping import create_map_ncs_competencies_tool
 from kr_gov_job_mcp.tools.public_jobs import (
     create_analyze_job_fit_report_tool,
     create_fetch_job_detail_tool,
@@ -49,6 +50,7 @@ def create_default_registry() -> ToolRegistry:
     registry.register(create_analyze_institution_weakness_tool())
     registry.register(create_prepare_institution_interview_tool())
     registry.register(create_analyze_job_fit_report_tool())
+    registry.register(create_map_ncs_competencies_tool())
     registry.register(create_fetch_job_detail_tool())
     registry.register(create_search_public_jobs_tool())
     return registry

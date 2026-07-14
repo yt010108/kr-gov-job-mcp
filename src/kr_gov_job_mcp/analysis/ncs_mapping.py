@@ -41,12 +41,16 @@ class NcsMappingPreparer:
         detail: JobAlioDetail,
         *,
         duty_description_text: str | None = None,
+        duty_description_source: NcsEvidenceReference | None = None,
     ) -> NcsMappingInput:
         verification_notes: list[NcsVerificationNote] = []
         ncs_codes = cls._ncs_codes(detail, verification_notes)
         duty_attachments = cls._duty_description_attachments(detail.attachments)
         source_fields = cls._source_fields(detail)
-        ksa_candidates = cls._ksa_candidates(duty_description_text)
+        ksa_candidates = cls._ksa_candidates(
+            duty_description_text,
+            source=duty_description_source,
+        )
 
         if not duty_attachments:
             verification_notes.append(
@@ -171,13 +175,25 @@ class NcsMappingPreparer:
         return references
 
     @classmethod
-    def _ksa_candidates(cls, duty_description_text: str | None) -> list[KsaCandidate]:
+    def _ksa_candidates(
+        cls,
+        duty_description_text: str | None,
+        *,
+        source: NcsEvidenceReference | None = None,
+    ) -> list[KsaCandidate]:
         if not duty_description_text:
             return []
         candidates: list[KsaCandidate] = []
         for category, labels in cls.KSA_LABELS.items():
             for label in labels:
-                candidates.extend(cls._extract_labeled_items(duty_description_text, category, label))
+                candidates.extend(
+                    cls._extract_labeled_items(
+                        duty_description_text,
+                        category,
+                        label,
+                        source=source,
+                    )
+                )
         return cls._dedupe_candidates(candidates)
 
     @classmethod
@@ -186,6 +202,8 @@ class NcsMappingPreparer:
         text: str,
         category: KsaCategory,
         label: str,
+        *,
+        source: NcsEvidenceReference | None = None,
     ) -> list[KsaCandidate]:
         pattern = re.compile(rf"{re.escape(label)}\s*[:：]\s*(.+)", flags=re.IGNORECASE)
         candidates: list[KsaCandidate] = []
@@ -197,9 +215,10 @@ class NcsMappingPreparer:
                         name=item,
                         evidence=[
                             NcsEvidenceReference(
-                                title=f"직무기술서 {label}",
+                                title=source.title if source else f"직무기술서 {label}",
                                 source_type="duty_description_text",
                                 field_name=label,
+                                url=source.url if source else None,
                                 excerpt=match.group(0)[:500],
                             )
                         ],
@@ -229,5 +248,10 @@ def prepare_ncs_mapping_input(
     detail: JobAlioDetail,
     *,
     duty_description_text: str | None = None,
+    duty_description_source: NcsEvidenceReference | None = None,
 ) -> NcsMappingInput:
-    return NcsMappingPreparer.prepare(detail, duty_description_text=duty_description_text)
+    return NcsMappingPreparer.prepare(
+        detail,
+        duty_description_text=duty_description_text,
+        duty_description_source=duty_description_source,
+    )

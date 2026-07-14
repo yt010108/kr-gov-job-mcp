@@ -26,6 +26,5 @@
 6. 06 `analyze_institution_strategy`
 7. 07 `analyze_institution_weakness`
 8. 08 `prepare_institution_interview`
-9. `collect_institution_context`
-
-05 `map_ncs_competencies`는 현재 분석 helper와 schema는 있으나 MCP tool로는 아직 분리 구현하지 않았다.
+9. 05 `map_ncs_competencies`
+10. `collect_institution_context`
