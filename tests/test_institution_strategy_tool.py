@@ -52,6 +52,9 @@ def test_analyze_institution_strategy_returns_evidence_backed_signal() -> None:
                     "url": "https://example.test/alio",
                     "source_id": None,
                     "collected_at": None,
+                    "evidence_year": None,
+                    "disclosed_at": None,
+                    "retrieved_at": None,
                     "excerpt": "디지털 신뢰 기반 조성과 정보보호 산업 지원",
                     "fields": {"source_type": "major_business"},
                 }
@@ -98,13 +101,20 @@ def test_analyze_institution_strategy_uses_live_alio_context(monkeypatch: pytest
         source_type="alio_disclosure",
         source_id="2026041303152259",
         url="https://www.alio.go.kr/item/itemReport.do?seq=2026041303152259",
+        evidence_year=2026,
+        disclosed_at="2026-04-13T00:00:00+00:00",
+        retrieved_at="2026-07-14T00:00:00+00:00",
+        collected_at="2026-07-14T00:00:00+00:00",
         excerpt="가장 큰 규모는 수탁사업으로 2026년 예산 56,012백만원입니다.",
         fields={"source_type": "major_business", "alio_item_no": "40"},
     )
 
-    def fake_context(*, institution_name: str, alio_id: str | None) -> AlioInstitutionContext:
+    def fake_context(
+        *, institution_name: str, alio_id: str | None, year: int | None
+    ) -> AlioInstitutionContext:
         assert institution_name == "(재)한국보건의료정보원"
         assert alio_id is None
+        assert year == 2026
         return AlioInstitutionContext(
             institution_id="C1304",
             institution_name="(재)한국보건의료정보원",
@@ -143,7 +153,61 @@ def test_analyze_institution_strategy_uses_live_alio_context(monkeypatch: pytest
 
     assert result["query"]["alio_id"] == "C1304"
     assert result["strategy_signals"][0]["summary"] == evidence.excerpt
+    assert result["strategy_signals"][0]["evidence"][0]["evidence_year"] == 2026
+    assert result["strategy_signals"][0]["evidence"][0]["disclosed_at"] == "2026-04-13T00:00:00+00:00"
+    assert result["strategy_signals"][0]["evidence"][0]["retrieved_at"] == "2026-07-14T00:00:00+00:00"
     assert result["verification_notes"] == []
+
+
+def test_analyze_institution_weakness_passes_year_to_live_alio_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+    evidence = InstitutionEvidence(
+        title="ALIO 국회 지적사항",
+        source_type="alio_disclosure",
+        evidence_year=2024,
+        disclosed_at="2024-05-12T00:00:00+00:00",
+        retrieved_at="2026-07-14T00:00:00+00:00",
+        collected_at="2026-07-14T00:00:00+00:00",
+        excerpt="운영 관리 체계를 개선할 필요가 있습니다.",
+        fields={"source_type": "audit_point", "alio_item_no": "47-1"},
+    )
+
+    def fake_context(*, institution_name: str, alio_id: str | None, year: int | None) -> AlioInstitutionContext:
+        captured.update(institution_name=institution_name, alio_id=alio_id, year=year)
+        return AlioInstitutionContext(
+            evidence=[evidence],
+            signals=[
+                InstitutionSignalCandidate(
+                    category="improvement_task",
+                    title=evidence.title,
+                    summary=evidence.excerpt,
+                    evidence=[evidence],
+                )
+            ],
+            warnings=["requested-year warning"],
+        )
+
+    monkeypatch.setattr(
+        "kr_gov_job_mcp.tools.institution_analysis.fetch_alio_institution_context_sync",
+        fake_context,
+    )
+
+    result = create_analyze_institution_weakness_tool().handler(
+        {"institution_name": "한국인터넷진흥원", "year": 2024}
+    )
+
+    assert captured == {
+        "institution_name": "한국인터넷진흥원",
+        "alio_id": None,
+        "year": 2024,
+    }
+    assert result["warnings"] == ["requested-year warning"]
+    returned_evidence = result["weakness_signals"][0]["evidence"][0]
+    assert returned_evidence["evidence_year"] == 2024
+    assert returned_evidence["disclosed_at"] == "2024-05-12T00:00:00+00:00"
+    assert returned_evidence["retrieved_at"] == "2026-07-14T00:00:00+00:00"
 
 
 def test_analyze_institution_weakness_returns_careful_evidence_backed_signal() -> None:

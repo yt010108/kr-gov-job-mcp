@@ -30,6 +30,12 @@
 
 `evidence`와 `signals`가 비어 있고 `fetch_live_alio`가 `true`면, 도구는 먼저
 `lookup_job_alio_codes` 기반 기관명 resolver로 ALIO 기관 코드를 찾고 40/47/50 항목을 조회한다.
+`year`를 지정하면 같은 공시 연도의 자료만 면접 카드 근거로 사용한다. 일치 자료가 없으면 다른 연도 자료로 대체하지 않고 `warnings`로 반환한다.
+
+자동 수집 evidence에는 근거 연도 `evidence_year`, timezone이 확인된 공시 시점 `disclosed_at`,
+실제 수집 시각 `retrieved_at`을 보존한다. 정기공시는 `critYyyy`를 근거 연도로 사용한다.
+날짜만 제공된 공시는 임의 timezone을 붙이지 않고 원문을 `fields.disclosed_date`와 기존
+`collected_at`에 유지하며 `disclosed_at`은 비워 둔다.
 
 ## 출력
 

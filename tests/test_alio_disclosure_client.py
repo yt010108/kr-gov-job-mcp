@@ -217,6 +217,7 @@ def test_list_regular_item_reports_posts_jung_payload_and_normalizes_rows() -> N
                                 "apbaId": "C0399",
                                 "apbaNa": "KISA",
                                 "reportFormNo": "31501",
+                                "critYyyy": "2025",
                                 "submissionNo": "2026041310382324",
                                 "disclosureNo": "2026041303151983",
                                 "files": "101@main-business.pdf|102@contract-summary.xlsx",
@@ -236,6 +237,8 @@ def test_list_regular_item_reports_posts_jung_payload_and_normalizes_rows() -> N
         report = result.reports[0]
         assert result.total_count == 1
         assert report.disclosure_no == "2026041303151983"
+        assert report.criterion_year == 2025
+        assert report.disclosed_date is None
         assert report.source_url is not None
         assert report.source_url.endswith(
             "/item/itemReport.do?seq=2026041303151983&disclosureNo=2026041303151983"

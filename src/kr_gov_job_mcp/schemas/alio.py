@@ -90,6 +90,7 @@ class AlioReportDisclosure(BaseModel):
     report_form_no: str | None = None
     title: str | None = None
     report_kind: str | None = None
+    criterion_year: int | None = None
     disclosed_date: str | None = None
     institution_id: str | None = None
     institution_name: str | None = None

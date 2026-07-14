@@ -52,6 +52,9 @@ class InstitutionEvidence(BaseModel):
     url: str | None = None
     source_id: str | None = None
     collected_at: str | None = None
+    evidence_year: int | None = None
+    disclosed_at: str | None = None
+    retrieved_at: str | None = None
     excerpt: str | None = None
     fields: dict[str, Any] = Field(default_factory=dict)
 

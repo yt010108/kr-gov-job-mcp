@@ -197,6 +197,7 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
             evidence=evidence,
             signals=signals,
             fetch_live=_to_bool(arguments.get("fetch_live_alio"), default=True),
+            year=year,
         )
         evidence = [*evidence, *alio_context.evidence]
         signals = [*signals, *alio_context.signals]
@@ -256,6 +257,7 @@ def create_analyze_institution_weakness_tool() -> ToolDefinition:
             evidence=evidence,
             signals=signals,
             fetch_live=_to_bool(arguments.get("fetch_live_alio"), default=True),
+            year=year,
         )
         evidence = [*evidence, *alio_context.evidence]
         signals = [*signals, *alio_context.signals]
@@ -319,6 +321,7 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
             evidence=evidence,
             signals=signals,
             fetch_live=_to_bool(arguments.get("fetch_live_alio"), default=True),
+            year=year,
         )
         evidence = [*evidence, *alio_context.evidence]
         signals = [*signals, *alio_context.signals]
@@ -389,12 +392,14 @@ def _live_alio_context(
     evidence: list[InstitutionEvidence],
     signals: list[InstitutionSignalCandidate],
     fetch_live: bool,
+    year: int | None,
 ) -> AlioInstitutionContext:
     if not fetch_live or evidence or signals:
         return AlioInstitutionContext()
     return fetch_alio_institution_context_sync(
         institution_name=institution_name,
         alio_id=alio_id,
+        year=year,
     )
 
 
