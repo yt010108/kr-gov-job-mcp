@@ -24,10 +24,9 @@
 3. 10 `resolve_ncs_code`
 4. 03 `search_public_jobs`
 5. 04 `fetch_job_detail`
-6. 09 `analyze_job_fit_report`
-7. 06 `analyze_institution_strategy`
-8. 07 `analyze_institution_weakness`
-9. 08 `prepare_institution_interview`
-10. `collect_institution_context`
-
-05 `map_ncs_competencies`는 현재 분석 helper와 schema는 있으나 MCP tool로는 아직 분리 구현하지 않았다.
+6. 05 `map_ncs_competencies`
+7. 09 `analyze_job_fit_report`
+8. 06 `analyze_institution_strategy`
+9. 07 `analyze_institution_weakness`
+10. 08 `prepare_institution_interview`
+11. `collect_institution_context`

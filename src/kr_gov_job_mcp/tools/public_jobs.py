@@ -633,8 +633,8 @@ def _serialize_step(step: JobAlioStep) -> dict[str, Any]:
 def _is_duty_description_candidate(attachment: JobAlioAttachment) -> bool:
     if attachment.file_type == "C":
         return True
-    name = attachment.name or ""
-    return any(keyword in name for keyword in ("직무기술서", "직무설명", "NCS"))
+    name = (attachment.name or "").lower()
+    return any(keyword in name for keyword in ("직무기술서", "직무설명", "ncs"))
 
 
 def _ncs_mappings(job: JobAlioSummary) -> list[dict[str, Any]]:
