@@ -47,9 +47,10 @@ _EXPLICIT_SECTION = re.compile(
     r"^\s*(?P<label>[A-Za-z가-힣 ]+?)\s*(?::|：|-|—)\s*(?P<excerpt>.+?)\s*$"
 )
 _METRIC_EXPRESSION = re.compile(r"\d+(?:\.\d+)?\s*(?:%|배|명|건|회|시간|일|원|점)")
-_ACTION_EXPRESSION = re.compile(
-    r"(?:분석|설계|구현|개발|개선|조율|협업|자동화|검토|수집|작성|제안|운영|실행|수행)"
-    r"(?:했|하|해|하여|하고|함|한)"
+_ACTION_STEMS = r"분석|설계|구현|개발|개선|조율|협업|자동화|검토|수집|작성|제안|운영|실행|수행"
+_ACTION_EXPRESSION = re.compile(rf"(?:{_ACTION_STEMS})(?:했|하|해|하여|하고|함|한)")
+_ACTION_NON_EVIDENCE = re.compile(
+    rf"(?:{_ACTION_STEMS})(?:해야|하지\s*(?:못|않)|할\s+필요|이\s+필요|할\s+수\s+없)"
 )
 
 
@@ -194,7 +195,7 @@ def _classify_excerpt(excerpt: str) -> str | None:
     matched_sections = [
         section for section, keywords in cues if any(keyword in text for keyword in keywords)
     ]
-    if _ACTION_EXPRESSION.search(text):
+    if _ACTION_EXPRESSION.search(text) and not _ACTION_NON_EVIDENCE.search(text):
         matched_sections.append("action")
     if len(matched_sections) == 1:
         return matched_sections[0]

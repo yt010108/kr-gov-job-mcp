@@ -1,3 +1,5 @@
+import pytest
+
 from kr_gov_job_mcp.analysis import generate_star_answer_framework
 from kr_gov_job_mcp.schemas.star_answer import StarAnswerFramework
 
@@ -102,13 +104,19 @@ def test_generate_star_answer_framework_classifies_single_cue_without_label() ->
     assert framework.unclassified_excerpts == []
 
 
-def test_generate_star_answer_framework_does_not_treat_required_action_as_performed() -> None:
+@pytest.mark.parametrize(
+    "unperformed_action",
+    ["로그 분석이 필요했다.", "로그를 분석해야 했다.", "로그를 분석하지 못했다."],
+)
+def test_generate_star_answer_framework_does_not_treat_unperformed_action_as_performed(
+    unperformed_action: str,
+) -> None:
     framework = generate_star_answer_framework(
         question="문제 해결 경험을 설명해 주세요.",
-        user_experience="""
+        user_experience=f"""
 Situation: 서비스 오류가 반복됐다.
 Task: 원인 파악을 맡았다.
-로그 분석이 필요했다.
+{unperformed_action}
 Result: 점검 기준을 정리했다.
 """,
         target_job="전산직",
@@ -116,7 +124,7 @@ Result: 점검 기준을 정리했다.
 
     assert framework.star["action"].status == "missing"
     assert framework.star["action"].source_excerpts == []
-    assert framework.unclassified_excerpts == ["로그 분석이 필요했다."]
+    assert framework.unclassified_excerpts == [unperformed_action]
     assert framework.interview_answer.status == "needs_evidence"
 
 
