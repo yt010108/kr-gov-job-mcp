@@ -85,9 +85,15 @@ python -m kr_gov_job_mcp.server --http --host 0.0.0.0 --port 8000
 로컬 Docker 실행 확인:
 
 ```bash
-docker build -t kr-gov-job-mcp .
+docker build -t kr-gov-job-mcp \
+  --build-arg APP_SOURCE_REF=refs/heads/main \
+  --build-arg APP_REVISION="$(git rev-parse HEAD)" .
 docker run --rm -p 8000:8000 kr-gov-job-mcp
+curl http://localhost:8000/health
 ```
+
+위 Docker와 endpoint 확인은 수동 운영 smoke test다. `APP_REVISION`에는 실제 배포한 전체
+commit SHA를 넣고, 재배포 후 `/health`의 값과 대조한다.
 
 ## 도구 등록 구조
 
@@ -126,5 +132,5 @@ python -m pytest -q
 예상 health 응답:
 
 ```json
-{"registered_tools":9,"service":"kr-gov-job-mcp","status":"ok","version":"0.1.0"}
+{"registered_tools":9,"revision":"unknown","service":"kr-gov-job-mcp","source_ref":"unknown","status":"ok","version":"0.1.0"}
 ```

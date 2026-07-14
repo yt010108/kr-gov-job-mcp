@@ -1,18 +1,28 @@
 import json
 from io import StringIO
 
+import pytest
+
 from kr_gov_job_mcp.server import build_parser, main, run_command
 from kr_gov_job_mcp.tools import create_default_registry
 
 
-def test_server_health_command_outputs_json(capsys) -> None:
+def test_server_health_command_outputs_json(
+    capsys: pytest.CaptureFixture[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("APP_SOURCE_REF", "refs/heads/main")
+    monkeypatch.setenv("APP_REVISION", "257e45c")
+
     exit_code = main(["--health"])
 
     captured = capsys.readouterr()
     assert exit_code == 0
     assert json.loads(captured.out) == {
         "registered_tools": 9,
+        "revision": "257e45c",
         "service": "kr-gov-job-mcp",
+        "source_ref": "refs/heads/main",
         "status": "ok",
         "version": "0.1.0",
     }
