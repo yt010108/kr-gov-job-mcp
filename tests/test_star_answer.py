@@ -57,6 +57,51 @@ def test_generate_star_answer_framework_returns_gaps_without_inventing_result() 
     assert framework.cover_letter_draft.sentence_draft is None
 
 
+def test_generate_star_answer_framework_does_not_fill_sections_by_sentence_order() -> None:
+    framework = generate_star_answer_framework(
+        question="경험을 설명해 주세요.",
+        user_experience="첫 번째 문장이다. 두 번째 문장이다. 세 번째 문장이다. 네 번째 문장이다.",
+        target_job="전산직",
+    )
+
+    assert all(section.status == "missing" for section in framework.star.values())
+    assert framework.unclassified_excerpts == [
+        "첫 번째 문장이다.",
+        "두 번째 문장이다.",
+        "세 번째 문장이다.",
+        "네 번째 문장이다.",
+    ]
+    assert framework.interview_answer.status == "needs_evidence"
+    assert framework.cover_letter_draft.status == "needs_evidence"
+
+
+def test_generate_star_answer_framework_keeps_ambiguous_excerpt_unclassified() -> None:
+    framework = generate_star_answer_framework(
+        question="문제 해결 경험을 설명해 주세요.",
+        user_experience="프로젝트 결과를 개선하기 위해 로그를 분석했다.",
+        target_job="전산직",
+    )
+
+    assert framework.unclassified_excerpts == [
+        "프로젝트 결과를 개선하기 위해 로그를 분석했다."
+    ]
+    assert framework.star["action"].source_excerpts == []
+    assert framework.star["result"].source_excerpts == []
+
+
+def test_generate_star_answer_framework_classifies_single_cue_without_label() -> None:
+    framework = generate_star_answer_framework(
+        question="행동을 설명해 주세요.",
+        user_experience="로그를 분석하고 체크리스트를 작성했다.",
+        target_job="전산직",
+    )
+
+    assert framework.star["action"].source_excerpts == [
+        "로그를 분석하고 체크리스트를 작성했다."
+    ]
+    assert framework.unclassified_excerpts == []
+
+
 def test_generate_star_answer_framework_links_ncs_without_claiming_possession() -> None:
     framework = generate_star_answer_framework(
         question="직무 역량을 설명해 주세요.",

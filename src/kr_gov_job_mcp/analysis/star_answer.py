@@ -61,7 +61,7 @@ def generate_star_answer_framework(
     """Return STAR evidence, gaps, and safe output templates without inventing claims."""
 
     normalized_competencies = _dedupe_text(ncs_competencies)
-    excerpts = _extract_star_excerpts(user_experience)
+    excerpts, unclassified_excerpts = _extract_star_excerpts(user_experience)
     risk_flags = _risk_flags(excerpts)
     risky_expressions = {flag.expression for flag in risk_flags}
     missing_evidence = _missing_evidence(excerpts)
@@ -104,6 +104,10 @@ def generate_star_answer_framework(
         verification_notes.append("NCS 후보는 사용자의 보유 역량으로 확정하지 않고 연결 검토 항목으로만 표시했습니다.")
     if institution_name:
         verification_notes.append("기관 관련 사실은 별도 공고·기관 자료로 확인한 뒤 연결해야 합니다.")
+    if unclassified_excerpts:
+        verification_notes.append(
+            "STAR 항목을 하나로 확인하기 어려운 문장은 임의 분류하지 않고 별도로 보존했습니다."
+        )
 
     return StarAnswerFramework(
         question=question,
@@ -112,6 +116,7 @@ def generate_star_answer_framework(
         ncs_competencies=normalized_competencies,
         mode=mode,
         star=star,
+        unclassified_excerpts=unclassified_excerpts,
         job_connections=_job_connections(
             target_job=target_job,
             competencies=normalized_competencies,
@@ -127,7 +132,9 @@ def generate_star_answer_framework(
     )
 
 
-def _extract_star_excerpts(user_experience: str) -> dict[str, list[str]]:
+def _extract_star_excerpts(
+    user_experience: str,
+) -> tuple[dict[str, list[str]], list[str]]:
     excerpts = {section: [] for section in _SECTION_ORDER}
     unclassified: list[str] = []
 
@@ -138,11 +145,15 @@ def _extract_star_excerpts(user_experience: str) -> dict[str, list[str]]:
         else:
             _append_unique(excerpts[explicit_section], excerpt)
 
+    remaining_unclassified: list[str] = []
     for excerpt in unclassified:
-        section = _classify_excerpt(excerpt, excerpts)
+        section = _classify_excerpt(excerpt)
+        if section is None:
+            _append_unique(remaining_unclassified, excerpt)
+            continue
         _append_unique(excerpts[section], excerpt)
 
-    return excerpts
+    return excerpts, remaining_unclassified
 
 
 def _experience_fragments(user_experience: str) -> list[str]:
@@ -169,7 +180,7 @@ def _explicit_section(fragment: str) -> tuple[str | None, str]:
     return None, fragment
 
 
-def _classify_excerpt(excerpt: str, assigned: dict[str, list[str]]) -> str:
+def _classify_excerpt(excerpt: str) -> str | None:
     text = excerpt.lower()
     cues = (
         ("result", ("결과", "성과", "달성", "향상", "감소", "증가", "배웠", "배움", "효과", "없앴")),
@@ -177,13 +188,12 @@ def _classify_excerpt(excerpt: str, assigned: dict[str, list[str]]) -> str:
         ("action", ("분석", "설계", "구현", "개발", "개선", "조율", "협업", "자동화", "검토", "수집", "작성", "제안", "운영", "실행", "수행")),
         ("situation", ("당시", "상황", "배경", "프로젝트", "팀", "인턴", "공모전", "동아리")),
     )
-    for section, keywords in cues:
-        if not assigned[section] and any(keyword in text for keyword in keywords):
-            return section
-    for section in _SECTION_ORDER:
-        if not assigned[section]:
-            return section
-    return "action"
+    matched_sections = [
+        section for section, keywords in cues if any(keyword in text for keyword in keywords)
+    ]
+    if len(matched_sections) == 1:
+        return matched_sections[0]
+    return None
 
 
 def _missing_evidence(excerpts: dict[str, list[str]]) -> list[StarMissingEvidence]:
@@ -259,7 +269,7 @@ def _job_connections(
         StarJobConnection(
             competency=competency,
             connection_sentence=(
-                f"'{competency}'은(는) 사용자의 보유 역량으로 단정하지 않고, 제공된 경험 근거를 "
+                f"NCS 후보 '{competency}'를 사용자의 보유 역량으로 단정하지 않고, 제공된 경험 근거를 "
                 f"{target_job} 직무의 해당 NCS 후보와 연결해 설명할 수 있는지 검토하세요."
             ),
             source_excerpts=source_excerpts,
@@ -303,9 +313,11 @@ def _interview_answer(
     return StarInterviewAnswer(
         status="ready",
         short_answer=(
-            f"핵심 경험은 상황 '{_joined(excerpts['situation'])}', 과제·역할 "
-            f"'{_joined(excerpts['task'])}', 실제 행동 '{_joined(excerpts['action'])}', "
-            f"결과·배운 점 '{_joined(excerpts['result'])}'으로 설명할 수 있습니다. 이 경험을 "
+            "핵심 경험을 다음 STAR 흐름으로 설명할 수 있습니다. "
+            f"상황·배경: '{_joined(excerpts['situation'])}' / "
+            f"과제·역할: '{_joined(excerpts['task'])}' / "
+            f"실제 행동: '{_joined(excerpts['action'])}' / "
+            f"결과·배운 점: '{_joined(excerpts['result'])}'. 이 경험을 "
             f"{target_job} 직무의 실제 요구 역량과 대조해 답하겠습니다."
         ),
         supporting_excerpts=supporting_excerpts,
@@ -333,10 +345,11 @@ def _cover_letter_draft(
     return StarCoverLetterDraft(
         status="ready",
         sentence_draft=(
-            f"'{question}'에 답하기 위한 초안입니다. 상황·배경은 "
-            f"'{_joined(excerpts['situation'])}'으로 정리했습니다. 맡은 과제·역할은 "
-            f"'{_joined(excerpts['task'])}'이고, 실제 행동은 '{_joined(excerpts['action'])}'입니다. "
-            f"결과·배운 점은 '{_joined(excerpts['result'])}'입니다. 이 경험을 {target_job} 직무의 "
+            f"'{question}'에 답하기 위한 초안입니다. "
+            f"상황·배경: '{_joined(excerpts['situation'])}' / "
+            f"과제·역할: '{_joined(excerpts['task'])}' / "
+            f"실제 행동: '{_joined(excerpts['action'])}' / "
+            f"결과·배운 점: '{_joined(excerpts['result'])}'. 이 경험을 {target_job} 직무의 "
             "실제 요구 역량과 대조해 구체화하겠습니다."
         ),
         supporting_excerpts=supporting_excerpts,

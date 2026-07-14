@@ -72,6 +72,7 @@ class StarAnswerFramework(BaseModel):
     ncs_competencies: list[str] = Field(default_factory=list)
     mode: StarAnswerMode
     star: dict[str, StarSection]
+    unclassified_excerpts: list[str] = Field(default_factory=list)
     job_connections: list[StarJobConnection] = Field(default_factory=list)
     institution_connection: StarInstitutionConnection | None = None
     missing_evidence: list[StarMissingEvidence] = Field(default_factory=list)
