@@ -45,7 +45,17 @@ def test_lookup_job_alio_codes_returns_ncs_candidate_by_keyword() -> None:
     assert result["codes"][0] == {
         "code": "R600020",
         "name": "정보통신",
-        "aliases": ["전산", "전산직", "IT", "정보보호", "보안", "네트워크", "개발", "데이터"],
+        "aliases": [
+            "전산",
+            "전산직",
+            "IT",
+            "정보보안",
+            "정보보호",
+            "보안",
+            "네트워크",
+            "개발",
+            "데이터",
+        ],
         "score": 0.92,
         "source": "job_alio_seed_table",
     }
