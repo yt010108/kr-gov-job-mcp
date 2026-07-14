@@ -277,7 +277,7 @@ def _resolution_query(
     known_skills: list[str],
     preparation_notes: str | None,
 ) -> str | None:
-    return query or target_role or job_family or " ".join([*known_skills, preparation_notes or ""]) or None
+    return target_role or job_family or query or " ".join([*known_skills, preparation_notes or ""]) or None
 
 
 def _report_context(

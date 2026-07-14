@@ -91,8 +91,6 @@ def _select_candidate(
         return None
     if top.score >= 0.92:
         return top
-    if top.score >= 0.68 and len(candidates) == 1:
-        return top
     return None
 
 
@@ -106,7 +104,7 @@ def _warnings_for(
         )
     if selected is None:
         return (
-            "여러 NCS 후보가 비슷하게 일치해 하나의 코드로 확정하지 않았습니다. candidates를 확인한 뒤 ncs_code를 선택하세요.",
+            "NCS 후보가 약하게 일치하거나 여러 후보가 비슷해 하나의 코드로 확정하지 않았습니다. candidates를 확인한 뒤 ncs_code를 선택하세요.",
         )
     return ()
 

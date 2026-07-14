@@ -59,6 +59,7 @@ def test_resolve_ncs_code_preserves_original_role_and_report_context() -> None:
     assert result["original_query"] == "KISA 전산직 공고 찾아줘"
     assert result["original_target_role"] == "정보보안"
     assert result["original_job_family"] == "정보통신"
+    assert result["resolved_query"] == "정보보안"
     assert result["selected_ncs_code"] == "R600020"
     assert result["report_context"] == {
         "original_target_role": "정보보안",
@@ -123,6 +124,28 @@ def test_resolve_ncs_code_returns_candidates_without_selecting_ambiguous_input()
     assert result["search_public_jobs_arguments"] == {}
     assert result["recommended_next_calls"][0]["tool"] == "lookup_job_alio_codes"
     assert "확정하지 않았습니다" in result["warnings"][0]
+
+
+def test_resolve_ncs_code_does_not_select_weak_institution_name_substring() -> None:
+    result = create_resolve_ncs_code_tool().handler({"query": "한국환경공단 채용"})
+
+    assert result["candidates"][0]["name"] == "환경·에너지·안전"
+    assert result["selected_ncs_code"] is None
+    assert result["search_public_jobs_arguments"] == {}
+    assert "약하게 일치" in result["warnings"][0]
+
+
+def test_resolve_ncs_code_prefers_explicit_role_over_broad_query() -> None:
+    result = create_resolve_ncs_code_tool().handler(
+        {
+            "query": "한국전기안전공사 전산직 공고",
+            "target_role": "전산직",
+        }
+    )
+
+    assert result["resolved_query"] == "전산직"
+    assert result["selected_ncs_code"] == "R600020"
+    assert result["search_public_jobs_arguments"] == {"ncs_code": "R600020"}
 
 
 def test_resolve_ncs_code_returns_safe_empty_search_arguments_for_unknown_input() -> None:
