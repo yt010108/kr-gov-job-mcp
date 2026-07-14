@@ -29,3 +29,9 @@
 9. `collect_institution_context`
 
 05 `map_ncs_competencies`는 현재 분석 helper와 schema는 있으나 MCP tool로는 아직 분리 구현하지 않았다.
+
+## 후속 source 설계
+
+- [상위 주무부처 정책 source 확장](parent-ministry-policy-source.md): 주무부처 정책 근거를
+  기관 공식 근거와 분리해 `analyze_institution_strategy` 및 면접 준비 흐름에 연결하는 방안을
+  정의한다. 현재 자동 수집이나 tool schema 변경은 구현하지 않았다.

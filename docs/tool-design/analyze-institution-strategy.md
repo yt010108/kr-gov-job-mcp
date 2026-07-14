@@ -5,6 +5,7 @@
 MVP MCP tool 구현됨. 입력 evidence와 signal 후보가 없으면 `lookup_job_alio_codes`와 같은
 기관명 resolver로 기관 코드를 먼저 확인한 뒤 ALIO 항목별 공시를 실시간 조회해 사업 방향과
 연구보고서 signal을 만든다. 기관 홈페이지와 Cleaneye 자동 수집은 아직 별도 단계다.
+상위 주무부처 정책브리핑과 보도자료 자동 수집도 현재 구현 범위에 포함되지 않는다.
 
 이 도구는 ALIO 근거를 바탕으로 기업 분석용 signal을 만든다. `40 주요사업`은 규모와 성장성을
 계산하고, `50-1/50-2 연구보고서`는 직무 관심과 마지막 할 말 소재로 재사용할 수 있게 반환한다.
@@ -84,6 +85,11 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 - 연구/정책 자료
 - 필요 시 Cleaneye 사업보고서 또는 신규투자사업
 - 입력으로 전달된 `evidence`와 `signals`가 있으면 이를 우선 사용하고, 없으면 기관명 resolver와 ALIO를 실시간 조회한다.
+
+상위 주무부처 정책 자료를 연결하는 후속 계약은
+[상위 주무부처 정책 source 확장 설계](parent-ministry-policy-source.md)에 정리한다. 이 설계는
+정책 자료를 기관 공식 입장과 분리하고, 새 외부 source나 schema 변경 전에 별도 승인을 받는 것을
+전제로 한다.
 
 ## 처리 원칙
 
