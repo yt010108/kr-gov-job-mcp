@@ -130,7 +130,27 @@ def test_prepare_application_strategy_stops_before_search_when_code_is_ambiguous
 
     assert result["job_candidates"] == []
     assert result["query"]["institution_code"] is None
+    assert result["application_strategy"]["institution_strategy"]["strategy_signals"]
+    assert result["application_strategy"]["interview_cards"]["interview_cards"]
     assert any(note["field"] == "institution_code" for note in result["verification_notes"])
+
+
+def test_prepare_application_strategy_keeps_institution_results_when_ncs_is_ambiguous() -> None:
+    result = _tool(
+        resolve_ncs=lambda _arguments: {
+            "selected_ncs_code": None,
+            "selected_ncs_name": None,
+            "candidates": [{"code": "R600020", "name": "정보통신", "score": 0.68}],
+        },
+        search_jobs=lambda _arguments: pytest.fail("must not search"),
+    ).handler({"institution_name": "KISA", "target_role": "보안 정책 기획"})
+
+    assert result["job_candidates"] == []
+    assert result["query"]["ncs_code"] is None
+    assert result["application_strategy"]["institution_strategy"]["strategy_signals"]
+    assert result["application_strategy"]["institution_weakness"]["verification_notes"]
+    assert result["application_strategy"]["interview_cards"]["interview_cards"]
+    assert any(note["field"] == "ncs_code" for note in result["verification_notes"])
 
 
 def test_prepare_application_strategy_rejects_invalid_input() -> None:

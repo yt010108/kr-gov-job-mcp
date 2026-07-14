@@ -172,68 +172,68 @@ def create_prepare_application_strategy_tool(
             "limit": limit,
             "year": year,
         }
-        if institution_code is None or ncs_code is None:
-            return _result(
-                query=query,
-                institution_resolution=institution_resolution,
-                ncs_resolution=ncs_resolution,
-                verification_notes=verification_notes,
-                warnings=warnings,
-            )
-
-        search_arguments: dict[str, Any] = {
-            "institution_code": institution_code,
-            "ncs_code": ncs_code,
-            "ongoing_only": ongoing_only,
-            "limit": limit,
-        }
-        if region:
-            search_arguments["region"] = region
-        search_result = _safe_call(
-            search_jobs,
-            search_arguments,
-            stage="job_search",
-            warnings=warnings,
-        )
-        jobs = list(search_result.get("jobs") or [])
+        search_result: dict[str, Any] = {}
+        jobs: list[dict[str, Any]] = []
         job_reports: list[dict[str, Any]] = []
-        for job in jobs:
-            job_id = _to_text(job.get("id") or job.get("source_job_id"))
-            if job_id is None:
-                warnings.append("job_analysis: 공고 ID가 없는 후보는 분석에서 제외했습니다.")
-                continue
-            fit_report = _safe_call(
-                analyze_job_fit,
-                {
-                    "job_id": job_id,
-                    "target_role": target_role,
-                    "known_skills": known_skills,
-                    "preparation_notes": preparation_notes,
-                },
-                stage=f"job_fit:{job_id}",
+        if institution_code is not None and ncs_code is not None:
+            search_arguments: dict[str, Any] = {
+                "institution_code": institution_code,
+                "ncs_code": ncs_code,
+                "ongoing_only": ongoing_only,
+                "limit": limit,
+            }
+            if region:
+                search_arguments["region"] = region
+            search_result = _safe_call(
+                search_jobs,
+                search_arguments,
+                stage="job_search",
                 warnings=warnings,
             )
-            ncs_mapping = (
-                _safe_call(
-                    map_ncs,
-                    {"job_id": job_id},
-                    stage=f"ncs_mapping:{job_id}",
+            jobs = list(search_result.get("jobs") or [])
+            for job in jobs:
+                job_id = _to_text(job.get("id") or job.get("source_job_id"))
+                if job_id is None:
+                    warnings.append("job_analysis: 공고 ID가 없는 후보는 분석에서 제외했습니다.")
+                    continue
+                fit_report = _safe_call(
+                    analyze_job_fit,
+                    {
+                        "job_id": job_id,
+                        "target_role": target_role,
+                        "known_skills": known_skills,
+                        "preparation_notes": preparation_notes,
+                    },
+                    stage=f"job_fit:{job_id}",
                     warnings=warnings,
                 )
-                if include_ncs
-                else None
-            )
-            job_reports.append(
-                {"job_id": job_id, "job": job, "fit_report": fit_report, "ncs": ncs_mapping}
-            )
+                ncs_mapping = (
+                    _safe_call(
+                        map_ncs,
+                        {"job_id": job_id},
+                        stage=f"ncs_mapping:{job_id}",
+                        warnings=warnings,
+                    )
+                    if include_ncs
+                    else None
+                )
+                job_reports.append(
+                    {
+                        "job_id": job_id,
+                        "job": job,
+                        "fit_report": fit_report,
+                        "ncs": ncs_mapping,
+                    }
+                )
 
         institution_arguments: dict[str, Any] = {
             "institution_name": institution_name,
             "job_family": ncs_name or target_role,
             "target_role": target_role,
-            "ncs_code": ncs_code,
             "fetch_live_alio": fetch_live_alio,
         }
+        if ncs_code is not None:
+            institution_arguments["ncs_code"] = ncs_code
         if year is not None:
             institution_arguments["year"] = year
         institution_strategy = None
