@@ -102,6 +102,24 @@ def test_generate_star_answer_framework_classifies_single_cue_without_label() ->
     assert framework.unclassified_excerpts == []
 
 
+def test_generate_star_answer_framework_does_not_treat_required_action_as_performed() -> None:
+    framework = generate_star_answer_framework(
+        question="문제 해결 경험을 설명해 주세요.",
+        user_experience="""
+Situation: 서비스 오류가 반복됐다.
+Task: 원인 파악을 맡았다.
+로그 분석이 필요했다.
+Result: 점검 기준을 정리했다.
+""",
+        target_job="전산직",
+    )
+
+    assert framework.star["action"].status == "missing"
+    assert framework.star["action"].source_excerpts == []
+    assert framework.unclassified_excerpts == ["로그 분석이 필요했다."]
+    assert framework.interview_answer.status == "needs_evidence"
+
+
 def test_generate_star_answer_framework_links_ncs_without_claiming_possession() -> None:
     framework = generate_star_answer_framework(
         question="직무 역량을 설명해 주세요.",
@@ -146,6 +164,22 @@ Result: 혼자 전사 시스템을 완전히 개선해 장애를 100% 없앴다.
     assert framework.interview_answer.short_answer is None
     assert framework.cover_letter_draft.status == "needs_evidence"
     assert framework.cover_letter_draft.sentence_draft is None
+
+
+def test_generate_star_answer_framework_flags_risk_in_unclassified_excerpt() -> None:
+    framework = generate_star_answer_framework(
+        question="문제 해결 경험을 설명해 주세요.",
+        user_experience=(
+            _COMPLETE_EXPERIENCE + "\n이후 오류가 전혀 발생하지 않았다."
+        ),
+        target_job="전산직",
+    )
+
+    assert framework.missing_evidence == []
+    assert framework.unclassified_excerpts == ["이후 오류가 전혀 발생하지 않았다."]
+    assert {flag.category for flag in framework.risk_flags} == {"absolute_claim"}
+    assert framework.interview_answer.status == "needs_evidence"
+    assert framework.cover_letter_draft.status == "needs_evidence"
 
 
 def test_generate_star_answer_framework_distinguishes_requested_modes() -> None:

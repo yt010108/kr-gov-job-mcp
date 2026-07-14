@@ -47,6 +47,10 @@ _EXPLICIT_SECTION = re.compile(
     r"^\s*(?P<label>[A-Za-z가-힣 ]+?)\s*(?::|：|-|—)\s*(?P<excerpt>.+?)\s*$"
 )
 _METRIC_EXPRESSION = re.compile(r"\d+(?:\.\d+)?\s*(?:%|배|명|건|회|시간|일|원|점)")
+_ACTION_EXPRESSION = re.compile(
+    r"(?:분석|설계|구현|개발|개선|조율|협업|자동화|검토|수집|작성|제안|운영|실행|수행)"
+    r"(?:했|하|해|하여|하고|함|한)"
+)
 
 
 def generate_star_answer_framework(
@@ -62,7 +66,7 @@ def generate_star_answer_framework(
 
     normalized_competencies = _dedupe_text(ncs_competencies)
     excerpts, unclassified_excerpts = _extract_star_excerpts(user_experience)
-    risk_flags = _risk_flags(excerpts)
+    risk_flags = _risk_flags([*_all_excerpts(excerpts), *unclassified_excerpts])
     risky_expressions = {flag.expression for flag in risk_flags}
     missing_evidence = _missing_evidence(excerpts)
     missing_fields = [item.field for item in missing_evidence]
@@ -185,12 +189,13 @@ def _classify_excerpt(excerpt: str) -> str | None:
     cues = (
         ("result", ("결과", "성과", "달성", "향상", "감소", "증가", "배웠", "배움", "효과", "없앴")),
         ("task", ("역할", "담당", "책임", "목표", "과제", "문제", "요구")),
-        ("action", ("분석", "설계", "구현", "개발", "개선", "조율", "협업", "자동화", "검토", "수집", "작성", "제안", "운영", "실행", "수행")),
         ("situation", ("당시", "상황", "배경", "프로젝트", "팀", "인턴", "공모전", "동아리")),
     )
     matched_sections = [
         section for section, keywords in cues if any(keyword in text for keyword in keywords)
     ]
+    if _ACTION_EXPRESSION.search(text):
+        matched_sections.append("action")
     if len(matched_sections) == 1:
         return matched_sections[0]
     return None
@@ -208,9 +213,9 @@ def _missing_evidence(excerpts: dict[str, list[str]]) -> list[StarMissingEvidenc
     ]
 
 
-def _risk_flags(excerpts: dict[str, list[str]]) -> list[StarRiskFlag]:
+def _risk_flags(excerpts: Iterable[str]) -> list[StarRiskFlag]:
     flags: list[StarRiskFlag] = []
-    for excerpt in _all_excerpts(excerpts):
+    for excerpt in excerpts:
         if any(term in excerpt for term in ("완전히", "완벽", "전혀", "100%", "없앴")):
             flags.append(
                 StarRiskFlag(
