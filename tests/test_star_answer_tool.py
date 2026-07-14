@@ -52,6 +52,7 @@ def test_generate_star_answer_framework_tool_serializes_framework() -> None:
         "mode": "both",
     }
     assert result["star"]["action"]["status"] == "supported"
+    assert result["unclassified_excerpts"] == []
     assert result["institution_connection"]["needs_verification"] is True
     assert result["interview_answer"]["status"] == "ready"
     assert result["cover_letter_draft"]["status"] == "ready"
