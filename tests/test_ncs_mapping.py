@@ -86,3 +86,33 @@ def test_ncs_code_name_mismatch_adds_verification_note() -> None:
 
     assert prepared.ncs_codes[1].display_name is None
     assert any(note.field == "ncs_codes" for note in prepared.verification_notes)
+
+
+def test_prepare_ncs_mapping_input_separates_flattened_labels() -> None:
+    detail = JobAlioDetail(id="1")
+
+    prepared = prepare_ncs_mapping_input(
+        detail,
+        duty_description_text="필요지식: 보안 법령 필요기술: 로그 분석 직무수행태도: 책임감",
+    )
+
+    by_category = {(candidate.category, candidate.name) for candidate in prepared.ksa_candidates}
+    assert by_category == {
+        ("knowledge", "보안 법령"),
+        ("skill", "로그 분석"),
+        ("attitude", "책임감"),
+    }
+
+
+def test_prepare_ncs_mapping_input_reads_value_on_line_after_label() -> None:
+    detail = JobAlioDetail(id="1")
+
+    prepared = prepare_ncs_mapping_input(
+        detail,
+        duty_description_text="필요지식:\n정보보호 법령\n필요기술:\n로그 분석",
+    )
+
+    assert {(item.category, item.name) for item in prepared.ksa_candidates} == {
+        ("knowledge", "정보보호 법령"),
+        ("skill", "로그 분석"),
+    }

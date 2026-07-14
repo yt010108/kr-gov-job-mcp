@@ -16,7 +16,11 @@ MVP MCP tool 구현됨. 입력 evidence와 signal 후보가 없으면 `lookup_jo
 | --- | --- |
 | `institution_name` | 분석 대상 기관명. 필수 |
 | `year` | 분석 기준 연도 |
-| `job_family` | 직무군. 보안 직무는 `정보보안`/`정보보호`가 아니라 Job-ALIO NCS 대분류명 `정보통신`으로 입력한다. |
+| `job_family` | 기관 분석에 사용할 직무군 또는 resolver가 선택한 NCS명. 채용공고 검색 필터는 아니다. |
+| `original_job_family` | 사용자가 처음 표현한 원문 직무군. NCS명과 다를 때 보존한다. |
+| `target_role` | resolver가 보존한 원문 목표 직무명. 직무 연결 축은 `job_family`를 사용한다. |
+| `original_target_role` | 사용자가 처음 표현한 원문 목표 직무명. NCS명과 다를 때 보존한다. |
+| `ncs_code` | `resolve_ncs_code`가 선택한 Job-ALIO NCS 코드. 분석 호출 맥락에만 보존한다. |
 | `alio_id` | ALIO/Job-ALIO 기관 코드. 기관명 resolver 결과를 우회하고 직접 지정할 때 사용 |
 | `apba_id` | `alio_id` 별칭 |
 | `fetch_live_alio` | evidence/signals가 없을 때 ALIO를 실시간 조회할지 여부. 기본값 `true` |
@@ -95,7 +99,11 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 - `year`를 지정한 live ALIO 조회는 같은 공시 연도의 자료만 사용한다. 일치 자료가 없으면 다른 연도 자료로 대체하지 않고 `warnings`로 반환한다.
 - 자동 수집 evidence에는 근거 연도 `evidence_year`, timezone이 확인된 공시 시점 `disclosed_at`, 실제 수집 시각 `retrieved_at`을 보존한다. 정기공시는 `critYyyy`를 근거 연도로 사용한다. 날짜만 제공된 공시는 임의 timezone을 붙이지 않고 원문을 `fields.disclosed_date`와 기존 `collected_at`에 유지하며 `disclosed_at`은 비워 둔다.
 - `job_connection`은 최종 답변 문장이 아니라, 직무/경험과 연결할 때 사용할 검토 축이다.
+- 공고 검색이 필요하면 자연어 직무를 `resolve_ncs_code`로 먼저 해석하고, 확정된 코드는
+  `search_public_jobs.ncs_code`에만 전달한다.
 
 뉴스를 기관의 공식 사업 방향과 분리하는 후속 계약은
-[기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)에 정리한다. 뉴스 evidence는
-현재 `evidence`에 넣어 기본 `business_direction` signal로 변환하지 않는다.
+[기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)에 정리한다. 현재 구현에는
+뉴스형 수동 evidence를 판별·격리하는 guard가 없으므로, 뉴스 자료를 일반 `evidence`로 전달하면
+기본 `business_direction` signal로 변환될 수 있다. 뉴스 전용 경계가 구현되기 전에는 호출자가
+뉴스 자료를 이 도구의 `evidence`에 넣지 않아야 하며, 이 문서는 현재 차단을 보장하지 않는다.

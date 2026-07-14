@@ -9,8 +9,11 @@
 - ALIO 50 연구보고서
 
 감사/경영평가 자료, 채용공고, 직무기술서, NCS 정보는 아직 사용하지 않는다.
-뉴스 검색 결과와 BigKinds 자료도 아직 자동 수집하거나 면접 카드에 연결하지 않는다. 후속
-연결 기준은 [기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)를 따른다.
+뉴스 검색 결과와 BigKinds 자료를 위한 전용 입력이나 자동 수집 경로는 아직 없다. 다만 현재
+일반 `evidence`와 `signals` 입력은 뉴스 여부를 판별하지 않으므로, 뉴스 자료를 수동으로 넣으면
+기존 카드 선택에 사용될 수 있다. 뉴스 전용 guard와 adapter가 구현되기 전에는 해당 자료를
+일반 입력에 전달하지 않는다. 후속 연결 기준은
+[기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)를 따른다.
 
 ## 입력
 
@@ -28,7 +31,10 @@
 
 `institution_name`은 필수다. `target_role` 또는 그 별칭인 `job_family` 중 하나는 반드시 입력한다.
 둘을 함께 입력하면 기존 호출 호환성을 위해 `target_role`을 우선 사용한다.
-보안 직무는 `정보보안`/`정보보호`가 아니라 Job-ALIO NCS 대분류명 `정보통신`으로 입력한다.
+
+자연어 직무명은 그대로 `target_role`에 유지한다. 공고 검색용 NCS 코드는 먼저
+`resolve_ncs_code`로 확인하고, 결과의 `job_family`, `original_job_family`, `original_target_role`,
+`ncs_code`는 호출 맥락에 함께 전달할 수 있다. 이 도구는 `ncs_code`로 채용공고를 검색하지 않는다.
 
 `evidence`와 `signals`가 비어 있고 `fetch_live_alio`가 `true`면, 도구는 먼저
 `lookup_job_alio_codes` 기반 기관명 resolver로 ALIO 기관 코드를 찾고 40/47/50 항목을 조회한다.

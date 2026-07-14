@@ -50,7 +50,7 @@ NCS_CODES: tuple[JobAlioCodeCandidate, ...] = (
     JobAlioCodeCandidate(
         "R600002",
         "경영·회계·사무",
-        ("경영.회계.사무", "경영회계사무", "사무", "행정", "경영", "회계"),
+        ("경영.회계.사무", "경영회계사무", "사무", "사무직", "행정", "경영", "회계"),
     ),
     JobAlioCodeCandidate("R600003", "금융·보험", ("금융", "보험")),
     JobAlioCodeCandidate(
@@ -88,15 +88,29 @@ NCS_CODES: tuple[JobAlioCodeCandidate, ...] = (
     JobAlioCodeCandidate("R600016", "재료", ("소재",)),
     JobAlioCodeCandidate("R600017", "화학", ("화공",)),
     JobAlioCodeCandidate("R600018", "섬유·의복", ("섬유", "의복")),
-    JobAlioCodeCandidate("R600019", "전기·전자", ("전기", "전자")),
+    JobAlioCodeCandidate("R600019", "전기·전자", ("전기", "전기직", "전자")),
     JobAlioCodeCandidate(
         "R600020",
         "정보통신",
-        ("전산", "전산직", "IT", "정보보호", "보안", "네트워크", "개발", "데이터"),
+        (
+            "전산",
+            "전산직",
+            "IT",
+            "정보보안",
+            "정보보호",
+            "보안",
+            "네트워크",
+            "개발",
+            "데이터",
+        ),
     ),
     JobAlioCodeCandidate("R600021", "식품가공", ("식품", "가공")),
     JobAlioCodeCandidate("R600022", "인쇄·목재·가구·공예", ("인쇄", "목재", "가구", "공예")),
-    JobAlioCodeCandidate("R600023", "환경·에너지·안전", ("환경", "에너지", "안전")),
+    JobAlioCodeCandidate(
+        "R600023",
+        "환경·에너지·안전",
+        ("환경", "환경직", "에너지", "안전"),
+    ),
     JobAlioCodeCandidate("R600024", "농림어업", ("농림", "어업", "농림어업")),
     JobAlioCodeCandidate(
         "R600025",

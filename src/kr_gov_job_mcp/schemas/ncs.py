@@ -13,6 +13,15 @@ NcsEvidenceType = Literal[
     "duty_description_text",
     "ncs_code",
 ]
+AttachmentExtractionStatus = Literal[
+    "not_selected",
+    "provided_text",
+    "extracted",
+    "unsupported_format",
+    "ocr_required",
+    "download_failed",
+    "invalid_pdf",
+]
 KsaCategory = Literal[
     "basic_competency",
     "duty_competency",
@@ -46,6 +55,9 @@ class NcsAttachmentCandidate(BaseModel):
     name: str | None = None
     file_type: str | None = None
     url: str | None = None
+    selected: bool = False
+    selection_reason: str | None = None
+    extraction_status: AttachmentExtractionStatus = "not_selected"
     evidence: list[NcsEvidenceReference] = Field(default_factory=list)
 
 
@@ -66,3 +78,17 @@ class NcsMappingInput(BaseModel):
     source_fields: list[NcsEvidenceReference] = Field(default_factory=list)
     ksa_candidates: list[KsaCandidate] = Field(default_factory=list)
     verification_notes: list[NcsVerificationNote] = Field(default_factory=list)
+
+
+class NcsMappingReport(BaseModel):
+    job_id: str
+    ncs_codes: list[NcsCodeMapping] = Field(default_factory=list)
+    basic_competencies: list[KsaCandidate] = Field(default_factory=list)
+    duty_competencies: list[KsaCandidate] = Field(default_factory=list)
+    knowledge: list[KsaCandidate] = Field(default_factory=list)
+    skills: list[KsaCandidate] = Field(default_factory=list)
+    attitudes: list[KsaCandidate] = Field(default_factory=list)
+    attachment_candidates: list[NcsAttachmentCandidate] = Field(default_factory=list)
+    evidence: list[NcsEvidenceReference] = Field(default_factory=list)
+    verification_notes: list[NcsVerificationNote] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)

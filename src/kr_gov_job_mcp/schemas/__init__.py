@@ -36,6 +36,7 @@ from kr_gov_job_mcp.schemas.job_fit import (
     PreparationPriority,
 )
 from kr_gov_job_mcp.schemas.ncs import (
+    AttachmentExtractionStatus,
     KsaCandidate,
     KsaCategory,
     NcsAttachmentCandidate,
@@ -43,6 +44,7 @@ from kr_gov_job_mcp.schemas.ncs import (
     NcsEvidenceReference,
     NcsEvidenceType,
     NcsMappingInput,
+    NcsMappingReport,
     NcsVerificationNote,
 )
 from kr_gov_job_mcp.schemas.institution import (
@@ -56,6 +58,7 @@ from kr_gov_job_mcp.schemas.institution import (
 )
 
 __all__ = [
+    "AttachmentExtractionStatus",
     "AlioInstitution",
     "AlioInstitutionSearchResult",
     "AlioPointAttachment",
@@ -96,6 +99,7 @@ __all__ = [
     "NcsEvidenceReference",
     "NcsEvidenceType",
     "NcsMappingInput",
+    "NcsMappingReport",
     "NcsVerificationNote",
     "PreparationPriority",
 ]
