@@ -90,8 +90,19 @@ def test_analyze_institution_strategy_rejects_invalid_arguments() -> None:
     with pytest.raises(ValueError, match="expected integer value for year"):
         tool.handler({"institution_name": "한국인터넷진흥원", "year": "올해"})
 
-    with pytest.raises(ValueError, match="Use the Job-ALIO NCS category '정보통신'"):
-        tool.handler({"institution_name": "한국인터넷진흥원", "job_family": "정보보안"})
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "job_family": "정보통신",
+            "original_target_role": "정보보안",
+            "ncs_code": "R600020",
+            "fetch_live_alio": False,
+        }
+    )
+
+    assert result["query"]["job_family"] == "정보통신"
+    assert result["query"]["original_target_role"] == "정보보안"
+    assert result["query"]["ncs_code"] == "R600020"
 
 
 def test_analyze_institution_strategy_uses_live_alio_context(monkeypatch: pytest.MonkeyPatch) -> None:

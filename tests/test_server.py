@@ -19,7 +19,7 @@ def test_server_health_command_outputs_json(
     captured = capsys.readouterr()
     assert exit_code == 0
     assert json.loads(captured.out) == {
-        "registered_tools": 9,
+        "registered_tools": 11,
         "revision": "257e45c",
         "service": "kr-gov-job-mcp",
         "source_ref": "refs/heads/main",
@@ -45,8 +45,10 @@ def test_server_list_tools_command_outputs_registered_tools(capsys) -> None:
     assert payload["tools"][4]["name"] == "health_check"
     assert payload["tools"][5]["name"] == "lookup_job_alio_codes"
     assert payload["tools"][6]["name"] == "lookup_region_codes"
-    assert payload["tools"][7]["name"] == "prepare_institution_interview"
-    assert payload["tools"][8]["name"] == "search_public_jobs"
+    assert payload["tools"][7]["name"] == "map_ncs_competencies"
+    assert payload["tools"][8]["name"] == "prepare_institution_interview"
+    assert payload["tools"][9]["name"] == "resolve_ncs_code"
+    assert payload["tools"][10]["name"] == "search_public_jobs"
 
 
 def test_server_call_tool_command_outputs_result(capsys) -> None:

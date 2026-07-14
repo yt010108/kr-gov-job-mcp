@@ -151,9 +151,12 @@ schema는 모두 제안 단계다. 이 PR은 새 MCP tool, 외부 데이터 sour
 adapter에서만 처리한다. 따라서 정책 자료가 기본 `business_direction`으로 승격되는 경로는
 허용하지 않는다.
 
-`prepare_institution_interview`에는 기존 `signals`와 별도로 `policy_signals` 입력을 추가한다.
-정책 signal을 현재 `InstitutionSignalCandidate` 모양으로 변환하거나 현재 tool이 이미 받을 수
-있다고 간주하지 않는다. 면접 adapter는 다음 조건을 모두 만족한 signal만 사용한다.
+`prepare_institution_interview`에는 기존 `signals`와 별도로 `policy_signals`,
+`ministry_candidates`, `selected_ministry` 입력을 추가한다. 세 필드는
+`analyze_institution_strategy`의 정책 adapter가 반환한 결과를 함께 전달하며, 면접 adapter는
+`selected_ministry`가 `relation_status=confirmed`인 단일 후보인지 다시 확인한다. 정책 signal을
+현재 `InstitutionSignalCandidate` 모양으로 변환하거나 현재 tool이 이미 받을 수 있다고 간주하지
+않는다. 면접 adapter는 다음 조건을 모두 만족한 signal만 사용한다.
 
 1. `needs_verification=false`다.
 2. `ministry_relation_status=confirmed`이고 signal의 부처가 분석 결과의 `selected_ministry`와 일치한다.
@@ -182,9 +185,10 @@ evidence를 별도로 표시한다. 검증 상태는 adapter를 통과하면서 
 | 유효·무효 문서가 혼재함 | 유효 문서 결과와 무효 문서의 index별 경고를 함께 반환한다. |
 | 확인된 부처 후보가 여러 개 | 자동 선택하지 않고 모든 후보와 확인 note를 반환한다. |
 
-기존 ALIO 조회 경고와 정책 검증 경고는 버리지 않고 이어 붙인 뒤 동일한 `field`, `reason`,
-`suggested_check` 조합만 중복 제거한다. 빈 결과도 정상 응답이며 `policy_signals=[]`과 확인
-방법을 반환한다.
+정책 검증의 객체형 `verification_notes`는 동일한 `field`, `reason`, `suggested_check` 조합으로
+중복 제거한다. 기존 ALIO 조회와 정책 검증의 `warnings: list[str]`는 문자열 배열 계약을 유지해
+이어 붙이고, 동일한 문자열만 최초 순서대로 중복 제거한다. 두 필드를 서로 합치거나 형식을
+바꾸지 않는다. 빈 결과도 정상 응답이며 `policy_signals=[]`과 확인 방법을 반환한다.
 
 ## 출처 우선순위와 중복
 
@@ -202,7 +206,8 @@ evidence를 별도로 표시한다. 검증 상태는 adapter를 통과하면서 
 
 - `schemas/institution.py`: `government_policy`, `government_relation`, `MinistryCandidate`,
   `PolicySignal`, 정책 입력·출력 필드 추가
-- `tools/institution_analysis.py`: 두 tool의 JSON schema와 handler에 정책 전용 필드 추가
+- `tools/institution_analysis.py`: 전략 tool의 정책 입력·출력과 면접 tool의 `policy_signals`,
+  `ministry_candidates`, `selected_ministry` 입력을 JSON schema와 handler에 함께 추가
 - `analysis/institution_strategy.py`: 일반 evidence 변환에서 정책 source 제외, 정책 전용 adapter 추가
 - `analysis/institution_interview.py`: 검증된 정책 signal의 카드 allowlist와 주 근거 선택 규칙 추가
 - `tests/`: 후보 0·1·복수, provenance 분리, 연도 불일치, 부분 실패, 면접 카드 차단 테스트 추가

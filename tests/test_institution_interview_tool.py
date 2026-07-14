@@ -149,16 +149,32 @@ def test_prepare_institution_interview_rejects_invalid_arguments() -> None:
         raise AssertionError("expected invalid argument to be rejected")
 
 
-def test_prepare_institution_interview_rejects_unsupported_security_role_alias() -> None:
+def test_prepare_institution_interview_preserves_resolved_ncs_context() -> None:
     tool = create_prepare_institution_interview_tool()
 
-    try:
-        tool.handler({"institution_name": "한국인터넷진흥원", "target_role": "정보보안"})
-    except ValueError as exc:
-        assert "prepare_institution_interview does not support target_role='정보보안'" in str(exc)
-        assert "Use the Job-ALIO NCS category '정보통신' instead." in str(exc)
-    else:
-        raise AssertionError("expected unsupported target_role to be rejected")
+    result = tool.handler(
+        {
+            "institution_name": "한국인터넷진흥원",
+            "target_role": "정보보안",
+            "job_family": "정보통신",
+            "original_target_role": "정보보안",
+            "ncs_code": "R600020",
+            "fetch_live_alio": False,
+        }
+    )
+
+    assert result["target_role"] == "정보보안"
+    assert result["query"] == {
+        "institution_name": "한국인터넷진흥원",
+        "year": None,
+        "target_role": "정보보안",
+        "job_family": "정보통신",
+        "original_job_family": "정보통신",
+        "original_target_role": "정보보안",
+        "ncs_code": "R600020",
+        "focus_areas": None,
+        "alio_id": None,
+    }
 
 
 @pytest.mark.parametrize(

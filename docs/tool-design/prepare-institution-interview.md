@@ -29,7 +29,10 @@
 
 `institution_name`은 필수다. `target_role` 또는 그 별칭인 `job_family` 중 하나는 반드시 입력한다.
 둘을 함께 입력하면 기존 호출 호환성을 위해 `target_role`을 우선 사용한다.
-보안 직무는 `정보보안`/`정보보호`가 아니라 Job-ALIO NCS 대분류명 `정보통신`으로 입력한다.
+
+자연어 직무명은 그대로 `target_role`에 유지한다. 공고 검색용 NCS 코드는 먼저
+`resolve_ncs_code`로 확인하고, 결과의 `job_family`, `original_job_family`, `original_target_role`,
+`ncs_code`는 호출 맥락에 함께 전달할 수 있다. 이 도구는 `ncs_code`로 채용공고를 검색하지 않는다.
 
 `evidence`와 `signals`가 비어 있고 `fetch_live_alio`가 `true`면, 도구는 먼저
 `lookup_job_alio_codes` 기반 기관명 resolver로 ALIO 기관 코드를 찾고 40/47/50 항목을 조회한다.
