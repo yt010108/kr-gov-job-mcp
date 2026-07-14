@@ -21,12 +21,13 @@
 - "전산직으로 지원할 만한 공공기관 채용공고를 찾아줘."
 - "KISED 전산직 면접 준비 도와줘."
 
-기관명·약칭이나 직무명이 Job-ALIO 코드와 다를 수 있으므로, 에이전트는 필요할 때
-`lookup_job_alio_codes`로 후보를 확인한 뒤 공고 검색·기관 분석 도구를 이어서 호출합니다.
+기관명·약칭이나 직무명이 Job-ALIO 코드와 다를 수 있으므로, 에이전트는 필요할 때 기관은
+`lookup_job_alio_codes`, 직무는 `resolve_ncs_code`로 후보를 확인한 뒤 공고 검색·기관 분석 도구를 이어서 호출합니다.
 
 | 도구 | 역할 |
 | --- | --- |
 | `search_public_jobs` | Job-ALIO 채용공고를 조건별로 검색 |
+| `resolve_ncs_code` | 자연어 직무를 Job-ALIO NCS 코드와 리포트 맥락으로 해석 |
 | `fetch_job_detail` | 공고 상세·첨부파일·전형 단계·NCS 매핑을 구조화 |
 | `analyze_job_fit_report` | 지원 직무 적합도와 준비 전략을 정리 |
 | `analyze_institution_strategy` | ALIO 및 연구·정책 자료 기반 기관 전략 신호를 분석 |
@@ -152,6 +153,7 @@ kr-gov-job-mcp/
       index.md
       lookup-region-codes.md
       lookup-job-alio-codes.md
+      resolve-ncs-code.md
       search-public-jobs.md
       fetch-job-detail.md
       map-ncs-competencies.md
@@ -208,6 +210,7 @@ kr-gov-job-mcp/
 - MCP Streamable HTTP POST 엔드포인트 실행
 - Job-ALIO 지역 코드 조회
 - Job-ALIO 기관명/NCS 코드 조회
+- 자연어 직무의 Job-ALIO NCS 코드 해석
 - Job-ALIO 공공기관 채용공고 검색
 - Job-ALIO 공고 상세 조회
 - Job-ALIO 공고와 직무기술서 PDF 기반 NCS/KSA 역량 정리

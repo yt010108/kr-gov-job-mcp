@@ -64,7 +64,7 @@ SEARCH_PUBLIC_JOBS_INPUT_SCHEMA: dict[str, Any] = {
             "type": "string",
             "description": (
                 "잡알리오 NCS 코드 필터입니다. 자연어 직무명이나 NCS명은 먼저 "
-                "`lookup_job_alio_codes`로 조회한 뒤 확인된 코드를 입력합니다."
+                "`resolve_ncs_code`로 해석한 뒤 확정된 selected_ncs_code를 입력합니다."
             ),
         },
         "region_code": {
@@ -208,8 +208,8 @@ def create_search_public_jobs_tool(search_jobs: SearchJobsRunner | None = None) 
         description=(
             "kr-gov-job-mcp 서비스에서 잡알리오 공공기관 채용공고를 검색하고 정규화된 "
             "공고 요약과 NCS 매핑 후보를 반환합니다. 기관명, 기관 약칭, NCS명, "
-            "직무 키워드처럼 자연어 코드 후보가 필요한 경우 먼저 `lookup_job_alio_codes`를 호출한 뒤 "
-            "반환된 코드를 해당 필터에 전달합니다."
+            "직무 키워드처럼 자연어 코드 후보가 필요한 경우 기관은 `lookup_job_alio_codes`, 직무는 "
+            "`resolve_ncs_code`를 먼저 호출한 뒤 반환된 코드를 해당 필터에 전달합니다."
         ),
         input_schema=SEARCH_PUBLIC_JOBS_INPUT_SCHEMA,
         annotations=read_only_tool_annotations("Search Public Jobs", open_world=True),
@@ -278,7 +278,8 @@ def create_analyze_job_fit_report_tool(
         name="analyze_job_fit_report",
         description=(
             "kr-gov-job-mcp 서비스에서 잡알리오 상세 공고를 바탕으로 준비 항목, 보완할 지식, "
-            "근거 링크, 검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다."
+            "근거 링크, 검증 필요 사항을 포함한 보수적인 MVP 준비 리포트를 생성합니다. target_role은 "
+            "NCS 검색 필터가 아니라 지원자가 표현한 원문 준비 관점으로 보존합니다."
         ),
         input_schema=ANALYZE_JOB_FIT_REPORT_INPUT_SCHEMA,
         annotations=read_only_tool_annotations("Analyze Job Fit Report", open_world=True),

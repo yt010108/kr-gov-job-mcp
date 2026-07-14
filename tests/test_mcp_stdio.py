@@ -41,12 +41,21 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         {"required": ["target_role"]},
         {"required": ["job_family"]},
     ]
+    assert schemas["resolve_ncs_code"]["anyOf"] == [
+        {"required": ["query"]},
+        {"required": ["target_role"]},
+        {"required": ["job_family"]},
+        {"required": ["known_skills"]},
+        {"required": ["preparation_notes"]},
+    ]
+    assert schemas["resolve_ncs_code"]["properties"]["known_skills"]["minItems"] == 1
     required_strings = {
         "analyze_institution_strategy": ["institution_name"],
         "analyze_institution_weakness": ["institution_name"],
         "fetch_job_detail": ["job_id", "source_job_id", "recruitment_notice_sn"],
         "analyze_job_fit_report": ["job_id", "source_job_id", "recruitment_notice_sn"],
         "prepare_institution_interview": ["institution_name", "target_role", "job_family"],
+        "resolve_ncs_code": ["query", "target_role", "job_family", "preparation_notes"],
     }
     for tool_name, fields in required_strings.items():
         for field in fields:
@@ -89,6 +98,7 @@ def test_mcp_stdio_initialize_and_list_tools() -> None:
         "analyze_institution_strategy",
         "analyze_institution_weakness",
         "prepare_institution_interview",
+        "resolve_ncs_code",
     }
     lookup = next(tool for tool in tools if tool["name"] == "lookup_region_codes")
     assert "inputSchema" in lookup
@@ -152,16 +162,44 @@ def test_mcp_stdio_tool_validation_error_is_tool_result() -> None:
     assert "unsupported lookup_region_codes arguments" in result["structuredContent"]["error"]
 
 
-def test_mcp_stdio_tool_domain_error_is_tool_result() -> None:
+def test_mcp_stdio_preserves_natural_language_role_context() -> None:
     responses = _run_stdio(
         [
             {
                 "jsonrpc": "2.0",
-                "id": "bad-role",
+                "id": "natural-role",
                 "method": "tools/call",
                 "params": {
                     "name": "prepare_institution_interview",
-                    "arguments": {"institution_name": "한국인터넷진흥원", "target_role": "정보보안"},
+                    "arguments": {
+                        "institution_name": "한국인터넷진흥원",
+                        "target_role": "정보보안",
+                        "job_family": "정보통신",
+                        "ncs_code": "R600020",
+                        "fetch_live_alio": False,
+                    },
+                },
+            }
+        ]
+    )
+
+    result = responses[0]["result"]
+    assert result["isError"] is False
+    assert result["structuredContent"]["target_role"] == "정보보안"
+    assert result["structuredContent"]["query"]["job_family"] == "정보통신"
+    assert result["structuredContent"]["query"]["ncs_code"] == "R600020"
+
+
+def test_mcp_stdio_rejects_empty_resolver_supporting_input() -> None:
+    responses = _run_stdio(
+        [
+            {
+                "jsonrpc": "2.0",
+                "id": "empty-skills",
+                "method": "tools/call",
+                "params": {
+                    "name": "resolve_ncs_code",
+                    "arguments": {"known_skills": []},
                 },
             }
         ]
@@ -169,10 +207,7 @@ def test_mcp_stdio_tool_domain_error_is_tool_result() -> None:
 
     result = responses[0]["result"]
     assert result["isError"] is True
-    assert "prepare_institution_interview does not support target_role='정보보안'" in result[
-        "structuredContent"
-    ]["error"]
-    assert "정보통신" in result["structuredContent"]["error"]
+    assert "resolve_ncs_code requires" in result["structuredContent"]["error"]
 
 
 def test_mcp_stdio_unknown_tool_returns_json_rpc_error() -> None:

@@ -36,7 +36,23 @@ ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA: dict[str, Any] = {
         },
         "job_family": {
             "type": "string",
-            "description": "목표 직무군입니다. 보안 직무는 정보보안/정보보호가 아니라 Job-ALIO NCS 대분류명 정보통신으로 입력합니다.",
+            "description": "기관 분석에서 사용할 직무 관점입니다. Job-ALIO 채용 검색 필터가 아니며, resolver가 선택한 NCS명은 이 필드에 함께 보존할 수 있습니다.",
+        },
+        "original_job_family": {
+            "type": "string",
+            "description": "resolver 호출 전 사용자가 입력한 원문 직무군입니다. resolver가 선택한 NCS명과 다를 때 보존합니다.",
+        },
+        "target_role": {
+            "type": "string",
+            "description": "resolver가 보존한 원문 목표 직무명입니다. 기관 전략의 직무 연결 축은 job_family를 사용합니다.",
+        },
+        "original_target_role": {
+            "type": "string",
+            "description": "사용자가 처음 표현한 원문 목표 직무명입니다. NCS명과 다를 때 원문 관점을 보존합니다.",
+        },
+        "ncs_code": {
+            "type": "string",
+            "description": "resolve_ncs_code가 선택한 Job-ALIO NCS 코드입니다. 기관 분석의 검색 필터로 사용하지 않고 호출 맥락에만 보존합니다.",
         },
         "alio_id": {
             "type": "string",
@@ -117,10 +133,20 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
     "properties": {
         "institution_name": non_blank_string_schema("면접 준비 대상 기관명입니다."),
         "target_role": non_blank_string_schema(
-            "지원자가 목표로 하는 직무 또는 직무군입니다. 보안 직무는 정보보안/정보보호가 아니라 "
-            "Job-ALIO NCS 대분류명 정보통신으로 입력합니다."
+            "지원자가 목표로 하는 원문 직무 또는 직무군입니다. Job-ALIO 검색용 NCS 코드와 구분합니다."
         ),
-        "job_family": non_blank_string_schema("target_role의 별칭입니다."),
+        "job_family": non_blank_string_schema(
+            "target_role의 호환 별칭 또는 resolver가 선택한 NCS명입니다."
+        ),
+        "original_job_family": non_blank_string_schema(
+            "resolver 호출 전 사용자가 입력한 원문 직무군입니다."
+        ),
+        "original_target_role": non_blank_string_schema(
+            "resolver 호출 전 사용자가 입력한 원문 목표 직무명입니다."
+        ),
+        "ncs_code": non_blank_string_schema(
+            "resolve_ncs_code가 선택한 Job-ALIO NCS 코드입니다. 면접 카드의 검색 필터로 사용하지 않고 호출 맥락에 보존합니다."
+        ),
         "year": {
             "type": "integer",
             "description": "분석 기준 연도입니다.",
@@ -167,12 +193,6 @@ PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA: dict[str, Any] = {
 
 _INTERVIEW_ARGUMENTS = set(PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA["properties"])
 
-_UNSUPPORTED_JOB_FAMILY_HINTS = {
-    "정보보안": "정보통신",
-    "정보보호": "정보통신",
-}
-
-
 def create_analyze_institution_strategy_tool() -> ToolDefinition:
     """Create the institution business-direction analysis tool."""
 
@@ -183,11 +203,11 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
 
         institution_name = _required_text(arguments.get("institution_name"), "institution_name")
         year = _to_int(arguments.get("year"), field="year")
-        job_family = _validate_job_family(
-            _to_text(arguments.get("job_family")),
-            field="job_family",
-            tool_name="analyze_institution_strategy",
-        )
+        job_family = _to_text(arguments.get("job_family"))
+        original_job_family = _to_text(arguments.get("original_job_family")) or job_family
+        target_role = _to_text(arguments.get("target_role"))
+        original_target_role = _to_text(arguments.get("original_target_role")) or target_role
+        ncs_code = _to_text(arguments.get("ncs_code"))
         alio_id = _to_text(arguments.get("alio_id") or arguments.get("apba_id"))
         evidence = _model_list(arguments.get("evidence"), InstitutionEvidence, field="evidence")
         signals = _model_list(arguments.get("signals"), InstitutionSignalCandidate, field="signals")
@@ -220,6 +240,10 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
                 "institution_name": institution_name,
                 "year": year,
                 "job_family": job_family,
+                "original_job_family": original_job_family,
+                "target_role": target_role,
+                "original_target_role": original_target_role,
+                "ncs_code": ncs_code,
                 "alio_id": resolved_alio_id,
             },
             **report.model_dump(mode="json"),
@@ -230,7 +254,8 @@ def create_analyze_institution_strategy_tool() -> ToolDefinition:
         name="analyze_institution_strategy",
         description=(
             "kr-gov-job-mcp 서비스에서 명시적인 근거를 바탕으로 기관의 사업 방향 signal과 "
-            "직무 연결 포인트를 요약하고, 근거가 부족한 내용은 검증 필요 사항으로 남깁니다."
+            "직무 연결 포인트를 요약하고, 근거가 부족한 내용은 검증 필요 사항으로 남깁니다. Job-ALIO 공고 "
+            "검색용 NCS 코드는 resolve_ncs_code 결과를 search_public_jobs.ncs_code로 전달합니다."
         ),
         input_schema=ANALYZE_INSTITUTION_STRATEGY_INPUT_SCHEMA,
         annotations=read_only_tool_annotations("Analyze Institution Strategy", open_world=True),
@@ -302,14 +327,14 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
             raise ValueError("unsupported prepare_institution_interview arguments: " + ", ".join(unknown))
 
         institution_name = _required_text(arguments.get("institution_name"), "institution_name")
-        target_role = _validate_job_family(
-            _required_text(
-                arguments.get("target_role") or arguments.get("job_family"),
-                "target_role",
-            ),
-            field="target_role",
-            tool_name="prepare_institution_interview",
+        target_role = _required_text(
+            arguments.get("target_role") or arguments.get("job_family"),
+            "target_role",
         )
+        original_target_role = _to_text(arguments.get("original_target_role")) or target_role
+        job_family = _to_text(arguments.get("job_family"))
+        original_job_family = _to_text(arguments.get("original_job_family")) or job_family
+        ncs_code = _to_text(arguments.get("ncs_code"))
         year = _to_int(arguments.get("year"), field="year")
         focus_areas = _text_list(arguments.get("focus_areas"), field="focus_areas")
         alio_id = _to_text(arguments.get("alio_id") or arguments.get("apba_id"))
@@ -336,7 +361,7 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
         report = generate_institution_interview_report(
             analysis_input,
             year=year,
-            target_role=target_role,
+            target_role=original_target_role,
             focus_areas=focus_areas or None,
         )
         return {
@@ -345,6 +370,10 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
                 "institution_name": institution_name,
                 "year": year,
                 "target_role": target_role,
+                "job_family": job_family,
+                "original_job_family": original_job_family,
+                "original_target_role": original_target_role,
+                "ncs_code": ncs_code,
                 "focus_areas": focus_areas or None,
                 "alio_id": resolved_alio_id,
             },
@@ -356,7 +385,8 @@ def create_prepare_institution_interview_tool() -> ToolDefinition:
         name="prepare_institution_interview",
         description=(
             "kr-gov-job-mcp 서비스에서 기관명과 목표 직무를 받아 주요사업, 연구/정책 자료, "
-            "국회 지적사항 근거를 면접 질문 카드로 변환합니다."
+            "국회 지적사항 근거를 면접 질문 카드로 변환합니다. 원문 직무명은 유지하며, 공고 검색이 필요하면 "
+            "resolve_ncs_code 결과의 ncs_code를 search_public_jobs에 사용합니다."
         ),
         input_schema=PREPARE_INSTITUTION_INTERVIEW_INPUT_SCHEMA,
         annotations=read_only_tool_annotations("Prepare Institution Interview", open_world=True),
@@ -408,22 +438,6 @@ def _required_text(value: Any, field: str) -> str:
     if text is None:
         raise ValueError(f"{field} is required")
     return text
-
-
-def _validate_job_family(value: str | None, *, field: str, tool_name: str) -> str | None:
-    if value is None:
-        return None
-    replacement = _UNSUPPORTED_JOB_FAMILY_HINTS.get(_normalize_job_family(value))
-    if replacement is None:
-        return value
-    raise ValueError(
-        f"{tool_name} does not support {field}='{value}'. "
-        f"Use the Job-ALIO NCS category '{replacement}' instead."
-    )
-
-
-def _normalize_job_family(value: str) -> str:
-    return "".join(str(value).split())
 
 
 def _to_text(value: Any) -> str | None:

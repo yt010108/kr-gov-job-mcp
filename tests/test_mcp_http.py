@@ -72,12 +72,21 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         {"required": ["target_role"]},
         {"required": ["job_family"]},
     ]
+    assert schemas["resolve_ncs_code"]["anyOf"] == [
+        {"required": ["query"]},
+        {"required": ["target_role"]},
+        {"required": ["job_family"]},
+        {"required": ["known_skills"]},
+        {"required": ["preparation_notes"]},
+    ]
+    assert schemas["resolve_ncs_code"]["properties"]["known_skills"]["minItems"] == 1
     required_strings = {
         "analyze_institution_strategy": ["institution_name"],
         "analyze_institution_weakness": ["institution_name"],
         "fetch_job_detail": ["job_id", "source_job_id", "recruitment_notice_sn"],
         "analyze_job_fit_report": ["job_id", "source_job_id", "recruitment_notice_sn"],
         "prepare_institution_interview": ["institution_name", "target_role", "job_family"],
+        "resolve_ncs_code": ["query", "target_role", "job_family", "preparation_notes"],
     }
     for tool_name, fields in required_strings.items():
         for field in fields:
@@ -93,7 +102,7 @@ def test_mcp_http_health_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert status == 200
     assert payload["status"] == "ok"
-    assert payload["registered_tools"] == 10
+    assert payload["registered_tools"] == 11
     assert payload["source_ref"] == "refs/heads/main"
     assert payload["revision"] == "257e45c"
 
@@ -130,6 +139,7 @@ def test_mcp_http_initialize_and_list_tools() -> None:
     tools = list_payload["result"]["tools"]
     tool_names = {tool["name"] for tool in tools}
     assert "lookup_region_codes" in tool_names
+    assert "resolve_ncs_code" in tool_names
     assert "search_public_jobs" in tool_names
     search_public_jobs = next(tool for tool in tools if tool["name"] == "search_public_jobs")
     assert "kr-gov-job-mcp" in search_public_jobs["description"]

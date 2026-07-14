@@ -86,7 +86,11 @@ def create_map_ncs_competencies_tool(
         )
         initial = prepare_ncs_mapping_input(detail)
         candidates = initial.duty_description_attachments
-        selected = _select_candidate(candidates, explicit_url=explicit_url)
+        selected = (
+            _select_candidate(candidates, explicit_url=explicit_url)
+            if explicit_url or supplied_text is None
+            else None
+        )
         explicit_url_unmatched = explicit_url is not None and selected is None
         if supplied_text and explicit_url_unmatched:
             selected = NcsAttachmentCandidate(url=explicit_url)
@@ -104,6 +108,14 @@ def create_map_ncs_competencies_tool(
             )
             if selected:
                 _mark_selected(selected, "사용자가 제공한 본문의 출처 후보입니다.", "provided_text")
+            elif candidates:
+                extra_notes.append(
+                    NcsVerificationNote(
+                        field="duty_description_text",
+                        reason="사용자 제공 본문과 Job-ALIO 첨부 후보의 출처 관계를 확인하지 못했습니다.",
+                        suggested_check="본문 출처가 후보 첨부라면 attachment_url을 함께 지정합니다.",
+                    )
+                )
         elif explicit_url_unmatched:
             candidates.append(NcsAttachmentCandidate(url=explicit_url))
             extra_notes.append(

@@ -183,32 +183,24 @@ class NcsMappingPreparer:
     ) -> list[KsaCandidate]:
         if not duty_description_text:
             return []
+        label_categories = {
+            label.lower(): category
+            for category, labels in cls.KSA_LABELS.items()
+            for label in labels
+        }
+        labels_pattern = "|".join(
+            re.escape(label) for label in sorted(label_categories, key=len, reverse=True)
+        )
+        pattern = re.compile(
+            rf"(?P<label>{labels_pattern})\s*[:：]\s*(?P<value>.*?)"
+            rf"(?=\s*(?:{labels_pattern})\s*[:：]|[\r\n]+|$)",
+            flags=re.IGNORECASE,
+        )
         candidates: list[KsaCandidate] = []
-        for category, labels in cls.KSA_LABELS.items():
-            for label in labels:
-                candidates.extend(
-                    cls._extract_labeled_items(
-                        duty_description_text,
-                        category,
-                        label,
-                        source=source,
-                    )
-                )
-        return cls._dedupe_candidates(candidates)
-
-    @classmethod
-    def _extract_labeled_items(
-        cls,
-        text: str,
-        category: KsaCategory,
-        label: str,
-        *,
-        source: NcsEvidenceReference | None = None,
-    ) -> list[KsaCandidate]:
-        pattern = re.compile(rf"{re.escape(label)}\s*[:：]\s*(.+)", flags=re.IGNORECASE)
-        candidates: list[KsaCandidate] = []
-        for match in pattern.finditer(text):
-            for item in cls._split_items(match.group(1)):
+        for match in pattern.finditer(duty_description_text):
+            label = match.group("label")
+            category = label_categories[label.lower()]
+            for item in cls._split_items(match.group("value")):
                 candidates.append(
                     KsaCandidate(
                         category=category,
@@ -224,7 +216,7 @@ class NcsMappingPreparer:
                         ],
                     )
                 )
-        return candidates
+        return cls._dedupe_candidates(candidates)
 
     @staticmethod
     def _split_items(value: str) -> list[str]:

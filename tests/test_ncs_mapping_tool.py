@@ -67,6 +67,26 @@ def test_map_ncs_competencies_extracts_single_pdf_candidate() -> None:
     assert result["warnings"] == []
 
 
+def test_map_ncs_competencies_does_not_link_supplied_text_without_attachment_url() -> None:
+    tool = create_map_ncs_competencies_tool(
+        fetch_job_detail=lambda _job_id: _detail(
+            JobAlioAttachment(
+                name="직무기술서.pdf",
+                file_type="C",
+                url="https://example.test/duty.pdf",
+            )
+        )
+    )
+
+    result = tool.handler(
+        {"job_id": "302368", "duty_description_text": "필요지식: 정보보호 법령"}
+    )
+
+    assert result["knowledge"][0]["evidence"][0]["url"] is None
+    assert result["attachment_candidates"][0]["selected"] is False
+    assert any(note["field"] == "duty_description_text" for note in result["verification_notes"])
+
+
 def test_map_ncs_competencies_does_not_choose_between_multiple_candidates() -> None:
     tool = create_map_ncs_competencies_tool(
         fetch_job_detail=lambda _job_id: _detail(
