@@ -13,7 +13,7 @@ MVP MCP tool 구현됨. 입력 evidence와 signal 후보가 없으면 `lookup_jo
 
 | field | 한국어 설명 |
 | --- | --- |
-| `institution_name` | 분석 대상 기관명 |
+| `institution_name` | 분석 대상 기관명. 필수 |
 | `year` | 분석 기준 연도 |
 | `job_family` | 직무군. 보안 직무는 `정보보안`/`정보보호`가 아니라 Job-ALIO NCS 대분류명 `정보통신`으로 입력한다. |
 | `alio_id` | ALIO/Job-ALIO 기관 코드. 기관명 resolver 결과를 우회하고 직접 지정할 때 사용 |

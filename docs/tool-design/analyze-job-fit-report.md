@@ -9,9 +9,9 @@ NCS/KSA 상세 분석과 기관 signal 자동 연결은 아직 planned 단계다
 
 | field | 한국어 설명 |
 | --- | --- |
-| `job_id` | Job-ALIO 공고 ID |
-| `source_job_id` | `search_public_jobs`가 반환한 Job-ALIO 원본 공고 ID alias |
-| `recruitment_notice_sn` | Job-ALIO 채용공고 일련번호 alias |
+| `job_id` | Job-ALIO 공고 ID. 세 ID alias 중 하나는 필수 |
+| `source_job_id` | `search_public_jobs`가 반환한 Job-ALIO 원본 공고 ID alias. 세 ID alias 중 하나는 필수 |
+| `recruitment_notice_sn` | Job-ALIO 채용공고 일련번호 alias. 세 ID alias 중 하나는 필수 |
 | `target_role` | 지원자가 목표로 하는 직무 또는 준비 초점 |
 | `known_skills` | 지원자가 이미 보유한 기술, 자격, 경험 목록 |
 | `preparation_notes` | 지원자 준비 상태에 대한 추가 메모 |
@@ -48,6 +48,7 @@ NCS/KSA 상세 분석과 기관 signal 자동 연결은 아직 planned 단계다
 
 ## 처리 원칙
 
+- `job_id`, `source_job_id`, `recruitment_notice_sn` 중 하나는 반드시 입력한다. 여러 alias를 함께 입력하면 값이 모두 같아야 한다.
 - 공고, NCS, 기관 signal은 evidence가 연결된 항목만 강한 주장으로 사용한다.
 - 부족한 자료는 `verification_notes` 또는 `institution_materials_to_check`로 남긴다.
 - 리포트는 지원자가 다음에 확인하거나 준비해야 할 항목을 우선순위로 정리한다.

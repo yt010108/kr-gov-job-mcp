@@ -103,6 +103,21 @@ def test_search_public_jobs_serializes_job_alio_results() -> None:
     }
 
 
+def test_search_public_jobs_forwards_institution_code_without_keyword_fallback() -> None:
+    captured_kwargs = {}
+
+    def fake_search_jobs(**kwargs) -> JobAlioSearchResult:
+        captured_kwargs.update(kwargs)
+        return JobAlioSearchResult(page=1, limit=20, total_count=0)
+
+    tool = create_search_public_jobs_tool(search_jobs=fake_search_jobs)
+
+    tool.handler({"institution_code": "C0251"})
+
+    assert captured_kwargs["institution_code"] == "C0251"
+    assert "keyword" not in captured_kwargs
+
+
 def test_search_public_jobs_rejects_unknown_arguments() -> None:
     tool = create_search_public_jobs_tool(
         search_jobs=lambda **_kwargs: JobAlioSearchResult(page=1, limit=20, total_count=0)
@@ -399,6 +414,24 @@ def test_fetch_job_detail_accepts_same_id_aliases() -> None:
     assert result["job"]["id"] == "302423"
 
 
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"job_id": "302423"},
+        {"source_job_id": "302423"},
+        {"recruitment_notice_sn": "302423"},
+    ],
+)
+def test_fetch_job_detail_accepts_each_id_alias(arguments: dict[str, str]) -> None:
+    tool = create_fetch_job_detail_tool(
+        fetch_job_detail=lambda job_id: JobAlioDetail(id=job_id, title="상세 공고")
+    )
+
+    result = tool.handler(arguments)
+
+    assert result["job"]["id"] == "302423"
+
+
 def test_fetch_job_detail_rejects_missing_or_conflicting_ids() -> None:
     tool = create_fetch_job_detail_tool(
         fetch_job_detail=lambda job_id: JobAlioDetail(id=job_id, title="상세 공고")
@@ -406,6 +439,8 @@ def test_fetch_job_detail_rejects_missing_or_conflicting_ids() -> None:
 
     with pytest.raises(ValueError, match="fetch_job_detail requires job_id"):
         tool.handler({})
+    with pytest.raises(ValueError, match="fetch_job_detail requires job_id"):
+        tool.handler({"job_id": "   "})
 
     with pytest.raises(ValueError, match="conflicting fetch_job_detail ids"):
         tool.handler({"job_id": "302423", "source_job_id": "302424"})
@@ -470,3 +505,43 @@ def test_analyze_job_fit_report_rejects_unknown_arguments_and_bad_skills() -> No
 
     with pytest.raises(ValueError, match="expected list value"):
         tool.handler({"job_id": "302423", "known_skills": "정보보호"})
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"job_id": "302423"},
+        {"source_job_id": "302423"},
+        {"recruitment_notice_sn": "302423"},
+    ],
+)
+def test_analyze_job_fit_report_accepts_each_id_alias(arguments: dict[str, str]) -> None:
+    tool = create_analyze_job_fit_report_tool(
+        fetch_job_detail=lambda job_id: JobAlioDetail(id=job_id, title="상세 공고")
+    )
+
+    result = tool.handler(arguments)
+
+    assert result["job_id"] == "302423"
+
+
+def test_analyze_job_fit_report_accepts_same_id_aliases_and_rejects_invalid_ids() -> None:
+    tool = create_analyze_job_fit_report_tool(
+        fetch_job_detail=lambda job_id: JobAlioDetail(id=job_id, title="상세 공고")
+    )
+
+    result = tool.handler(
+        {
+            "job_id": "302423",
+            "source_job_id": "302423",
+            "recruitment_notice_sn": "302423",
+        }
+    )
+
+    assert result["job_id"] == "302423"
+    with pytest.raises(ValueError, match="analyze_job_fit_report requires job_id"):
+        tool.handler({})
+    with pytest.raises(ValueError, match="analyze_job_fit_report requires job_id"):
+        tool.handler({"job_id": "   "})
+    with pytest.raises(ValueError, match="conflicting analyze_job_fit_report ids"):
+        tool.handler({"job_id": "302423", "source_job_id": "302424"})

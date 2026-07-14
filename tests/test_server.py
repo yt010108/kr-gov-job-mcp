@@ -34,6 +34,10 @@ def test_server_list_tools_command_outputs_registered_tools(capsys) -> None:
     captured = capsys.readouterr()
     assert exit_code == 0
     payload = json.loads(captured.out)
+    expected_schemas = {
+        tool["name"]: tool["input_schema"] for tool in create_default_registry().list_tools()
+    }
+    assert {tool["name"]: tool["input_schema"] for tool in payload["tools"]} == expected_schemas
     assert payload["tools"][0]["name"] == "analyze_institution_strategy"
     assert payload["tools"][1]["name"] == "analyze_institution_weakness"
     assert payload["tools"][2]["name"] == "analyze_job_fit_report"

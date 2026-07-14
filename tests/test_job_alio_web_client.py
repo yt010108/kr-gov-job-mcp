@@ -75,6 +75,27 @@ def test_search_jobs_posts_ajax_form_and_normalizes_response() -> None:
     asyncio.run(run())
 
 
+def test_search_jobs_posts_institution_filter_without_title_keyword() -> None:
+    async def run() -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            body = request.content.decode()
+            assert "pblntInstCd=C0251" in body
+            assert "recrutPbancTtl" not in body
+            return httpx.Response(
+                200,
+                json={"data": {"resultCode": "1", "totalCount": 0, "result": []}},
+            )
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http_client:
+            client = JobAlioWebClient(http_client=http_client)
+            result = await client.search_jobs(institution_code="C0251")
+
+        assert result.total_count == 0
+        assert result.jobs == []
+
+    asyncio.run(run())
+
+
 def test_fetch_job_detail_normalizes_attachments_and_steps() -> None:
     async def run() -> None:
         def handler(request: httpx.Request) -> httpx.Response:
