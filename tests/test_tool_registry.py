@@ -17,6 +17,7 @@ def test_default_registry_exposes_health_check() -> None:
         "lookup_job_alio_codes",
         "lookup_region_codes",
         "prepare_institution_interview",
+        "resolve_ncs_code",
         "search_public_jobs",
     ]
     assert tools[4] == {
@@ -44,6 +45,7 @@ def test_default_registry_exposes_health_check() -> None:
     assert tools[6]["input_schema"]["additionalProperties"] is False
     assert tools[7]["input_schema"]["additionalProperties"] is False
     assert tools[8]["input_schema"]["additionalProperties"] is False
+    assert tools[9]["input_schema"]["additionalProperties"] is False
 
 
 def test_default_registry_tool_metadata_satisfies_review_requirements() -> None:
@@ -73,7 +75,7 @@ def test_health_check_returns_server_metadata(monkeypatch: pytest.MonkeyPatch) -
         "version": "0.1.0",
         "source_ref": "refs/heads/main",
         "revision": "257e45c",
-        "registered_tools": 9,
+        "registered_tools": 10,
     }
 
 
