@@ -1,5 +1,6 @@
 """Tool registry helpers for kr-gov-job-mcp."""
 
+from kr_gov_job_mcp.tools.application_strategy import create_prepare_application_strategy_tool
 from kr_gov_job_mcp.tools.builtin import create_default_registry
 from kr_gov_job_mcp.tools.code_lookup import (
     create_lookup_job_alio_codes_tool,
@@ -30,6 +31,7 @@ __all__ = [
     "create_lookup_job_alio_codes_tool",
     "create_lookup_region_codes_tool",
     "create_map_ncs_competencies_tool",
+    "create_prepare_application_strategy_tool",
     "create_resolve_ncs_code_tool",
     "create_prepare_institution_interview_tool",
     "create_search_public_jobs_tool",

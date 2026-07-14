@@ -31,6 +31,7 @@
 | `fetch_job_detail` | 공고 상세·첨부파일·전형 단계·NCS 매핑을 구조화 |
 | `analyze_job_fit_report` | 지원 직무 적합도와 준비 전략을 정리 |
 | `analyze_institution_strategy` | ALIO 및 연구·정책 자료 기반 기관 전략 신호를 분석 |
+| `prepare_application_strategy` | 기관·직무 해석부터 공고별 준비 전략과 면접 카드까지 통합 |
 
 ## 문제 정의
 
@@ -54,6 +55,7 @@
 - 국회 지적사항 기반 개선 과제 분석
 - ALIO 주요사업, 연구/정책 자료, 국회 지적사항 기반 면접 카드 생성
 - 공고, NCS, 기관 정보 기반 준비 항목 리포트 생성
+- 공고 후보, 적합도, NCS, 기관 분석, 면접 카드를 한 응답으로 통합
 
 ## 도구 설계 문서
 
@@ -216,3 +218,4 @@ kr-gov-job-mcp/
 - Job-ALIO 공고와 직무기술서 PDF 기반 NCS/KSA 역량 정리
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
 - evidence 입력 기반 기관 사업 방향 signal 요약
+- 기관명과 직무 기반 통합 지원 전략 생성
