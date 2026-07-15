@@ -46,7 +46,9 @@ _LABEL_ALIASES = {
 _EXPLICIT_SECTION = re.compile(
     r"^\s*(?P<label>[A-Za-z가-힣 ]+?)\s*(?::|：|-|—)\s*(?P<excerpt>.+?)\s*$"
 )
-_METRIC_EXPRESSION = re.compile(r"\d+(?:\.\d+)?\s*(?:%|배|명|건|회|시간|일|원|점)")
+_METRIC_EXPRESSION = re.compile(
+    r"\d+(?:\.\d+)?\s*(?:%|배|명|건|회|시간|분|초|일|주|개월|년|점|개|(?:천|만|억|조)?원)"
+)
 _ACTION_STEMS = r"분석|설계|구현|개발|개선|조율|협업|자동화|검토|수집|작성|제안|운영|실행|수행"
 _ACTION_EXPRESSION = re.compile(rf"(?:{_ACTION_STEMS})(?:했|하|해|하여|하고|함|한)")
 _ACTION_NON_EVIDENCE = re.compile(
@@ -145,7 +147,9 @@ def _extract_star_excerpts(
 
     for fragment in _experience_fragments(user_experience):
         explicit_section, excerpt = _explicit_section(fragment)
-        if explicit_section is None:
+        if explicit_section is None or (
+            explicit_section == "action" and _ACTION_NON_EVIDENCE.search(excerpt)
+        ):
             unclassified.append(excerpt)
         else:
             _append_unique(excerpts[explicit_section], excerpt)

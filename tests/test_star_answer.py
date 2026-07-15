@@ -128,6 +128,30 @@ Result: 점검 기준을 정리했다.
     assert framework.interview_answer.status == "needs_evidence"
 
 
+@pytest.mark.parametrize(
+    "unperformed_action",
+    ["로그를 분석해야 했다.", "로그를 분석하지 못했다."],
+)
+def test_generate_star_answer_framework_checks_explicit_action_evidence(
+    unperformed_action: str,
+) -> None:
+    framework = generate_star_answer_framework(
+        question="문제 해결 경험을 설명해 주세요.",
+        user_experience=f"""
+Situation: 서비스 오류가 반복됐다.
+Task: 원인 파악을 맡았다.
+Action: {unperformed_action}
+Result: 점검 기준을 정리했다.
+""",
+        target_job="전산직",
+    )
+
+    assert framework.star["action"].status == "missing"
+    assert framework.star["action"].source_excerpts == []
+    assert framework.unclassified_excerpts == [unperformed_action]
+    assert framework.interview_answer.status == "needs_evidence"
+
+
 def test_generate_star_answer_framework_links_ncs_without_claiming_possession() -> None:
     framework = generate_star_answer_framework(
         question="직무 역량을 설명해 주세요.",
@@ -186,6 +210,33 @@ def test_generate_star_answer_framework_flags_risk_in_unclassified_excerpt() -> 
     assert framework.missing_evidence == []
     assert framework.unclassified_excerpts == ["이후 오류가 전혀 발생하지 않았다."]
     assert {flag.category for flag in framework.risk_flags} == {"absolute_claim"}
+    assert framework.interview_answer.status == "needs_evidence"
+    assert framework.cover_letter_draft.status == "needs_evidence"
+
+
+@pytest.mark.parametrize(
+    "quantified_result",
+    [
+        "처리 기간을 3개월에서 2개월로 줄였다.",
+        "운영 비용을 10만원 절감했다.",
+        "개선 효과가 1년 동안 유지됐다.",
+    ],
+)
+def test_generate_star_answer_framework_flags_korean_scaled_metrics(
+    quantified_result: str,
+) -> None:
+    framework = generate_star_answer_framework(
+        question="성과를 설명해 주세요.",
+        user_experience=(
+            "Situation: 처리 지연이 반복됐다.\n"
+            "Task: 개선 절차 정리를 맡았다.\n"
+            "Action: 작업 흐름을 분석하고 점검표를 작성했다.\n"
+            f"Result: {quantified_result}"
+        ),
+        target_job="전산직",
+    )
+
+    assert "unverified_metric" in {flag.category for flag in framework.risk_flags}
     assert framework.interview_answer.status == "needs_evidence"
     assert framework.cover_letter_draft.status == "needs_evidence"
 
