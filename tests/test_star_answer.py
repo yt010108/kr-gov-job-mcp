@@ -130,7 +130,12 @@ Result: 점검 기준을 정리했다.
 
 @pytest.mark.parametrize(
     "unperformed_action",
-    ["로그를 분석해야 했다.", "로그를 분석하지 못했다."],
+    [
+        "로그를 분석해야 했다.",
+        "로그를 분석하지 못했다.",
+        "로그를 분석할 계획이었다.",
+        "로그를 분석할 예정이었다.",
+    ],
 )
 def test_generate_star_answer_framework_checks_explicit_action_evidence(
     unperformed_action: str,
@@ -219,6 +224,8 @@ def test_generate_star_answer_framework_flags_risk_in_unclassified_excerpt() -> 
     [
         "처리 기간을 3개월에서 2개월로 줄였다.",
         "운영 비용을 10만원 절감했다.",
+        "운영 비용을 1억 원 절감했다.",
+        "사업 예산을 5천만 원 절감했다.",
         "개선 효과가 1년 동안 유지됐다.",
     ],
 )
