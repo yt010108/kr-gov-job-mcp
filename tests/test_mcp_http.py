@@ -108,7 +108,7 @@ def test_mcp_http_health_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert status == 200
     assert payload["status"] == "ok"
-    assert payload["registered_tools"] == 12
+    assert payload["registered_tools"] == 13
     assert payload["source_ref"] == "refs/heads/main"
     assert payload["revision"] == "257e45c"
 

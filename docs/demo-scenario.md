@@ -1,6 +1,6 @@
 # 데모 시나리오
 
-현재 데모는 구현된 MVP 흐름을 먼저 보여준다. 장기 목표인 NCS/KSA 상세 분석과 기관 분석은 planned 항목으로 분리한다.
+현재 데모는 구현된 MVP 도구를 개별 호출하거나 통합 전략 도구로 연결하는 흐름을 보여준다.
 
 ## 사용자 입력
 
@@ -13,17 +13,24 @@
 
 현재 실제로 실행 가능한 흐름:
 
-1. `search_public_jobs`로 관련 공고를 찾습니다.
-2. `fetch_job_detail`로 공고 상세, 첨부파일, 전형 단계, NCS 후보를 구조화합니다.
-3. `analyze_job_fit_report`로 Job-ALIO 상세 정보 기반의 최소 준비 항목 리포트를 생성합니다.
+1. `resolve_ncs_code`와 기관 코드 조회로 검색 필터를 확인합니다.
+2. `search_public_jobs`로 관련 공고 후보를 찾습니다.
+3. 공고별 `analyze_job_fit_report`와 `map_ncs_competencies` 결과를 정리합니다.
+4. 기관 전략·개선 과제와 면접 카드를 함께 확인합니다.
+5. `prepare_application_strategy`는 위 호출을 부분 실패가 가능한 한 응답으로 조합합니다.
 
-기관 분석 도구인 `analyze_institution_strategy`, `analyze_institution_weakness`도 호출 가능하지만,
-현재는 입력으로 전달된 evidence와 signal 후보만 사용한다. ALIO/Cleaneye 자료 자동 수집과
-준비 리포트 자동 연결은 아직 planned 단계다.
+기관 분석 도구는 입력 evidence를 사용할 수 있고, 설정에 따라 ALIO 자료를 실시간 조회합니다.
+외부 자료가 없거나 호출이 실패하면 결과를 추정하지 않고 검증 메모와 경고를 반환합니다.
 
 실제 KISA 기준 출력 예시는 `examples/kisa-real-demo-output.md`에 기록되어 있습니다.
 
 ## 실제 실행 명령
+
+통합 지원 전략:
+
+```bash
+python -m kr_gov_job_mcp.server --call-tool prepare_application_strategy --input '{"institution_name":"한국인터넷진흥원","target_role":"정보보안","region":"서울","known_skills":["웹 보안","네트워크"],"ongoing_only":true,"limit":3}'
+```
 
 KISA 공고 검색:
 
@@ -67,11 +74,10 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 
 ## Planned 분석 흐름
 
-다음 흐름은 설계 문서에는 있지만 현재 기본 registry 또는 자동 연결에는 아직 포함되지 않습니다.
+다음 흐름은 후속 범위입니다.
 
-1. `map_ncs_competencies`: 직무기술서 본문에서 NCS/KSA 역량을 추출합니다.
-2. `collect_institution_context`: ALIO, Cleaneye, 기관 홈페이지 evidence를 자동 수집합니다.
-3. 기관 분석 signal을 `analyze_job_fit_report` 준비 항목에 자동 연결합니다.
+1. `collect_institution_context`: ALIO, Cleaneye, 기관 홈페이지 evidence를 한 번에 자동 수집합니다.
+2. 기관 분석 signal을 공고별 준비 항목에 더 세밀하게 연결합니다.
 
 planned 흐름까지 연결되면 최종 출력은 다음 항목을 포함합니다.
 

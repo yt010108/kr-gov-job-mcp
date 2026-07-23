@@ -18,6 +18,7 @@ def test_default_registry_exposes_health_check() -> None:
         "lookup_job_alio_codes",
         "lookup_region_codes",
         "map_ncs_competencies",
+        "prepare_application_strategy",
         "prepare_institution_interview",
         "resolve_ncs_code",
         "search_public_jobs",
@@ -79,7 +80,7 @@ def test_health_check_returns_server_metadata(monkeypatch: pytest.MonkeyPatch) -
         "version": "0.1.0",
         "source_ref": "refs/heads/main",
         "revision": "257e45c",
-        "registered_tools": 12,
+        "registered_tools": 13,
     }
 
 
