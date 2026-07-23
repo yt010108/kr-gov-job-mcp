@@ -3,6 +3,17 @@
 한국 공공기관 NCS 및 채용 정보 분석을 위한 MCP(Model Context Protocol) 서버입니다.
 단순 공고 검색을 넘어 **채용공고 · 직무기술서 · NCS 역량 · 기관 분석**의 파편화된 정보를 근거 기반으로 연결해 취업 준비 전략을 정리합니다.
 
+## 대표 원스톱 진입
+
+대표 요청은 다음 한 문장으로 시작합니다.
+
+> "공공기관 취업하려는데 도와줘."
+
+에이전트는 `public_job_career_coach`를 빈 입력으로 호출해 사용자가 처음 준비하는지, 공고를
+찾는지, 정해진 공고에 지원하는지, 면접을 준비하는지 선택하게 합니다. 선택 뒤에는 필요한
+정보만 추가로 확인하고 `workflow_ready` 상태에서 기존 공고 검색·기관 분석·지원 준비 도구로
+이어갑니다. 현재 대표 도구 자체는 사용자 유형 분류와 다음 워크플로 준비까지만 담당합니다.
+
 ## 취업 정보 분석 워크플로우
 
 이 MCP는 다음 4단계로 활용할 수 있습니다.
@@ -28,12 +39,14 @@
 
 | 도구 | 역할 |
 | --- | --- |
+| `public_job_career_coach` | 사용자 유형을 선택하게 하고 맞춤 취업 준비 워크플로를 준비 |
 | `search_public_jobs` | Job-ALIO 채용공고를 조건별로 검색 |
 | `resolve_ncs_code` | 자연어 직무를 Job-ALIO NCS 코드와 리포트 맥락으로 해석 |
 | `fetch_job_detail` | 공고 상세·첨부파일·전형 단계·NCS 매핑을 구조화 |
 | `analyze_job_fit_report` | 지원 직무 적합도와 준비 전략을 정리 |
 | `analyze_institution_strategy` | ALIO 및 연구·정책 자료 기반 기관 전략 신호를 분석 |
 | `prepare_application_strategy` | 기관·직무 해석부터 공고별 준비 전략과 면접 카드까지 통합 |
+| `get_institution_average_salary` | ALIO 정기공시의 직원 평균보수(1인당 평균 보수액)를 조회 |
 | `generate_star_answer_framework` | 사용자 경험을 STAR 구조와 보완 질문으로 정리 |
 
 ## 문제 정의
@@ -169,6 +182,8 @@ kr-gov-job-mcp/
       analyze-job-fit-report.md
       generate-star-answer-framework.md
       prepare-application-strategy.md
+      get-institution-average-salary.md
+      public-job-career-coach.md
     inventory/
       job-alio-field-inventory.md
       alio-disclosure-field-inventory.md
@@ -223,6 +238,8 @@ kr-gov-job-mcp/
 - Job-ALIO 공고 상세 조회
 - Job-ALIO 공고와 직무기술서 PDF 기반 NCS/KSA 역량 정리
 - Job-ALIO 상세 정보 기반 최소 준비 리포트 생성
+- ALIO 정기공시 기반 기관 직원 평균보수 조회
 - evidence 입력 기반 기관 사업 방향 signal 요약
 - 기관명과 직무 기반 통합 지원 전략 생성
 - 사용자 경험 근거 기반 STAR 답변 프레임 생성
+- 대표 요청에서 사용자 유형 선택 및 후속 워크플로 준비

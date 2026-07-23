@@ -19,6 +19,7 @@ class RawSampleStore:
     _MAX_SAMPLE_SLUG_LENGTH = 48
     _MAX_TIME_TOKEN_LENGTH = 24
     _MAX_SEGMENT_LENGTH = 80
+    _WINDOWS_SAFE_PATH_LENGTH = 240
     _WINDOWS_RESERVED_SEGMENTS = frozenset(
         {
             "CON",
@@ -35,13 +36,16 @@ class RawSampleStore:
 
     def path_for(self, sample: RawSample) -> Path:
         collected_date = sample.collected_at.split("T", maxsplit=1)[0] or "unknown-date"
-        return (
+        directory = (
             self.root
             / self._safe_segment(sample.source)
             / self._safe_segment(sample.raw_type)
             / self._safe_segment(collected_date)
-            / self._filename_for(sample)
         )
+        path = directory / self._filename_for(sample)
+        if os.name == "nt" and len(str(path)) > self._WINDOWS_SAFE_PATH_LENGTH:
+            path = directory / self._compact_filename_for(sample)
+        return path
 
     def write_sample(self, sample: RawSample) -> Path:
         path = self.path_for(sample)
@@ -53,7 +57,10 @@ class RawSampleStore:
                 mode="w",
                 encoding="utf-8",
                 dir=path.parent,
-                prefix=f".{path.stem}-",
+                # Keep the temporary filename short.  The final path is deliberately
+                # descriptive, but reusing its stem here can exceed Windows' legacy
+                # path limit when the sample root itself is long.
+                prefix=".raw-sample-",
                 suffix=".tmp",
                 delete=False,
             ) as temp_file:
@@ -81,6 +88,15 @@ class RawSampleStore:
         sample_digest = sha256(sample.sample_id.encode("utf-8")).hexdigest()[: cls._DIGEST_HEX_LENGTH]
         time_token = cls._time_token(sample.collected_at)
         return f"{sample_slug}-{sample_digest}-{time_token}.json"
+
+    @classmethod
+    def _compact_filename_for(cls, sample: RawSample) -> str:
+        """Return a collision-resistant filename with room for a long Windows root."""
+
+        sample_slug = cls._safe_segment(sample.sample_id, 16)
+        sample_digest = sha256(sample.sample_id.encode("utf-8")).hexdigest()[:16]
+        time_digest = sha256(sample.collected_at.encode("utf-8")).hexdigest()[:16]
+        return f"{sample_slug}-{sample_digest}-{time_digest}.json"
 
     @classmethod
     def _time_token(cls, collected_at: str) -> str:

@@ -13,10 +13,14 @@ from kr_gov_job_mcp.tools.institution_analysis import (
     create_prepare_institution_interview_tool,
 )
 from kr_gov_job_mcp.tools.ncs_mapping import create_map_ncs_competencies_tool
+from kr_gov_job_mcp.tools.alio_average_salary import create_get_institution_average_salary_tool
 from kr_gov_job_mcp.tools.public_jobs import (
     create_analyze_job_fit_report_tool,
     create_fetch_job_detail_tool,
     create_search_public_jobs_tool,
+)
+from kr_gov_job_mcp.tools.public_job_career_coach import (
+    create_public_job_career_coach_tool,
 )
 from kr_gov_job_mcp.tools.star_answer import create_generate_star_answer_framework_tool
 from kr_gov_job_mcp.tools.registry import ToolDefinition, ToolRegistry
@@ -30,11 +34,13 @@ __all__ = [
     "create_analyze_job_fit_report_tool",
     "create_fetch_job_detail_tool",
     "create_generate_star_answer_framework_tool",
+    "create_get_institution_average_salary_tool",
     "create_lookup_job_alio_codes_tool",
     "create_lookup_region_codes_tool",
     "create_map_ncs_competencies_tool",
     "create_prepare_application_strategy_tool",
     "create_resolve_ncs_code_tool",
     "create_prepare_institution_interview_tool",
+    "create_public_job_career_coach_tool",
     "create_search_public_jobs_tool",
 ]

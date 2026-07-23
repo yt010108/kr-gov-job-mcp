@@ -14,16 +14,18 @@ def test_default_registry_exposes_health_check() -> None:
         "analyze_job_fit_report",
         "fetch_job_detail",
         "generate_star_answer_framework",
+        "get_institution_average_salary",
         "health_check",
         "lookup_job_alio_codes",
         "lookup_region_codes",
         "map_ncs_competencies",
         "prepare_application_strategy",
         "prepare_institution_interview",
+        "public_job_career_coach",
         "resolve_ncs_code",
         "search_public_jobs",
     ]
-    assert tools[5] == {
+    assert tools[6] == {
         "name": "health_check",
         "description": "kr-gov-job-mcp 서비스에서 서버 준비 상태와 등록된 도구 개수 같은 기본 메타데이터를 반환합니다.",
         "input_schema": {
@@ -51,6 +53,9 @@ def test_default_registry_exposes_health_check() -> None:
     assert tools[9]["input_schema"]["additionalProperties"] is False
     assert tools[10]["input_schema"]["additionalProperties"] is False
     assert tools[11]["input_schema"]["additionalProperties"] is False
+    assert tools[12]["input_schema"]["additionalProperties"] is False
+    assert tools[13]["input_schema"]["additionalProperties"] is False
+    assert tools[14]["input_schema"]["additionalProperties"] is False
 
 
 def test_default_registry_tool_metadata_satisfies_review_requirements() -> None:
@@ -80,7 +85,7 @@ def test_health_check_returns_server_metadata(monkeypatch: pytest.MonkeyPatch) -
         "version": "0.1.0",
         "source_ref": "refs/heads/main",
         "revision": "257e45c",
-        "registered_tools": 13,
+        "registered_tools": 15,
     }
 
 

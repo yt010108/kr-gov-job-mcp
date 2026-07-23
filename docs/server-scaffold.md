@@ -119,7 +119,9 @@ registry.register(
 `analyze_job_fit_report`,
 `analyze_institution_strategy`, `analyze_institution_weakness`,
 `prepare_institution_interview`, `prepare_application_strategy`,
-`generate_star_answer_framework`다. 이후 `collect_institution_context` 같은 실제 도구를
+`generate_star_answer_framework`, `get_institution_average_salary`,
+`public_job_career_coach`다. 이후
+`collect_institution_context` 같은 실제 도구를
 이 레지스트리에 붙인다.
 
 ## 최소 확인
@@ -135,5 +137,5 @@ python -m pytest -q
 예상 health 응답:
 
 ```json
-{"registered_tools":13,"revision":"unknown","service":"kr-gov-job-mcp","source_ref":"unknown","status":"ok","version":"0.1.0"}
+{"registered_tools":15,"revision":"unknown","service":"kr-gov-job-mcp","source_ref":"unknown","status":"ok","version":"0.1.0"}
 ```

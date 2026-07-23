@@ -1,4 +1,5 @@
 import hashlib
+import os
 from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import PureWindowsPath
@@ -120,6 +121,8 @@ def test_raw_sample_store_limits_long_sample_id_filename(tmp_path) -> None:
     path = store.write_sample(make_raw_sample(sample_id="long-id-" * 300))
 
     assert len(path.name) <= 160
+    if os.name == "nt":
+        assert len(str(path)) <= RawSampleStore._WINDOWS_SAFE_PATH_LENGTH
     assert store.read_sample(path).sample_id == "long-id-" * 300
 
 

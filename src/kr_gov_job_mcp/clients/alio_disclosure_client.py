@@ -58,6 +58,7 @@ class AlioDisclosureClient:
 
     GENERAL_STATUS_REPORT_FORM_ROOT_NO = "10105"
     MAIN_BUSINESS_REPORT_FORM_ROOT_NO = "31501"
+    AVERAGE_SALARY_REPORT_FORM_ROOT_NO = "2060"
     POINT_REPORT_FORM_NO: dict[AlioPointKind, str] = {
         "national_assembly": "B1210",
     }
