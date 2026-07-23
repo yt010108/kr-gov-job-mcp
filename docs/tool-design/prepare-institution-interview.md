@@ -13,6 +13,13 @@
 않는다. 후속 연결 기준은
 [상위 주무부처 정책 source 확장 설계](parent-ministry-policy-source.md)를 따른다.
 
+뉴스 검색 결과와 BigKinds 자료를 위한 전용 입력이나 자동 수집 경로는 아직 없다. 다만 현재
+일반 `evidence`와 `signals` 입력은 뉴스 여부를 판별하지 않으므로, 뉴스 자료를 수동으로 넣으면
+기존 카드 선택에 사용될 수 있다. `analyze_institution_weakness`에 전달된 뉴스형 근거도 개선과제
+signal을 거쳐 면접의 `개선과제` 카드로 이어질 수 있다. 뉴스 전용 guard와 adapter가 구현되기
+전에는 해당 자료를 일반 입력에 전달하지 않는다. 후속 연결 기준은
+[기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)를 따른다.
+
 ## 입력
 
 ```json

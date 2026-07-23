@@ -16,6 +16,8 @@
 | 07 | `analyze_institution_weakness` | 분석 | P0 | [analyze-institution-weakness.md](analyze-institution-weakness.md) | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리한다. |
 | 08 | `prepare_institution_interview` | 분석 | P0 | [prepare-institution-interview.md](prepare-institution-interview.md) | 주요사업, 연구/정책 자료, 국회 지적사항을 면접 질문 카드로 변환한다. |
 | 09 | `analyze_job_fit_report` | 분석 | P0 | [analyze-job-fit-report.md](analyze-job-fit-report.md) | 공고 내용, NCS, 기관 정보를 연결해 준비 리포트를 만든다. |
+| 11 | `prepare_application_strategy` | 통합 | P0 | [prepare-application-strategy.md](prepare-application-strategy.md) | 공고 탐색부터 적합도·NCS·기관·면접 분석까지 기존 도구를 한 응답으로 조합한다. |
+| 12 | `generate_star_answer_framework` | 분석 | P0 | [generate-star-answer-framework.md](generate-star-answer-framework.md) | 사용자 경험을 근거 기반 STAR 답변 뼈대로 정리한다. |
 
 ## 구현 순서
 
@@ -29,10 +31,16 @@
 8. 06 `analyze_institution_strategy`
 9. 07 `analyze_institution_weakness`
 10. 08 `prepare_institution_interview`
-11. `collect_institution_context`
+11. 11 `prepare_application_strategy`
+12. 12 `generate_star_answer_framework`
+13. `collect_institution_context`
 
-## 후속 source 설계
+## 후속 설계
 
 - [상위 주무부처 정책 source 확장](parent-ministry-policy-source.md): 주무부처 정책 근거를
   기관 공식 근거와 분리해 `analyze_institution_strategy` 및 면접 준비 흐름에 연결하는 방안을
   정의한다. 현재 자동 수집이나 tool schema 변경은 구현하지 않았다.
+
+- [기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md): 사용자 제공 기사부터
+  provenance와 검증 상태를 보존해 최근 이슈 후보로 정리하고, BigKinds 직접 연동은 후속
+  승인 단계로 분리한다.

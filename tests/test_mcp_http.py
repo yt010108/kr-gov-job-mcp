@@ -80,6 +80,11 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         {"required": ["preparation_notes"]},
     ]
     assert schemas["resolve_ncs_code"]["properties"]["known_skills"]["minItems"] == 1
+    assert schemas["generate_star_answer_framework"]["required"] == [
+        "question",
+        "user_experience",
+        "target_job",
+    ]
     required_strings = {
         "analyze_institution_strategy": ["institution_name"],
         "analyze_institution_weakness": ["institution_name"],
@@ -87,6 +92,7 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         "analyze_job_fit_report": ["job_id", "source_job_id", "recruitment_notice_sn"],
         "prepare_institution_interview": ["institution_name", "target_role", "job_family"],
         "resolve_ncs_code": ["query", "target_role", "job_family", "preparation_notes"],
+        "generate_star_answer_framework": ["question", "user_experience", "target_job"],
     }
     for tool_name, fields in required_strings.items():
         for field in fields:
@@ -102,7 +108,7 @@ def test_mcp_http_health_endpoint(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert status == 200
     assert payload["status"] == "ok"
-    assert payload["registered_tools"] == 11
+    assert payload["registered_tools"] == 13
     assert payload["source_ref"] == "refs/heads/main"
     assert payload["revision"] == "257e45c"
 
@@ -141,6 +147,7 @@ def test_mcp_http_initialize_and_list_tools() -> None:
     assert "lookup_region_codes" in tool_names
     assert "resolve_ncs_code" in tool_names
     assert "search_public_jobs" in tool_names
+    assert "generate_star_answer_framework" in tool_names
     search_public_jobs = next(tool for tool in tools if tool["name"] == "search_public_jobs")
     assert "kr-gov-job-mcp" in search_public_jobs["description"]
     assert search_public_jobs["annotations"]["readOnlyHint"] is True
@@ -175,6 +182,40 @@ def test_mcp_http_call_tool_returns_structured_content() -> None:
     assert result["isError"] is False
     assert result["structuredContent"]["matches"][0]["code"] == "R3010"
     assert json.loads(result["content"][0]["text"]) == result["structuredContent"]
+
+
+def test_mcp_http_calls_star_answer_framework_with_structured_content() -> None:
+    with _mcp_http_server() as (host, port):
+        status, payload = _request(
+            host,
+            port,
+            "POST",
+            "/mcp",
+            {
+                "jsonrpc": "2.0",
+                "id": "star-call",
+                "method": "tools/call",
+                "params": {
+                    "name": "generate_star_answer_framework",
+                    "arguments": {
+                        "question": "문제 해결 경험을 설명해 주세요.",
+                        "user_experience": (
+                            "Situation: 반복 오류가 있었다.\n"
+                            "Task: 원인 파악을 맡았다.\n"
+                            "Action: 로그를 분석했다.\n"
+                            "Result: 점검 절차를 만들었다."
+                        ),
+                        "target_job": "전산직",
+                    },
+                },
+            },
+        )
+
+    result = payload["result"]
+    assert status == 200
+    assert result["isError"] is False
+    assert result["structuredContent"]["source"] == "star_answer_framework"
+    assert result["structuredContent"]["cover_letter_draft"]["status"] == "ready"
 
 
 def test_mcp_http_notification_returns_accepted_without_body() -> None:
