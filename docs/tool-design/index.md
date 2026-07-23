@@ -37,6 +37,10 @@
 
 ## 후속 설계
 
+- [상위 주무부처 정책 source 확장](parent-ministry-policy-source.md): 주무부처 정책 근거를
+  기관 공식 근거와 분리해 `analyze_institution_strategy` 및 면접 준비 흐름에 연결하는 방안을
+  정의한다. 현재 자동 수집이나 tool schema 변경은 구현하지 않았다.
+
 - [기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md): 사용자 제공 기사부터
   provenance와 검증 상태를 보존해 최근 이슈 후보로 정리하고, BigKinds 직접 연동은 후속
   승인 단계로 분리한다.
