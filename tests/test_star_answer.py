@@ -106,7 +106,13 @@ def test_generate_star_answer_framework_classifies_single_cue_without_label() ->
 
 @pytest.mark.parametrize(
     "unperformed_action",
-    ["로그 분석이 필요했다.", "로그를 분석해야 했다.", "로그를 분석하지 못했다."],
+    [
+        "로그 분석이 필요했다.",
+        "로그를 분석해야 했다.",
+        "로그를 분석하지 못했다.",
+        "로그를 분석하지는 않았다.",
+        "로그를 분석하진 않았다.",
+    ],
 )
 def test_generate_star_answer_framework_does_not_treat_unperformed_action_as_performed(
     unperformed_action: str,
@@ -133,6 +139,8 @@ Result: 점검 기준을 정리했다.
     [
         "로그를 분석해야 했다.",
         "로그를 분석하지 못했다.",
+        "로그를 분석하지는 않았다.",
+        "로그를 분석하진 않았다.",
         "로그를 분석할 계획이었다.",
         "로그를 분석할 예정이었다.",
     ],

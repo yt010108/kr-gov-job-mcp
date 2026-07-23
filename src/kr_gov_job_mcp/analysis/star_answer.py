@@ -52,7 +52,8 @@ _METRIC_EXPRESSION = re.compile(
 _ACTION_STEMS = r"분석|설계|구현|개발|개선|조율|협업|자동화|검토|수집|작성|제안|운영|실행|수행"
 _ACTION_EXPRESSION = re.compile(rf"(?:{_ACTION_STEMS})(?:했|하|해|하여|하고|함|한)")
 _ACTION_NON_EVIDENCE = re.compile(
-    rf"(?:{_ACTION_STEMS})(?:해야|하지\s*(?:못|않)|할\s+(?:필요|계획|예정)|이\s+필요|할\s+수\s+없)"
+    rf"(?:{_ACTION_STEMS})(?:해야|하(?:지(?:는|도|만)?|진)\s*(?:못|않)|"
+    r"할\s+(?:필요|계획|예정)|이\s+필요|할\s+수\s+없)"
 )
 
 
