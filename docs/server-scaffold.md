@@ -114,9 +114,11 @@ registry.register(
 ```
 
 기본 레지스트리는 `create_default_registry()`로 생성한다.
-현재 기본 등록 도구는 `health_check`, `lookup_region_codes`, `search_public_jobs`,
-`fetch_job_detail`, `analyze_job_fit_report`, `analyze_institution_strategy`,
-`analyze_institution_weakness`, `prepare_institution_interview`다. 이후 `collect_institution_context` 같은 실제 도구를
+현재 기본 등록 도구는 `health_check`, `lookup_region_codes`, `lookup_job_alio_codes`,
+`resolve_ncs_code`, `search_public_jobs`, `fetch_job_detail`, `map_ncs_competencies`,
+`analyze_job_fit_report`,
+`analyze_institution_strategy`, `analyze_institution_weakness`,
+`prepare_institution_interview`, `generate_star_answer_framework`다. 이후 `collect_institution_context` 같은 실제 도구를
 이 레지스트리에 붙인다.
 
 ## 최소 확인
@@ -132,5 +134,5 @@ python -m pytest -q
 예상 health 응답:
 
 ```json
-{"registered_tools":9,"revision":"unknown","service":"kr-gov-job-mcp","source_ref":"unknown","status":"ok","version":"0.1.0"}
+{"registered_tools":12,"revision":"unknown","service":"kr-gov-job-mcp","source_ref":"unknown","status":"ok","version":"0.1.0"}
 ```

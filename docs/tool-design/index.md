@@ -16,6 +16,7 @@
 | 07 | `analyze_institution_weakness` | 분석 | P0 | [analyze-institution-weakness.md](analyze-institution-weakness.md) | 기관의 부족한 점과 개선 과제를 분석 가능한 형태로 정리한다. |
 | 08 | `prepare_institution_interview` | 분석 | P0 | [prepare-institution-interview.md](prepare-institution-interview.md) | 주요사업, 연구/정책 자료, 국회 지적사항을 면접 질문 카드로 변환한다. |
 | 09 | `analyze_job_fit_report` | 분석 | P0 | [analyze-job-fit-report.md](analyze-job-fit-report.md) | 공고 내용, NCS, 기관 정보를 연결해 준비 리포트를 만든다. |
+| 12 | `generate_star_answer_framework` | 분석 | P0 | [generate-star-answer-framework.md](generate-star-answer-framework.md) | 사용자 경험을 근거 기반 STAR 답변 뼈대로 정리한다. |
 
 ## 구현 순서
 
@@ -29,4 +30,5 @@
 8. 06 `analyze_institution_strategy`
 9. 07 `analyze_institution_weakness`
 10. 08 `prepare_institution_interview`
-11. `collect_institution_context`
+11. 12 `generate_star_answer_framework`
+12. `collect_institution_context`
