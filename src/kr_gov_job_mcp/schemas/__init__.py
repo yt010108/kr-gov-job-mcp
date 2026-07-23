@@ -47,6 +47,19 @@ from kr_gov_job_mcp.schemas.ncs import (
     NcsMappingReport,
     NcsVerificationNote,
 )
+from kr_gov_job_mcp.schemas.star_answer import (
+    StarAnswerFramework,
+    StarAnswerMode,
+    StarCoverLetterDraft,
+    StarDraftStatus,
+    StarInstitutionConnection,
+    StarInterviewAnswer,
+    StarJobConnection,
+    StarMissingEvidence,
+    StarRiskFlag,
+    StarSection,
+    StarSectionStatus,
+)
 from kr_gov_job_mcp.schemas.institution import (
     InstitutionAnalysisInput,
     InstitutionEvidence,
@@ -102,4 +115,15 @@ __all__ = [
     "NcsMappingReport",
     "NcsVerificationNote",
     "PreparationPriority",
+    "StarAnswerFramework",
+    "StarAnswerMode",
+    "StarCoverLetterDraft",
+    "StarDraftStatus",
+    "StarInstitutionConnection",
+    "StarInterviewAnswer",
+    "StarJobConnection",
+    "StarMissingEvidence",
+    "StarRiskFlag",
+    "StarSection",
+    "StarSectionStatus",
 ]

@@ -49,6 +49,11 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         {"required": ["preparation_notes"]},
     ]
     assert schemas["resolve_ncs_code"]["properties"]["known_skills"]["minItems"] == 1
+    assert schemas["generate_star_answer_framework"]["required"] == [
+        "question",
+        "user_experience",
+        "target_job",
+    ]
     required_strings = {
         "analyze_institution_strategy": ["institution_name"],
         "analyze_institution_weakness": ["institution_name"],
@@ -56,6 +61,7 @@ def _assert_issue_112_input_schemas(tools: list[dict]) -> None:
         "analyze_job_fit_report": ["job_id", "source_job_id", "recruitment_notice_sn"],
         "prepare_institution_interview": ["institution_name", "target_role", "job_family"],
         "resolve_ncs_code": ["query", "target_role", "job_family", "preparation_notes"],
+        "generate_star_answer_framework": ["question", "user_experience", "target_job"],
     }
     for tool_name, fields in required_strings.items():
         for field in fields:
@@ -99,6 +105,7 @@ def test_mcp_stdio_initialize_and_list_tools() -> None:
         "analyze_institution_weakness",
         "prepare_institution_interview",
         "resolve_ncs_code",
+        "generate_star_answer_framework",
     }
     lookup = next(tool for tool in tools if tool["name"] == "lookup_region_codes")
     assert "inputSchema" in lookup
@@ -140,6 +147,36 @@ def test_mcp_stdio_call_tool_returns_text_and_structured_content() -> None:
     assert structured == text_payload
     assert structured["matches"][0]["code"] == "R3010"
     assert structured["matches"][0]["name"] == "서울"
+
+
+def test_mcp_stdio_calls_star_answer_framework_with_structured_content() -> None:
+    responses = _run_stdio(
+        [
+            {
+                "jsonrpc": "2.0",
+                "id": "star-call",
+                "method": "tools/call",
+                "params": {
+                    "name": "generate_star_answer_framework",
+                    "arguments": {
+                        "question": "문제 해결 경험을 설명해 주세요.",
+                        "user_experience": (
+                            "Situation: 반복 오류가 있었다.\n"
+                            "Task: 원인 파악을 맡았다.\n"
+                            "Action: 로그를 분석했다.\n"
+                            "Result: 점검 절차를 만들었다."
+                        ),
+                        "target_job": "전산직",
+                    },
+                },
+            }
+        ]
+    )
+
+    result = responses[0]["result"]
+    assert result["isError"] is False
+    assert result["structuredContent"]["source"] == "star_answer_framework"
+    assert result["structuredContent"]["interview_answer"]["status"] == "ready"
 
 
 def test_mcp_stdio_tool_validation_error_is_tool_result() -> None:
