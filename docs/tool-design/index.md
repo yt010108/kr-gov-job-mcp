@@ -19,7 +19,7 @@
 | 11 | `prepare_application_strategy` | 통합 | P0 | [prepare-application-strategy.md](prepare-application-strategy.md) | 공고 탐색부터 적합도·NCS·기관·면접 분석까지 기존 도구를 한 응답으로 조합한다. |
 | 12 | `generate_star_answer_framework` | 분석 | P0 | [generate-star-answer-framework.md](generate-star-answer-framework.md) | 사용자 경험을 근거 기반 STAR 답변 뼈대로 정리한다. |
 | 13 | `get_institution_average_salary` | 수집 | P0 | [get-institution-average-salary.md](get-institution-average-salary.md) | ALIO 정기공시의 직원 평균보수(1인당 평균 보수액)를 조회한다. |
-| 14 | `public_job_career_coach` | 안내 | P0 | [public-job-career-coach.md](public-job-career-coach.md) | 대표 요청에서 사용자 유형을 선택하게 하고 맞춤 워크플로를 준비한다. |
+| 14 | `public_job_career_coach` | 통합 | P0 | [public-job-career-coach.md](public-job-career-coach.md) | 사용자 유형을 선택받고 기존 도구를 자동 실행해 한 화면 취업 준비 대시보드로 통합한다. |
 
 ## 구현 순서
 

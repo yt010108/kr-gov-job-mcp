@@ -63,6 +63,6 @@ def create_default_registry() -> ToolRegistry:
     registry.register(create_generate_star_answer_framework_tool())
     registry.register(create_get_institution_average_salary_tool())
     registry.register(create_fetch_job_detail_tool())
-    registry.register(create_public_job_career_coach_tool())
     registry.register(create_search_public_jobs_tool())
+    registry.register(create_public_job_career_coach_tool(call_tool=registry.call))
     return registry
