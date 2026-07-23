@@ -13,6 +13,7 @@ def test_default_registry_exposes_health_check() -> None:
         "analyze_institution_weakness",
         "analyze_job_fit_report",
         "fetch_job_detail",
+        "generate_star_answer_framework",
         "health_check",
         "lookup_job_alio_codes",
         "lookup_region_codes",
@@ -22,7 +23,7 @@ def test_default_registry_exposes_health_check() -> None:
         "resolve_ncs_code",
         "search_public_jobs",
     ]
-    assert tools[4] == {
+    assert tools[5] == {
         "name": "health_check",
         "description": "kr-gov-job-mcp 서비스에서 서버 준비 상태와 등록된 도구 개수 같은 기본 메타데이터를 반환합니다.",
         "input_schema": {
@@ -79,7 +80,7 @@ def test_health_check_returns_server_metadata(monkeypatch: pytest.MonkeyPatch) -
         "version": "0.1.0",
         "source_ref": "refs/heads/main",
         "revision": "257e45c",
-        "registered_tools": 12,
+        "registered_tools": 13,
     }
 
 
