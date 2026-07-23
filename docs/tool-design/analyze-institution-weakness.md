@@ -90,3 +90,7 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_weakness --input
 - 개선 과제는 지원자가 자기소개서나 면접에서 활용 가능한 표현으로 바꾸되, 원문 의미를 과장하지 않는다.
 - 현재 ALIO `47-2`, `47-3`은 수집 범위에서 제외되어 있으므로 근거로 쓰지 않는다.
 - `applicant_connection`은 지원자 맞춤 답변이 아니라, 후속 면접 준비 단계가 재가공할 때 지켜야 할 연결 기준이다.
+- 현재 구현에는 뉴스형 수동 evidence를 판별·격리하는 guard가 없다. 사고·논란 기사를 일반
+  `evidence`나 `signals`로 전달하면 개선과제 signal로 변환될 수 있으므로, 뉴스 전용 경계가
+  구현되기 전에는 해당 자료를 이 도구에 넣지 않는다. 후속 계약은
+  [기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)를 따른다.

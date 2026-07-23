@@ -34,3 +34,9 @@
 11. 11 `prepare_application_strategy`
 12. 12 `generate_star_answer_framework`
 13. `collect_institution_context`
+
+## 후속 설계
+
+- [기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md): 사용자 제공 기사부터
+  provenance와 검증 상태를 보존해 최근 이슈 후보로 정리하고, BigKinds 직접 연동은 후속
+  승인 단계로 분리한다.

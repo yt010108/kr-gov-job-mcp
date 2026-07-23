@@ -5,6 +5,7 @@
 MVP MCP tool 구현됨. 입력 evidence와 signal 후보가 없으면 `lookup_job_alio_codes`와 같은
 기관명 resolver로 기관 코드를 먼저 확인한 뒤 ALIO 항목별 공시를 실시간 조회해 사업 방향과
 연구보고서 signal을 만든다. 기관 홈페이지와 Cleaneye 자동 수집은 아직 별도 단계다.
+뉴스 검색 결과와 BigKinds 자료도 현재 입력 source나 자동 수집 범위에 포함되지 않는다.
 
 이 도구는 ALIO 근거를 바탕으로 기업 분석용 signal을 만든다. `40 주요사업`은 규모와 성장성을
 계산하고, `50-1/50-2 연구보고서`는 직무 관심과 마지막 할 말 소재로 재사용할 수 있게 반환한다.
@@ -100,3 +101,9 @@ python -m kr_gov_job_mcp.server --call-tool analyze_institution_strategy --input
 - `job_connection`은 최종 답변 문장이 아니라, 직무/경험과 연결할 때 사용할 검토 축이다.
 - 공고 검색이 필요하면 자연어 직무를 `resolve_ncs_code`로 먼저 해석하고, 확정된 코드는
   `search_public_jobs.ncs_code`에만 전달한다.
+
+뉴스를 기관의 공식 사업 방향과 분리하는 후속 계약은
+[기관 뉴스·이슈 분석 확장 설계](analyze-institution-news-issues.md)에 정리한다. 현재 구현에는
+뉴스형 수동 evidence를 판별·격리하는 guard가 없으므로, 뉴스 자료를 일반 `evidence`로 전달하면
+기본 `business_direction` signal로 변환될 수 있다. 뉴스 전용 경계가 구현되기 전에는 호출자가
+뉴스 자료를 이 도구의 `evidence`에 넣지 않아야 하며, 이 문서는 현재 차단을 보장하지 않는다.
