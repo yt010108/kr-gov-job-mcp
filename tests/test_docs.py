@@ -22,12 +22,11 @@ def test_readme_links_collector_workflow_doc() -> None:
     assert "docs/collector-workflow.md" in text
 
 
-def test_career_coach_persona_report_is_linked_and_reproducible() -> None:
-    readme = Path("README.md").read_text(encoding="utf-8")
+def test_career_coach_persona_report_references_fixture_and_findings() -> None:
     report = Path("docs/career-coach-persona-test-report.md").read_text(encoding="utf-8")
 
-    assert "docs/career-coach-persona-test-report.md" in readme
-    assert "examples/career-coach-personas.json" in readme
+    assert "../examples/career-coach-personas.json" in report
+    assert "../tests/test_public_job_career_coach_execution.py" in report
     for phrase in [
         "beginner_minji",
         "job_search_junho",
