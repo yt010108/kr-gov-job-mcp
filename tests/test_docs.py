@@ -22,6 +22,27 @@ def test_readme_links_collector_workflow_doc() -> None:
     assert "docs/collector-workflow.md" in text
 
 
+def test_career_coach_persona_report_is_linked_and_reproducible() -> None:
+    readme = Path("README.md").read_text(encoding="utf-8")
+    report = Path("docs/career-coach-persona-test-report.md").read_text(encoding="utf-8")
+
+    assert "docs/career-coach-persona-test-report.md" in readme
+    assert "examples/career-coach-personas.json" in readme
+    for phrase in [
+        "beginner_minji",
+        "job_search_junho",
+        "application_seoyeon",
+        "interview_hyeonu",
+        "missing_information_jisu",
+        "partial_salary_taehun",
+        "missing_information_echoes_free_text = true",
+        "downstream_error_echoes_secret_text = true",
+        "deadline_this_month",
+        "MCP Player",
+    ]:
+        assert phrase in report
+
+
 def test_alio_pagination_policy_doc_covers_high_volume_controls() -> None:
     text = Path("docs/archive/alio-pagination-policy.md").read_text(encoding="utf-8")
 

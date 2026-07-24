@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from datetime import date
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -10,6 +12,14 @@ from kr_gov_job_mcp.tools.career_coach_execution import _ExecutionContext
 from kr_gov_job_mcp.tools.public_job_career_coach import (
     create_public_job_career_coach_tool,
 )
+
+
+_PERSONA_FIXTURE = json.loads(
+    (Path(__file__).resolve().parents[1] / "examples" / "career-coach-personas.json").read_text(
+        encoding="utf-8"
+    )
+)
+_PERSONAS = _PERSONA_FIXTURE["personas"]
 
 
 class FakeToolCaller:
@@ -680,3 +690,117 @@ def test_execution_options_are_strictly_validated(
                 field: value,
             }
         )
+
+
+def test_career_coach_persona_fixture_covers_four_modes_and_two_exceptions() -> None:
+    ids = [str(persona["id"]) for persona in _PERSONAS]
+    core = [persona for persona in _PERSONAS if persona["category"] == "core"]
+    exceptions = [persona for persona in _PERSONAS if persona["category"] == "exception"]
+
+    assert _PERSONA_FIXTURE["schema_version"] == 1
+    assert len(ids) == len(set(ids)) == 6
+    assert {persona["support_mode"] for persona in core} == {
+        "beginner",
+        "job_search",
+        "application",
+        "interview",
+    }
+    assert len(exceptions) == 2
+    assert all(len(persona["conversation"]) == 3 for persona in _PERSONAS)
+
+
+@pytest.mark.parametrize(
+    "persona",
+    [persona for persona in _PERSONAS if persona["category"] == "core"],
+    ids=lambda persona: str(persona["id"]),
+)
+def test_core_persona_conversation_reaches_one_screen_dashboard(
+    persona: Mapping[str, Any],
+) -> None:
+    caller = FakeToolCaller(**dict(persona.get("caller_options") or {}))
+    tool = _tool(caller)
+
+    menu = tool.handler({})
+    selection = tool.handler({"support_mode": persona["support_mode"]})
+    result = tool.handler(
+        {
+            **selection["next_call"]["arguments"],
+            **dict(persona["final_arguments"]),
+        }
+    )
+
+    assert menu["status"] == "needs_user_selection"
+    assert persona["support_mode"] in {choice["id"] for choice in menu["choices"]}
+    assert selection["status"] == "needs_more_information"
+    assert selection["missing_fields"] == persona["expected"]["selection_missing_fields"]
+    assert result["status"] == persona["expected"]["status"]
+    assert result["dashboard"]["view"] == persona["expected"]["dashboard_view"]
+    assert result["input_summary"]["support_mode"] == persona["support_mode"]
+    assert result["next_call"] is None
+
+    called_tools = {name for name, _arguments in caller.calls}
+    assert set(persona["expected"]["required_tools"]) <= called_tools
+
+    trace_text = json.dumps(result["execution_trace"], ensure_ascii=False)
+    input_summary_text = json.dumps(result["input_summary"], ensure_ascii=False)
+    for experience in persona["final_arguments"].get("user_experiences", []):
+        assert experience not in trace_text
+        assert experience not in input_summary_text
+
+    dashboard = result["dashboard"]
+    if dashboard["view"] == "job_discovery":
+        cards = dashboard["job_rankings"]
+        assert 1 <= len(cards) <= persona["final_arguments"]["max_results"]
+        assert dashboard["today_actions"]
+        for card in cards:
+            assert card["deadline"]["label"].startswith("D-")
+            assert card["average_compensation"]["amount_krw"] > 0
+            assert 0 <= card["fit"]["priority_score"] <= 100
+            assert card["fit"]["missing_competencies"]
+            assert card["today_actions"]
+            assert card["links"]["application"].startswith("https://")
+    elif dashboard["view"] == "application_package":
+        assert dashboard["job"]["job_id"] == (
+            persona["final_arguments"].get("job_id") or persona["final_arguments"]["source_job_id"]
+        )
+        assert dashboard["job"]["average_compensation"]["amount_krw"] > 0
+        assert dashboard["star_frameworks"]
+        assert dashboard["today_actions"]
+        assert dashboard["source_links"]
+    else:
+        assert dashboard["institution_name"] == persona["final_arguments"]["institution_name"]
+        assert dashboard["job"]["job_id"] == persona["final_arguments"]["job_id"]
+        assert dashboard["average_compensation"]["amount_krw"] > 0
+        assert dashboard["strategy_signals"]
+        assert dashboard["improvement_signals"]
+        assert dashboard["interview_questions"]
+        assert dashboard["star_frameworks"]
+        assert dashboard["today_actions"]
+        assert dashboard["source_links"]
+
+
+def test_missing_information_persona_stops_before_downstream_calls() -> None:
+    persona = next(persona for persona in _PERSONAS if persona["id"] == "missing_information_jisu")
+    caller = FakeToolCaller()
+    result = _tool(caller).handler(dict(persona["final_arguments"]))
+
+    assert result["status"] == persona["expected"]["status"]
+    assert result["missing_fields"] == persona["expected"]["missing_fields"]
+    assert len(caller.calls) == persona["expected"]["downstream_call_count"]
+    assert result["next_call"]["fields_to_add"] == persona["expected"]["missing_fields"]
+    assert result["preserved_arguments"]["career_level"] == "entry"
+
+
+def test_partial_failure_persona_retains_usable_job_card() -> None:
+    persona = next(persona for persona in _PERSONAS if persona["id"] == "partial_salary_taehun")
+    caller = FakeToolCaller(**dict(persona["caller_options"]))
+    result = _tool(caller).handler(dict(persona["final_arguments"]))
+
+    assert result["status"] == persona["expected"]["status"]
+    assert result["dashboard"]["view"] == persona["expected"]["dashboard_view"]
+    assert result["dashboard"]["job_rankings"]
+    assert result["dashboard"]["job_rankings"][0]["average_compensation"] is None
+    assert [
+        entry["tool"] for entry in result["execution_trace"] if entry["status"] == "failed"
+    ] == ["get_institution_average_salary"]
+    assert any(persona["expected"]["warning_contains"] in warning for warning in result["warnings"])

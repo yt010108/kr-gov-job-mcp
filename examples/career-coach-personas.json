@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "fixture_as_of_date": "2026-07-23",
+  "personas": [
+    {
+      "id": "beginner_minji",
+      "name": "민지",
+      "category": "core",
+      "profile": "공공기관 준비 경험이 없고 관심 분야부터 찾으려는 신입 준비생",
+      "conversation": [
+        "공공기관 취업하려는데 도와줘.",
+        "처음 준비하고 있어요.",
+        "신입이고 디지털 서비스와 정보보호에 관심 있어요. 컴퓨터활용능력 1급이 있고 서울에서 일하고 싶어요."
+      ],
+      "support_mode": "beginner",
+      "final_arguments": {
+        "support_mode": "beginner",
+        "career_level": "entry",
+        "interests": [
+          "디지털 서비스",
+          "정보보호"
+        ],
+        "known_skills": [
+          "컴퓨터활용능력 1급"
+        ],
+        "regions": [
+          "서울"
+        ],
+        "max_results": 2,
+        "as_of_date": "2026-07-23"
+      },
+      "expected": {
+        "selection_missing_fields": [
+          "career_level",
+          "interests"
+        ],
+        "status": "completed",
+        "dashboard_view": "job_discovery",
+        "required_tools": [
+          "resolve_ncs_code",
+          "lookup_region_codes",
+          "search_public_jobs",
+          "fetch_job_detail",
+          "get_institution_average_salary",
+          "analyze_job_fit_report"
+        ]
+      }
+    },
+    {
+      "id": "job_search_junho",
+      "name": "준호",
+      "category": "core",
+      "profile": "정보보호 직무와 보유 역량이 명확하고 지금 지원할 공고를 찾는 신입 준비생",
+      "conversation": [
+        "공공기관 취업하려는데 도와줘.",
+        "지원할 공고를 찾고 있어요.",
+        "정보보호 신입인데 이번 달 지원할 만한 공공기관 공고를 찾아주세요. 정보보안기사와 웹 보안 프로젝트 경험이 있고 서울을 희망해요."
+      ],
+      "support_mode": "job_search",
+      "final_arguments": {
+        "support_mode": "job_search",
+        "target_role": "정보보호",
+        "career_level": "entry",
+        "known_skills": [
+          "정보보안기사",
+          "웹 보안 프로젝트"
+        ],
+        "regions": [
+          "서울"
+        ],
+        "max_results": 3,
+        "as_of_date": "2026-07-23"
+      },
+      "expected": {
+        "selection_missing_fields": [
+          "target_role",
+          "career_level"
+        ],
+        "status": "completed",
+        "dashboard_view": "job_discovery",
+        "required_tools": [
+          "resolve_ncs_code",
+          "lookup_region_codes",
+          "search_public_jobs",
+          "fetch_job_detail",
+          "get_institution_average_salary",
+          "analyze_job_fit_report"
+        ]
+      }
+    },
+    {
+      "id": "application_seoyeon",
+      "name": "서연",
+      "category": "core",
+      "profile": "지원할 공고를 정했고 자기소개서와 면접 답변의 근거를 만들려는 지원자",
+      "conversation": [
+        "공공기관 취업하려는데 도와줘.",
+        "지원할 공고가 정해졌어요.",
+        "job-1 공고에 지원할 거예요. 로그 분석으로 반복 오류를 줄인 경험을 직무 지원동기 답변으로 정리하고 싶어요."
+      ],
+      "support_mode": "application",
+      "final_arguments": {
+        "support_mode": "application",
+        "source_job_id": "job-1",
+        "target_role": "정보보호",
+        "career_level": "entry",
+        "known_skills": [
+          "정보보안기사"
+        ],
+        "user_experiences": [
+          "로그 분석으로 반복 오류의 원인을 찾아 재발을 줄인 경험"
+        ],
+        "question": "정보보호 직무에 지원한 동기와 준비 경험을 설명해 주세요.",
+        "as_of_date": "2026-07-23"
+      },
+      "expected": {
+        "selection_missing_fields": [
+          "job_id"
+        ],
+        "status": "completed",
+        "dashboard_view": "application_package",
+        "required_tools": [
+          "fetch_job_detail",
+          "get_institution_average_salary",
+          "analyze_job_fit_report",
+          "generate_star_answer_framework"
+        ]
+      }
+    },
+    {
+      "id": "interview_hyeonu",
+      "name": "현우",
+      "category": "core",
+      "profile": "한국인터넷진흥원 정보보호 직무 면접과 STAR 답변을 준비하는 지원자",
+      "conversation": [
+        "공공기관 취업하려는데 도와줘.",
+        "면접을 준비하고 있어요.",
+        "한국인터넷진흥원 정보보호 직무 면접이에요. 보안 점검 절차를 개선한 경험으로 예상 질문과 답변 틀을 만들어주세요."
+      ],
+      "support_mode": "interview",
+      "final_arguments": {
+        "support_mode": "interview",
+        "institution_name": "한국인터넷진흥원",
+        "target_role": "정보보호",
+        "job_id": "job-1",
+        "known_skills": [
+          "정보보안기사"
+        ],
+        "user_experiences": [
+          "보안 점검 절차를 표준화해 누락 항목을 줄인 경험"
+        ],
+        "question": "왜 이 기관의 정보보호 직무에 지원했나요?",
+        "as_of_date": "2026-07-23"
+      },
+      "expected": {
+        "selection_missing_fields": [
+          "institution_name",
+          "target_role"
+        ],
+        "status": "completed",
+        "dashboard_view": "interview_package",
+        "required_tools": [
+          "fetch_job_detail",
+          "resolve_ncs_code",
+          "analyze_institution_strategy",
+          "analyze_institution_weakness",
+          "prepare_institution_interview",
+          "get_institution_average_salary",
+          "generate_star_answer_framework"
+        ]
+      }
+    },
+    {
+      "id": "missing_information_jisu",
+      "name": "지수",
+      "category": "exception",
+      "profile": "공고를 찾고 싶지만 아직 목표 직무를 정하지 못한 사용자",
+      "conversation": [
+        "공공기관 취업하려는데 도와줘.",
+        "지원할 공고를 찾고 있어요.",
+        "신입으로 지원하고 싶은데 무슨 직무가 맞는지는 아직 모르겠어요."
+      ],
+      "support_mode": "job_search",
+      "final_arguments": {
+        "support_mode": "job_search",
+        "career_level": "entry"
+      },
+      "expected": {
+        "status": "needs_more_information",
+        "missing_fields": [
+          "target_role"
+        ],
+        "downstream_call_count": 0
+      }
+    },
+    {
+      "id": "partial_salary_taehun",
+      "name": "태훈",
+      "category": "exception",
+      "profile": "공고 탐색은 가능하지만 ALIO 평균보수 조회가 일시적으로 실패한 사용자",
+      "conversation": [
+        "공공기관 취업하려는데 도와줘.",
+        "지원할 공고를 찾고 있어요.",
+        "정보보호 신입 공고를 찾아주세요. 평균보수 조회가 안 되더라도 공고와 준비 정보는 보여주세요."
+      ],
+      "support_mode": "job_search",
+      "caller_options": {
+        "salary_error": true
+      },
+      "final_arguments": {
+        "support_mode": "job_search",
+        "target_role": "정보보호",
+        "career_level": "entry",
+        "known_skills": [
+          "정보보안기사"
+        ],
+        "max_results": 1,
+        "as_of_date": "2026-07-23"
+      },
+      "expected": {
+        "status": "partial_success",
+        "dashboard_view": "job_discovery",
+        "warning_contains": "ALIO timeout",
+        "retains_job_without_salary": true
+      }
+    }
+  ]
+}
